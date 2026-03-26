@@ -13,7 +13,7 @@ URL = os.environ.get('SUPABASE_URL', '').strip()
 KEY = os.environ.get('SUPABASE_KEY', '').strip()
 ADMIN_ID = os.environ.get('ADMIN_CHAT_ID', '').strip()
 
-bot = telebot.TeleBot(TOKEN, threaded=False)
+bot = telebot.Bot(TOKEN, threaded=False) if TOKEN else None
 
 # هدرهای مورد نیاز برای ارتباط با Supabase REST API
 DB_HEADERS = {
@@ -24,84 +24,15 @@ DB_HEADERS = {
 }
 
 # ==========================================
-# 📝 دیکشنری متون
-# ==========================================
-STRINGS = {
-    'fa': {
-        'intro': (
-            "🚀 **به نُوا وی‌پی‌ان خوش آمدید | Nova VPN**\n\n"
-            "ما مفتخریم که سریع‌ترین و امن‌ترین زیرساخت اینترنت آزاد را در اختیار شما قرار می‌دهیم.\n\n"
-            "💎 **چرا نُوا؟**\n"
-            "🔹 سرورهای اختصاصی با پورت ۱۰ گیگابیت\n"
-            "🔹 بدون قطعی و افت سرعت در ساعات اوج مصرف\n"
-            "🔹 پشتیبانی ۲۴ ساعته واقعی\n"
-            "🔹 قابلیت استفاده در تمام سیستم‌عامل‌ها\n\n"
-            "📢 **کانال ما:** @NovaVPN_Net\n"
-            "🎧 **پشتیبانی:** @NovaVPN_Sup\n\n"
-            "👇 **لطفاً برای ادامه کار، زبان خود را انتخاب کنید:**"
-        ),
-        'welcome': "💎 خوش آمدید! هم‌اکنون می‌توانید از منوی زیر استفاده کنید.",
-        'main_menu': "🏠 **منوی اصلی**\n➖➖➖➖➖➖\n💰 موجودی: `{balance}` تومان\n👥 زیرمجموعه: `{ref_count}` نفر",
-        'btn_buy': "🛒 خرید اشتراک VIP",
-        'btn_dash': "👤 داشبورد من",
-        'btn_wallet': "💰 کیف پول / شارژ",
-        'btn_affiliate': "🤝 کسب درآمد",
-        'btn_support': "🎧 پشتیبانی",
-        'btn_lang': "🌐 Change Language",
-        'dash_title': "👤 **داشبورد نُوا**\n\n🆔 آیدی: `{chat_id}`\n💰 اعتبار: `{balance}` تومان\n\n📦 **سرویس‌های شما:**\n{services}",
-        'wallet_title': (
-            "💰 **شارژ حساب (کمترین کارمزد)**\n\n"
-            "پیشنهاد ما استفاده از شبکه‌های زیر برای حداقل کارمزد است:\n\n"
-            "🔹 **TRON (TRX):**\n`آدرس_شما_اینجا`\n\n"
-            "🔹 **TON (Toncoin):**\n`آدرس_شما_اینجا`\n\n"
-            "🔹 **Tether (USDT-TRC20):**\n`آدرس_شما_اینجا`\n\n"
-            "⚠️ پس از واریز، فقط **TXID** را اینجا ارسال کنید."
-        ),
-        'invoice_msg': "🧾 **فاکتور خرید**\n📌 پلن: {plan}\n💵 مبلغ: {price} تومان\n\nلطفاً پرداخت را انجام داده و TXID را بفرستید:",
-        'tx_received': "✅ تراکنش ثبت شد. پس از تایید ادمین، سرویس ارسال و پورسانت معرف واریز می‌گردد.",
-        'admin_panel': "🛠 **پنل مدیریت نُوا**\nیکی از گزینه‌های زیر را انتخاب کنید:",
-        'sales_closed': "❌ متأسفانه در حال حاضر فروش موقتاً غیرفعال است."
-    },
-    'en': {
-        'intro': (
-            "🚀 **Welcome to Nova VPN**\n\n"
-            "We provide the fastest and most secure internet infrastructure.\n\n"
-            "💎 **Why Nova?**\n"
-            "🔹 Dedicated 10Gbps servers\n"
-            "🔹 No drops during peak hours\n"
-            "🔹 Real 24/7 Support\n"
-            "🔹 Compatible with all devices\n\n"
-            "📢 **Channel:** @NovaVPN_Net\n"
-            "🎧 **Support:** @NovaVPN_Sup\n\n"
-            "👇 **Please select your language:**"
-        ),
-        'welcome': "💎 Welcome! You can now use the menu below.",
-        'main_menu': "🏠 **Main Menu**\n➖➖➖➖➖➖\n💰 Balance: `{balance}` T\n👥 Referrals: `{ref_count}`",
-        'btn_buy': "🛒 Buy VIP Plan",
-        'btn_dash': "👤 My Dashboard",
-        'btn_wallet': "💰 Wallet / Top-up",
-        'btn_affiliate': "🤝 Affiliate",
-        'btn_support': "🎧 Support",
-        'btn_lang': "🌐 تغییر زبان",
-        'dash_title': "👤 **Nova Dashboard**\n\n🆔 ID: `{chat_id}`\n💰 Balance: `{balance}` T\n\n📦 **Your Services:**\n{services}",
-        'wallet_title': (
-            "💰 **Wallet (Low Fees)**\n\n"
-            "We recommend using these networks for the lowest transaction fees:\n\n"
-            "🔹 **TRON (TRX):**\n`YOUR_ADDRESS_HERE`\n\n"
-            "🔹 **TON (Toncoin):**\n`YOUR_ADDRESS_HERE`\n\n"
-            "🔹 **Tether (USDT-TRC20):**\n`YOUR_ADDRESS_HERE`\n\n"
-            "⚠️ Send the **TXID** after payment."
-        ),
-        'invoice_msg': "🧾 **Invoice**\n📌 Plan: {plan}\n💵 Price: {price} T\n\nPlease pay and send TXID:",
-        'tx_received': "✅ TX submitted. Service will be sent after admin approval.",
-        'admin_panel': "🛠 **Nova Admin Panel**",
-        'sales_closed': "❌ Sales are temporarily disabled."
-    }
-}
-
-# ==========================================
 # 🛠 توابع کمکی
 # ==========================================
+
+def f_price(amount):
+    """فرمت‌دهی اعداد به صورت ۳ رقم ۳ رقم"""
+    try:
+        return f"{int(amount):,}"
+    except:
+        return str(amount)
 
 def get_user(chat_id):
     res = requests.get(f"{URL}/rest/v1/users?chat_id=eq.{chat_id}&select=*", headers=DB_HEADERS)
@@ -123,6 +54,66 @@ def build_main_menu(user):
     return markup
 
 # ==========================================
+# 📝 دیکشنری متون
+# ==========================================
+STRINGS = {
+    'fa': {
+        'intro': (
+            "🚀 **به نُوا وی‌پی‌ان خوش آمدید | Nova VPN**\n\n"
+            "ما مفتخریم که سریع‌ترین و امن‌ترین زیرساخت اینترنت آزاد را در اختیار شما قرار می‌دهیم.\n\n"
+            "📢 **کانال ما:** @NovaVPN_Net\n"
+            "🎧 **پشتیبانی:** @NovaVPN_Sup\n\n"
+            "👇 **لطفاً برای ادامه کار، زبان خود را انتخاب کنید:**"
+        ),
+        'welcome': "💎 خوش آمدید! هم‌اکنون می‌توانید از منوی زیر استفاده کنید.",
+        'main_menu': "🏠 **منوی اصلی**\n➖➖➖➖➖➖\n💰 موجودی: `{balance}` تومان\n👥 زیرمجموعه: `{ref_count}` نفر",
+        'btn_buy': "🛒 خرید اشتراک VIP",
+        'btn_dash': "👤 داشبورد من",
+        'btn_wallet': "💰 کیف پول / شارژ",
+        'btn_affiliate': "🤝 کسب درآمد",
+        'btn_support': "🎧 پشتیبانی",
+        'btn_lang': "🌐 Change Language",
+        'dash_title': "👤 **داشبورد نُوا**\n\n🆔 آیدی: `{chat_id}`\n💰 اعتبار: `{balance}` تومان\n\n📦 **سرویس‌های شما:**\n{services}",
+        'wallet_title': (
+            "💰 **شارژ حساب (کمترین کارمزد)**\n\n"
+            "لیست ارزهای پیشنهادی با کمترین هزینه انتقال:\n\n"
+            "🔹 **TRON (TRX):**\n`آدرس_شما_اینجا`\n\n"
+            "🔹 **TON (Toncoin):**\n`آدرس_شما_اینجا`\n\n"
+            "🔹 **Tether (USDT-TRC20):**\n`آدرس_شما_اینجا`\n\n"
+            "🔹 **Litecoin (LTC):**\n`آدرس_شما_اینجا`\n\n"
+            "🔹 **Ripple (XRP):**\n`آدرس_شما_اینجا`\n\n"
+            "⚠️ پس از واریز، فقط **TXID** را اینجا ارسال کنید."
+        ),
+        'invoice_msg': "🧾 **فاکتور خرید**\n📌 پلن: {plan}\n💵 مبلغ: {price} تومان\n\nلطفاً پرداخت را انجام داده و TXID را بفرستید:",
+        'tx_received': "✅ تراکنش ثبت شد. پس از تایید ادمین، سرویس ارسال و پورسانت معرف واریز می‌گردد.",
+        'admin_panel': "🛠 **پنل مدیریت نُوا**",
+        'sales_closed': "❌ متأسفانه در حال حاضر فروش موقتاً غیرفعال است."
+    },
+    'en': {
+        'intro': "🚀 **Welcome to Nova VPN**\n\nPlease select your language:",
+        'welcome': "💎 Welcome! Use the menu below.",
+        'main_menu': "🏠 **Main Menu**\n➖➖➖➖➖➖\n💰 Balance: `{balance}` T\n👥 Referrals: `{ref_count}`",
+        'btn_buy': "🛒 Buy VIP Plan",
+        'btn_dash': "👤 My Dashboard",
+        'btn_wallet': "💰 Wallet / Top-up",
+        'btn_affiliate': "🤝 Affiliate",
+        'btn_support': "🎧 Support",
+        'btn_lang': "🌐 تغییر زبان",
+        'dash_title': "👤 **Nova Dashboard**\n\n🆔 ID: `{chat_id}`\n💰 Balance: `{balance}` T\n\n📦 **Your Services:**\n{services}",
+        'wallet_title': (
+            "💰 **Wallet (Low Fees)**\n\n"
+            "Supported low-fee networks:\n\n"
+            "🔹 **TRON (TRX)**\n🔹 **TON (Toncoin)**\n🔹 **Tether (USDT-TRC20)**\n🔹 **Litecoin (LTC)**\n🔹 **Ripple (XRP)**\n\n"
+            "⚠️ Send the **TXID** after payment."
+        ),
+        'invoice_msg': "🧾 **Invoice**\n📌 Plan: {plan}\n💵 Price: {price} T\n\nPlease pay and send TXID:",
+        'tx_received': "✅ TX submitted. Processing...",
+        'admin_panel': "🛠 **Nova Admin Panel**",
+        'sales_closed': "❌ Sales are temporarily disabled."
+    }
+}
+
+# ==========================================
 # 🤖 هندلرهای اصلی
 # ==========================================
 
@@ -131,7 +122,6 @@ def start_cmd(message):
     chat_id = message.chat.id
     user = get_user(chat_id)
     
-    # لاجیک رفرال
     ref_id = None
     if len(message.text.split()) > 1:
         potential_ref = message.text.split()[1]
@@ -146,18 +136,14 @@ def start_cmd(message):
         }
         requests.post(f"{URL}/rest/v1/users", headers=DB_HEADERS, json=new_user)
         
-        # آپدیت تعداد زیرمجموعه برای معرف
-        if ref_id:
-            requests.rpc('increment_referral', {'uid': ref_id}) # نیاز به فانکشن RPC در سوپابیس یا Patch ساده
-            requests.patch(f"{URL}/rest/v1/users?chat_id=eq.{ref_id}", headers=DB_HEADERS, json={}) # در اینجا ساده نگه میداریم
-
         markup = telebot.types.InlineKeyboardMarkup()
         markup.row(telebot.types.InlineKeyboardButton("🇮🇷 فارسی", callback_data="setlang_fa"),
                    telebot.types.InlineKeyboardButton("🇬🇧 English", callback_data="setlang_en"))
         bot.send_message(chat_id, STRINGS['fa']['intro'], reply_markup=markup, parse_mode="Markdown")
     else:
         lang = user.get('language', 'fa')
-        bot.send_message(chat_id, STRINGS[lang]['welcome'], reply_markup=build_main_menu(user), parse_mode="Markdown")
+        text = STRINGS[lang]['main_menu'].format(balance=f_price(user.get('wallet_balance', 0)), ref_count=user.get('total_referrals', 0))
+        bot.send_message(chat_id, text, reply_markup=build_main_menu(user), parse_mode="Markdown")
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('setlang_'))
 def callback_lang(call):
@@ -187,7 +173,7 @@ def handle_buy_plan(call):
         bot.answer_callback_query(call.id, STRINGS[lang]['sales_closed'], show_alert=True)
         return
 
-    text = STRINGS[lang]['invoice_msg'].format(plan=plan['title_fa'], price=plan['price_toman'])
+    text = STRINGS[lang]['invoice_msg'].format(plan=plan['title_fa'], price=f_price(plan['price_toman']))
     requests.post(f"{URL}/rest/v1/transactions", headers=DB_HEADERS, json={
         'chat_id': chat_id, 'amount_toman': plan['price_toman'],
         'target_plan': plan_name, 'status': 'pending', 'txid_or_receipt': 'AWAITING'
@@ -215,23 +201,24 @@ def handle_txid(message):
 def admin_action(call):
     action, txid = call.data.split('_')
     if action == 'approve':
-        tx = requests.get(f"{URL}/rest/v1/transactions?txid_or_receipt=eq.{txid}", headers=DB_HEADERS).json()[0]
+        tx_list = requests.get(f"{URL}/rest/v1/transactions?txid_or_receipt=eq.{txid}", headers=DB_HEADERS).json()
+        if not tx_list: return
+        tx = tx_list[0]
+        
         config = requests.get(f"{URL}/rest/v1/configs?plan_name=eq.{tx['target_plan']}&status=eq.available&limit=1", headers=DB_HEADERS).json()
         
         if config:
             conf = config[0]
-            # تایید تراکنش و فروش کانفیگ
             requests.patch(f"{URL}/rest/v1/configs?id=eq.{conf['id']}", headers=DB_HEADERS, json={'status': 'sold', 'owner_id': tx['chat_id']})
             requests.patch(f"{URL}/rest/v1/transactions?id=eq.{tx['id']}", headers=DB_HEADERS, json={'status': 'approved'})
             
-            # 🎁 محاسبه پورسانت ۱۰ درصدی برای معرف
             user = get_user(tx['chat_id'])
             if user['referrer_id']:
                 commission = int(tx['amount_toman'] * 0.1)
                 ref_user = get_user(user['referrer_id'])
                 new_balance = ref_user['wallet_balance'] + commission
                 requests.patch(f"{URL}/rest/v1/users?chat_id=eq.{user['referrer_id']}", headers=DB_HEADERS, json={'wallet_balance': new_balance})
-                bot.send_message(user['referrer_id'], f"🎊 پورسانت واریز شد!\nمبلغ `{commission}` تومان بابت خرید زیرمجموعه شما به کیف پولتان اضافه شد.")
+                bot.send_message(user['referrer_id'], f"🎊 پورسانت واریز شد!\nمبلغ `{f_price(commission)}` تومان بابت خرید زیرمجموعه به کیف پول شما اضافه شد.")
 
             bot.send_message(tx['chat_id'], f"🎉 تایید شد!\nکانفیگ:\n`{conf['v2ray_uri']}`\n[پنل حجم]({conf['web_panel_url']})", parse_mode="Markdown")
             bot.edit_message_text(f"✅ تایید شد: {txid}", call.message.chat.id, call.message.message_id)
@@ -259,14 +246,13 @@ def admin_callbacks(call):
         markup = telebot.types.InlineKeyboardMarkup()
         for p in plans:
             status = "✅" if p['is_active'] else "❌"
-            markup.row(telebot.types.InlineKeyboardButton(f"{status} {p['title_fa']} ({p['price_toman']})", callback_data=f"toggle_plan_{p['internal_name']}"))
+            markup.row(telebot.types.InlineKeyboardButton(f"{status} {p['title_fa']} ({f_price(p['price_toman'])})", callback_data=f"toggle_plan_{p['internal_name']}"))
         bot.edit_message_text("وضعیت فروش را تغییر دهید:", call.message.chat.id, call.message.message_id, reply_markup=markup)
     
     elif call.data.startswith("toggle_plan_"):
         p_name = call.data.replace("toggle_plan_", "")
         current = requests.get(f"{URL}/rest/v1/plans?internal_name=eq.{p_name}", headers=DB_HEADERS).json()[0]
         requests.patch(f"{URL}/rest/v1/plans?internal_name=eq.{p_name}", headers=DB_HEADERS, json={'is_active': not current['is_active']})
-        bot.answer_callback_query(call.id, "تغییر اعمال شد.")
         admin_callbacks(telebot.types.CallbackQuery(id=call.id, from_user=call.from_user, message=call.message, data="admin_manage_plans", chat_instance=call.chat_instance, json=None))
 
 # ==========================================
@@ -287,13 +273,13 @@ def menu_logic(message):
             return
         markup = telebot.types.InlineKeyboardMarkup()
         for p in plans:
-            markup.row(telebot.types.InlineKeyboardButton(f"{p['title_fa']} - {p['price_toman']} T", callback_data=f"buy_{p['internal_name']}"))
+            markup.row(telebot.types.InlineKeyboardButton(f"{p['title_fa']} - {f_price(p['price_toman'])} T", callback_data=f"buy_{p['internal_name']}"))
         bot.send_message(chat_id, s['buy_title'], reply_markup=markup, parse_mode="Markdown")
         
     elif message.text == s['btn_dash']:
         services = requests.get(f"{URL}/rest/v1/configs?owner_id=eq.{chat_id}&select=*", headers=DB_HEADERS).json()
         srv_text = "\n".join([f"🔹 {s['plan_name']} | [پنل]({s['web_panel_url']})" for s in services]) if services else "سرویسی ندارید."
-        bot.send_message(chat_id, s['dash_title'].format(chat_id=chat_id, balance=user['wallet_balance'], services=srv_text), parse_mode="Markdown")
+        bot.send_message(chat_id, s['dash_title'].format(chat_id=chat_id, balance=f_price(user['wallet_balance']), services=srv_text), parse_mode="Markdown")
         
     elif message.text == s['btn_wallet']:
         bot.send_message(chat_id, s['wallet_title'], parse_mode="Markdown")
