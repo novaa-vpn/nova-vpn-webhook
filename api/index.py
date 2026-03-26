@@ -2,6 +2,7 @@ import os
 import sys
 import traceback
 import logging
+import requests
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -15,20 +16,25 @@ SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '').strip()
 ADMIN_CHAT_ID = os.environ.get('ADMIN_CHAT_ID', '').strip()
 
 bot = None
-supabase = None
 startup_error = None
 
-# سیستم ضد-کرش: اگر خطایی در اتصال رخ دهد، کل سرور خاموش نمی‌شود
+# سیستم ضد-کرش و استفاده از REST API به جای کتابخانه سنگین
 try:
     import telebot
-    from supabase import create_client, Client
     
     if TELEGRAM_TOKEN and SUPABASE_URL and SUPABASE_KEY:
-        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
         bot = telebot.TeleBot(TELEGRAM_TOKEN)
         
         logger = telebot.logger
         telebot.logger.setLevel(logging.INFO)
+        
+        # هدرهای ثابت برای ارتباط مستقیم با دیتابیس سوپابیس
+        DB_HEADERS = {
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+        }
 
         # ==========================================
         # 🤖 دستورات ربات (Bot Handlers)
@@ -38,16 +44,24 @@ try:
             chat_id = message.chat.id
             username = message.from_user.username
             try:
-                user_data = supabase.table('users').select('*').eq('chat_id', chat_id).execute()
-                if not user_data.data:
+                # ۱. بررسی اینکه آیا کاربر قبلاً در دیتابیس ثبت شده است یا خیر
+                url = f"{SUPABASE_URL}/rest/v1/users?chat_id=eq.{chat_id}&select=*"
+                response = requests.get(url, headers=DB_HEADERS)
+                user_data = response.json()
+                
+                # ۲. اگر کاربر جدید بود، در دیتابیس ذخیره شود
+                if not user_data: # اگر لیست خالی بود یعنی کاربر جدید است
                     user_role = 'admin' if str(chat_id) == str(ADMIN_CHAT_ID) else 'user'
-                    supabase.table('users').insert({
+                    insert_url = f"{SUPABASE_URL}/rest/v1/users"
+                    new_user = {
                         'chat_id': chat_id,
                         'username': username,
                         'language': 'fa',
                         'role': user_role
-                    }).execute()
+                    }
+                    requests.post(insert_url, headers=DB_HEADERS, json=new_user)
                 
+                # ۳. ارسال پیام خوش‌آمدگویی دوزبانه
                 markup = telebot.types.InlineKeyboardMarkup()
                 markup.row(
                     telebot.types.InlineKeyboardButton("🇮🇷 فارسی", callback_data="lang_fa"),
@@ -64,7 +78,9 @@ try:
             chat_id = call.message.chat.id
             selected_lang = call.data.split('_')[1]
             try:
-                supabase.table('users').update({'language': selected_lang}).eq('chat_id', chat_id).execute()
+                update_url = f"{SUPABASE_URL}/rest/v1/users?chat_id=eq.{chat_id}"
+                requests.patch(update_url, headers=DB_HEADERS, json={'language': selected_lang})
+                
                 if selected_lang == 'fa':
                     bot.edit_message_text("زبان شما با موفقیت به 🇮🇷 فارسی تنظیم شد. ✅\nبه زودی منوی اصلی برای شما ارسال می‌شود.", chat_id, call.message.message_id)
                 else:
@@ -81,13 +97,10 @@ except Exception as e:
 # ==========================================
 @app.route('/', methods=['GET'])
 def index():
-    # اگر اروری رخ داده باشد، مستقیماً روی صفحه مانیتور چاپ می‌شود تا آن را حل کنیم
     if startup_error:
-        return f"<h1>❌ ارور در راه‌اندازی ربات</h1><pre>{startup_error}</pre><p>لطفا متن این ارور را کپی کرده و برای من بفرستید.</p>", 500
-        
+        return f"<h1>❌ ارور در راه‌اندازی ربات</h1><pre>{startup_error}</pre>", 500
     if not bot:
         return "❌ Error: متغیرهای محیطی در تنظیمات ورسل وارد نشده‌اند!", 500
-        
     return "✅ Nova VPN Bot Backend is Running Successfully!"
 
 @app.route('/setup', methods=['GET'])
