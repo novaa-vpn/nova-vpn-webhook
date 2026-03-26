@@ -32,6 +32,7 @@ STRINGS = {
             "✨ **به دنیای اینترنت بدون مرز نُوا خوش آمدید!** ✨\n\n"
             "🚀 **نُوا وی‌پی‌ان (Nova VPN)**\n"
             "سریع‌ترین و پایدارترین راهکار برای دسترسی به اینترنت آزاد، گیمینگ و ترید.\n\n"
+            "📢 **کانال رسمی ما:** @NovaVPN_Net\n\n"
             "💎 **برخی از ویژگی‌های سرویس‌های ما:**\n"
             "✅ بهره‌گیری از پروتکل‌های نسل جدید\n"
             "✅ آپ‌تایم ۹۹.۹٪ و پایداری تضمینی\n"
@@ -49,12 +50,12 @@ STRINGS = {
         'btn_lang': "🌐 Change Language",
         'dash_title': "👤 **پنل کاربری شما**\n\n🆔 آیدی شما: `{chat_id}`\n💰 اعتبار: `{balance}` تومان\n📅 تاریخ عضویت: `{date}`\n\n📦 **سرویس‌های فعال شما:**\n{services}",
         'no_services': "❌ شما هنوز اشتراک فعالی ندارید.",
-        'affiliate_title': "🤝 **سیستم کسب درآمد نُوا**\n\nبا دعوت دوستان خود، 10% سود از هر خرید آن‌ها دریافت کنید!\n\n🔗 لینک اختصاصی شما:\n`https://t.me/{bot_username}?start={chat_id}`\n\n💰 سود شما مستقیماً به کیف پول ربات واریز می‌شود.",
+        'affiliate_title': "🤝 **سیستم کسب درآمد نُوا**\n\nبا دعوت دوستان خود، 10% سود از هر خرید آن‌ها دریافت کنید!\n\n🔗 لینک اختصاصی شما:\n`https://t.me/NoovaVpn_Bot?start={chat_id}`\n\n💰 سود شما مستقیماً به کیف پول ربات واریز می‌شود.",
         'wallet_title': "💰 **شارژ کیف پول**\n\nجهت خرید یا شارژ حساب، مبلغ را واریز کرده و هش تراکنش (TXID) را ارسال کنید:\n\n🔹 **Tether (USDT-TRC20):**\n`T-ADDRESS-HERE`\n\n🔹 **TON:**\n`TON-ADDRESS-HERE`",
         'buy_title': "🛒 **انتخاب پلن اشتراک**\n\nلطفاً یکی از پلن‌های پرسرعت زیر را انتخاب کنید:",
         'invoice_msg': "🧾 **فاکتور خرید**\n\n📌 پلن: {plan}\n💵 مبلغ: {price} تومان\n\nلطفاً مبلغ را به ولت‌های بخش «کیف پول» واریز کرده و **فقط هش تراکنش (TXID)** را اینجا ارسال کنید:",
         'tx_received': "✅ تراکنش شما ثبت شد و در صف بررسی قرار گرفت. پس از تایید ادمین، سرویس برای شما ارسال می‌شود.",
-        'support_msg': "🎧 جهت ارتباط با واحد پشتیبانی، با آیدی زیر در تماس باشید:\n\n🆔 @Nova_Support_Admin",
+        'support_msg': "🎧 جهت ارتباط با واحد پشتیبانی و ارسال رسید، با آیدی زیر در تماس باشید:\n\n🆔 @NovaVPN_Sup",
         'lang_set': "زبان با موفقیت به فارسی تغییر کرد. 🇮🇷"
     },
     'en': {
@@ -62,6 +63,7 @@ STRINGS = {
             "✨ **Welcome to the Borderless World of Nova VPN!** ✨\n\n"
             "🚀 **Nova VPN**\n"
             "The fastest and most stable solution for open internet, gaming, and trading.\n\n"
+            "📢 **Official Channel:** @NovaVPN_Net\n\n"
             "💎 **Key Features:**\n"
             "✅ Next-gen protocols\n"
             "✅ 99.9% Guaranteed Uptime\n"
@@ -79,12 +81,12 @@ STRINGS = {
         'btn_lang': "🌐 تغییر زبان",
         'dash_title': "👤 **Your Dashboard**\n\n🆔 ID: `{chat_id}`\n💰 Balance: `{balance}` Tomans\n📅 Joined: `{date}`\n\n📦 **Your Active Services:**\n{services}",
         'no_services': "❌ You have no active subscriptions.",
-        'affiliate_title': "🤝 **Nova Affiliate Program**\n\nInvite your friends and earn 10% commission!\n\n🔗 Your Link:\n`https://t.me/{bot_username}?start={chat_id}`",
+        'affiliate_title': "🤝 **Nova Affiliate Program**\n\nInvite your friends and earn 10% commission!\n\n🔗 Your Link:\n`https://t.me/NoovaVpn_Bot?start={chat_id}`",
         'wallet_title': "💰 **Wallet Top-up**\n\nSend the amount and share the TXID:\n\n🔹 **Tether (USDT-TRC20):**\n`T-ADDRESS-HERE`\n\n🔹 **TON:**\n`TON-ADDRESS-HERE`",
         'buy_title': "🛒 **Select a Plan**\n\nPlease choose a plan:",
         'invoice_msg': "🧾 **Invoice**\n\n📌 Plan: {plan}\n💵 Price: {price} Tomans\n\nPlease pay and send the **TXID** here:",
         'tx_received': "✅ Your transaction has been submitted for review. Service will be sent after approval.",
-        'support_msg': "🎧 Contact support:\n\n🆔 @Nova_Support_Admin",
+        'support_msg': "🎧 Contact support or send receipts:\n\n🆔 @NovaVPN_Sup",
         'lang_set': "Language set to English. 🇬🇧"
     }
 }
@@ -140,7 +142,6 @@ def start_cmd(message):
         markup.row(telebot.types.InlineKeyboardButton("🇮🇷 فارسی", callback_data="setlang_fa"),
                    telebot.types.InlineKeyboardButton("🇬🇧 English", callback_data="setlang_en"))
         
-        # ارسال پیام خوش‌آمدگویی زیبا با فرمت Markdown
         bot.send_message(chat_id, STRINGS['fa']['welcome'], reply_markup=markup, parse_mode="Markdown")
     else:
         lang = user.get('language', 'fa')
