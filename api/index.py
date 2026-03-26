@@ -13,7 +13,7 @@ URL = os.environ.get('SUPABASE_URL', '').strip()
 KEY = os.environ.get('SUPABASE_KEY', '').strip()
 ADMIN_ID = os.environ.get('ADMIN_CHAT_ID', '').strip()
 
-bot = telebot.Bot(TOKEN, threaded=False) if TOKEN else None
+bot = telebot.TeleBot(TOKEN, threaded=False)
 
 # هدرهای مورد نیاز برای ارتباط با Supabase REST API
 DB_HEADERS = {
@@ -54,19 +54,19 @@ def build_main_menu(user):
     return markup
 
 # ==========================================
-# 📝 دیکشنری متون
+# 📝 دیکشنری متون (دوزبانه با آدرس‌های واقعی ولت)
 # ==========================================
 STRINGS = {
     'fa': {
         'intro': (
             "🚀 **به نُوا وی‌پی‌ان خوش آمدید | Nova VPN**\n\n"
             "ما مفتخریم که سریع‌ترین و امن‌ترین زیرساخت اینترنت آزاد را در اختیار شما قرار می‌دهیم.\n\n"
-            "📢 **کانال ما:** @NovaVPN_Net\n"
+            "📢 **کانال رسمی:** @NovaVPN_Net\n"
             "🎧 **پشتیبانی:** @NovaVPN_Sup\n\n"
             "👇 **لطفاً برای ادامه کار، زبان خود را انتخاب کنید:**"
         ),
         'welcome': "💎 خوش آمدید! هم‌اکنون می‌توانید از منوی زیر استفاده کنید.",
-        'main_menu': "🏠 **منوی اصلی**\n➖➖➖➖➖➖\n💰 موجودی: `{balance}` تومان\n👥 زیرمجموعه: `{ref_count}` نفر",
+        'main_menu': "🏠 **منوی اصلی مدیریت**\n➖➖➖➖➖➖\n💰 موجودی: `{balance}` تومان\n👥 زیرمجموعه: `{ref_count}` نفر",
         'btn_buy': "🛒 خرید اشتراک VIP",
         'btn_dash': "👤 داشبورد من",
         'btn_wallet': "💰 کیف پول / شارژ",
@@ -76,22 +76,23 @@ STRINGS = {
         'dash_title': "👤 **داشبورد نُوا**\n\n🆔 آیدی: `{chat_id}`\n💰 اعتبار: `{balance}` تومان\n\n📦 **سرویس‌های شما:**\n{services}",
         'wallet_title': (
             "💰 **شارژ حساب (کمترین کارمزد)**\n\n"
-            "لیست ارزهای پیشنهادی با کمترین هزینه انتقال:\n\n"
-            "🔹 **TRON (TRX):**\n`آدرس_شما_اینجا`\n\n"
-            "🔹 **TON (Toncoin):**\n`آدرس_شما_اینجا`\n\n"
-            "🔹 **Tether (USDT-TRC20):**\n`آدرس_شما_اینجا`\n\n"
-            "🔹 **Litecoin (LTC):**\n`آدرس_شما_اینجا`\n\n"
-            "🔹 **Ripple (XRP):**\n`آدرس_شما_اینجا`\n\n"
-            "⚠️ پس از واریز، فقط **TXID** را اینجا ارسال کنید."
+            "لطفاً مبلغ مورد نظر را به یکی از آدرس‌های زیر واریز کنید:\n\n"
+            "🔹 **TRON (TRX):**\n`TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3`\n\n"
+            "🔹 **TON (Toncoin):**\n`UQCpWdG73bwuwFAp2EDQLLkl6VhTGpVVJDre8X02qvJ5OJem`\n\n"
+            "🔹 **Tether (USDT-TRC20):**\n`TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3`\n\n"
+            "🔹 **Ripple (XRP):**\n`rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F`\n\n"
+            "🔹 **Litecoin (LTC):**\n`آدرس_LTC_شما` (بزودی)\n\n"
+            "⚠️ پس از واریز، فقط **هش تراکنش (TXID)** را در همینجا ارسال کنید."
         ),
-        'invoice_msg': "🧾 **فاکتور خرید**\n📌 پلن: {plan}\n💵 مبلغ: {price} تومان\n\nلطفاً پرداخت را انجام داده و TXID را بفرستید:",
-        'tx_received': "✅ تراکنش ثبت شد. پس از تایید ادمین، سرویس ارسال و پورسانت معرف واریز می‌گردد.",
+        'invoice_msg': "🧾 **فاکتور خرید**\n📌 پلن: {plan}\n💵 مبلغ: {price} تومان\n\nلطفاً پرداخت را انجام داده و TXID را اینجا ارسال کنید:",
+        'tx_received': "✅ تراکنش شما ثبت شد. پس از تایید توسط تیم مدیریت، سرویس به صورت خودکار برای شما ارسال و پورسانت معرف واریز می‌گردد.",
         'admin_panel': "🛠 **پنل مدیریت نُوا**",
-        'sales_closed': "❌ متأسفانه در حال حاضر فروش موقتاً غیرفعال است."
+        'sales_closed': "❌ متأسفانه در حال حاضر فروش موقتاً غیرفعال است.",
+        'support_msg': "🎧 جهت ارتباط با واحد پشتیبانی و ارسال رسید، با آیدی زیر در تماس باشید:\n\n🆔 @NovaVPN_Sup"
     },
     'en': {
-        'intro': "🚀 **Welcome to Nova VPN**\n\nPlease select your language:",
-        'welcome': "💎 Welcome! Use the menu below.",
+        'intro': "🚀 **Welcome to Nova VPN**\n\nPlease select your language to start:",
+        'welcome': "💎 Welcome! You can now use the menu below.",
         'main_menu': "🏠 **Main Menu**\n➖➖➖➖➖➖\n💰 Balance: `{balance}` T\n👥 Referrals: `{ref_count}`",
         'btn_buy': "🛒 Buy VIP Plan",
         'btn_dash': "👤 My Dashboard",
@@ -101,20 +102,24 @@ STRINGS = {
         'btn_lang': "🌐 تغییر زبان",
         'dash_title': "👤 **Nova Dashboard**\n\n🆔 ID: `{chat_id}`\n💰 Balance: `{balance}` T\n\n📦 **Your Services:**\n{services}",
         'wallet_title': (
-            "💰 **Wallet (Low Fees)**\n\n"
-            "Supported low-fee networks:\n\n"
-            "🔹 **TRON (TRX)**\n🔹 **TON (Toncoin)**\n🔹 **Tether (USDT-TRC20)**\n🔹 **Litecoin (LTC)**\n🔹 **Ripple (XRP)**\n\n"
-            "⚠️ Send the **TXID** after payment."
+            "💰 **Wallet Top-up (Low Fees)**\n\n"
+            "Please send the amount to one of the following addresses:\n\n"
+            "🔹 **TRON (TRX):**\n`TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3`\n\n"
+            "🔹 **TON (Toncoin):**\n`UQCpWdG73bwuwFAp2EDQLLkl6VhTGpVVJDre8X02qvJ5OJem`\n\n"
+            "🔹 **Tether (USDT-TRC20):**\n`TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3`\n\n"
+            "🔹 **Ripple (XRP):**\n`rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F`\n\n"
+            "⚠️ After payment, send the **TXID** here."
         ),
         'invoice_msg': "🧾 **Invoice**\n📌 Plan: {plan}\n💵 Price: {price} T\n\nPlease pay and send TXID:",
-        'tx_received': "✅ TX submitted. Processing...",
+        'tx_received': "✅ TX received. Service will be delivered after admin approval.",
         'admin_panel': "🛠 **Nova Admin Panel**",
-        'sales_closed': "❌ Sales are temporarily disabled."
+        'sales_closed': "❌ Sales are temporarily disabled.",
+        'support_msg': "🎧 Support: @NovaVPN_Sup"
     }
 }
 
 # ==========================================
-# 🤖 هندلرهای اصلی
+# 🤖 هندلرهای اصلی و سیستم رفرال
 # ==========================================
 
 @bot.message_handler(commands=['start'])
@@ -122,6 +127,7 @@ def start_cmd(message):
     chat_id = message.chat.id
     user = get_user(chat_id)
     
+    # استخراج آیدی معرف از لینک دعوت
     ref_id = None
     if len(message.text.split()) > 1:
         potential_ref = message.text.split()[1]
@@ -136,6 +142,13 @@ def start_cmd(message):
         }
         requests.post(f"{URL}/rest/v1/users", headers=DB_HEADERS, json=new_user)
         
+        # اگر معرف داشت، تعداد زیرمجموعه‌اش را یکی زیاد می‌کنیم
+        if ref_id:
+            ref_user = get_user(ref_id)
+            if ref_user:
+                requests.patch(f"{URL}/rest/v1/users?chat_id=eq.{ref_id}", headers=DB_HEADERS, 
+                               json={'total_referrals': ref_user.get('total_referrals', 0) + 1})
+
         markup = telebot.types.InlineKeyboardMarkup()
         markup.row(telebot.types.InlineKeyboardButton("🇮🇷 فارسی", callback_data="setlang_fa"),
                    telebot.types.InlineKeyboardButton("🇬🇧 English", callback_data="setlang_en"))
@@ -155,7 +168,7 @@ def callback_lang(call):
     bot.send_message(chat_id, STRINGS[new_lang]['welcome'], reply_markup=build_main_menu(user))
 
 # ==========================================
-# 🛒 سیستم خرید و پورسانت
+# 🛒 سیستم خرید، تایید ادمین و پورسانت
 # ==========================================
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('buy_'))
@@ -174,6 +187,7 @@ def handle_buy_plan(call):
         return
 
     text = STRINGS[lang]['invoice_msg'].format(plan=plan['title_fa'], price=f_price(plan['price_toman']))
+    # ثبت تراکنش موقت برای انتظار TXID
     requests.post(f"{URL}/rest/v1/transactions", headers=DB_HEADERS, json={
         'chat_id': chat_id, 'amount_toman': plan['price_toman'],
         'target_plan': plan_name, 'status': 'pending', 'txid_or_receipt': 'AWAITING'
@@ -187,15 +201,16 @@ def handle_txid(message):
     user = get_user(chat_id)
     if not user: return
     
+    # آپدیت تراکنش با TXID واقعی
     update_url = f"{URL}/rest/v1/transactions?chat_id=eq.{chat_id}&txid_or_receipt=eq.AWAITING"
     res = requests.patch(update_url, headers=DB_HEADERS, json={'txid_or_receipt': txid})
     
     if res.status_code < 300:
         bot.send_message(chat_id, STRINGS[user['language']]['tx_received'])
         markup = telebot.types.InlineKeyboardMarkup()
-        markup.row(telebot.types.InlineKeyboardButton("✅ تایید", callback_data=f"approve_{txid}"),
-                   telebot.types.InlineKeyboardButton("❌ رد", callback_data=f"reject_{txid}"))
-        bot.send_message(ADMIN_ID, f"💰 تراکنش جدید!\nID: `{chat_id}`\nTXID: `{txid}`", reply_markup=markup, parse_mode="Markdown")
+        markup.row(telebot.types.InlineKeyboardButton("✅ تایید و ارسال", callback_data=f"approve_{txid}"),
+                   telebot.types.InlineKeyboardButton("❌ رد تراکنش", callback_data=f"reject_{txid}"))
+        bot.send_message(ADMIN_ID, f"💰 **تراکنش جدید!**\nآیدی: `{chat_id}`\nهش: `{txid}`", reply_markup=markup, parse_mode="Markdown")
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith(('approve_', 'reject_')))
 def admin_action(call):
@@ -205,27 +220,33 @@ def admin_action(call):
         if not tx_list: return
         tx = tx_list[0]
         
+        # پیدا کردن کانفیگ آزاد
         config = requests.get(f"{URL}/rest/v1/configs?plan_name=eq.{tx['target_plan']}&status=eq.available&limit=1", headers=DB_HEADERS).json()
         
         if config:
             conf = config[0]
+            # ۱. فروختن کانفیگ
             requests.patch(f"{URL}/rest/v1/configs?id=eq.{conf['id']}", headers=DB_HEADERS, json={'status': 'sold', 'owner_id': tx['chat_id']})
+            # ۲. تایید تراکنش
             requests.patch(f"{URL}/rest/v1/transactions?id=eq.{tx['id']}", headers=DB_HEADERS, json={'status': 'approved'})
             
-            user = get_user(tx['chat_id'])
-            if user['referrer_id']:
+            # ۳. واریز پورسانت ۱۰ درصدی به معرف
+            buyer = get_user(tx['chat_id'])
+            if buyer and buyer['referrer_id']:
                 commission = int(tx['amount_toman'] * 0.1)
-                ref_user = get_user(user['referrer_id'])
-                new_balance = ref_user['wallet_balance'] + commission
-                requests.patch(f"{URL}/rest/v1/users?chat_id=eq.{user['referrer_id']}", headers=DB_HEADERS, json={'wallet_balance': new_balance})
-                bot.send_message(user['referrer_id'], f"🎊 پورسانت واریز شد!\nمبلغ `{f_price(commission)}` تومان بابت خرید زیرمجموعه به کیف پول شما اضافه شد.")
+                ref_user = get_user(buyer['referrer_id'])
+                if ref_user:
+                    new_bal = ref_user['wallet_balance'] + commission
+                    requests.patch(f"{URL}/rest/v1/users?chat_id=eq.{buyer['referrer_id']}", headers=DB_HEADERS, json={'wallet_balance': new_bal})
+                    bot.send_message(buyer['referrer_id'], f"🎊 **هدیه نُوا!**\nمبلغ `{f_price(commission)}` تومان بابت خرید زیرمجموعه به کیف پول شما واریز شد.")
 
-            bot.send_message(tx['chat_id'], f"🎉 تایید شد!\nکانفیگ:\n`{conf['v2ray_uri']}`\n[پنل حجم]({conf['web_panel_url']})", parse_mode="Markdown")
-            bot.edit_message_text(f"✅ تایید شد: {txid}", call.message.chat.id, call.message.message_id)
+            # ۴. ارسال سرویس برای مشتری
+            bot.send_message(tx['chat_id'], f"🎉 **سرویس شما فعال شد!**\n\n🚀 کانفیگ اختصاصی:\n`{conf['v2ray_uri']}`\n\n📊 [پنل مدیریت حجم]({conf['web_panel_url']})", parse_mode="Markdown")
+            bot.edit_message_text(f"✅ تایید شد و ارسال گشت: {txid}", call.message.chat.id, call.message.message_id)
         else:
-            bot.answer_callback_query(call.id, "انبار خالی است!", show_alert=True)
+            bot.answer_callback_query(call.id, "❌ انبار خالی است! ابتدا کانفیگ اضافه کنید.", show_alert=True)
     else:
-        bot.edit_message_text(f"❌ رد شد: {txid}", call.message.chat.id, call.message.message_id)
+        bot.edit_message_text(f"❌ تراکنش رد شد: {txid}", call.message.chat.id, call.message.message_id)
 
 # ==========================================
 # 🛠 پنل مدیریت (Admin Panel)
@@ -235,8 +256,8 @@ def admin_action(call):
 def admin_menu(message):
     if str(message.chat.id) != ADMIN_ID: return
     markup = telebot.types.InlineKeyboardMarkup()
-    markup.row(telebot.types.InlineKeyboardButton("📦 مدیریت پلن‌ها", callback_data="admin_manage_plans"))
-    markup.row(telebot.types.InlineKeyboardButton("📊 آمار کلی", callback_data="admin_stats"))
+    markup.row(telebot.types.InlineKeyboardButton("📦 مدیریت فروش پلن‌ها", callback_data="admin_manage_plans"))
+    markup.row(telebot.types.InlineKeyboardButton("📊 آمار کاربران", callback_data="admin_stats"))
     bot.send_message(message.chat.id, STRINGS['fa']['admin_panel'], reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('admin_'))
@@ -245,18 +266,19 @@ def admin_callbacks(call):
         plans = requests.get(f"{URL}/rest/v1/plans?select=*", headers=DB_HEADERS).json()
         markup = telebot.types.InlineKeyboardMarkup()
         for p in plans:
-            status = "✅" if p['is_active'] else "❌"
-            markup.row(telebot.types.InlineKeyboardButton(f"{status} {p['title_fa']} ({f_price(p['price_toman'])})", callback_data=f"toggle_plan_{p['internal_name']}"))
-        bot.edit_message_text("وضعیت فروش را تغییر دهید:", call.message.chat.id, call.message.message_id, reply_markup=markup)
+            status = "✅ فعال" if p['is_active'] else "❌ غیرفعال"
+            markup.row(telebot.types.InlineKeyboardButton(f"{status} | {p['title_fa']} ({f_price(p['price_toman'])})", callback_data=f"toggle_plan_{p['internal_name']}"))
+        bot.edit_message_text("وضعیت فروش هر پلن را مدیریت کنید:", call.message.chat.id, call.message.message_id, reply_markup=markup)
     
     elif call.data.startswith("toggle_plan_"):
         p_name = call.data.replace("toggle_plan_", "")
         current = requests.get(f"{URL}/rest/v1/plans?internal_name=eq.{p_name}", headers=DB_HEADERS).json()[0]
         requests.patch(f"{URL}/rest/v1/plans?internal_name=eq.{p_name}", headers=DB_HEADERS, json={'is_active': not current['is_active']})
+        # بازگشت به منوی قبل برای آپدیت لحظه‌ای دکمه‌ها
         admin_callbacks(telebot.types.CallbackQuery(id=call.id, from_user=call.from_user, message=call.message, data="admin_manage_plans", chat_instance=call.chat_instance, json=None))
 
 # ==========================================
-# 🔘 هندلرهای دکمه‌های منو
+# 🔘 لاجیک منوی اصلی
 # ==========================================
 
 @bot.message_handler(func=lambda m: True)
@@ -278,7 +300,7 @@ def menu_logic(message):
         
     elif message.text == s['btn_dash']:
         services = requests.get(f"{URL}/rest/v1/configs?owner_id=eq.{chat_id}&select=*", headers=DB_HEADERS).json()
-        srv_text = "\n".join([f"🔹 {s['plan_name']} | [پنل]({s['web_panel_url']})" for s in services]) if services else "سرویسی ندارید."
+        srv_text = "\n".join([f"🔹 {s['plan_name']} | [پنل کاربری]({s['web_panel_url']})" for s in services]) if services else "شما اشتراک فعالی ندارید."
         bot.send_message(chat_id, s['dash_title'].format(chat_id=chat_id, balance=f_price(user['wallet_balance']), services=srv_text), parse_mode="Markdown")
         
     elif message.text == s['btn_wallet']:
@@ -292,11 +314,11 @@ def menu_logic(message):
         bot.send_message(chat_id, s['support_msg'])
 
 # ==========================================
-# 🌐 Flask Routes
+# 🌐 مسیرهای Flask (ورسل)
 # ==========================================
 
 @app.route('/', methods=['GET'])
-def index(): return "✅ Nova VPN is online!"
+def index(): return "✅ Nova VPN is online and secured!"
 
 @app.route('/setup', methods=['GET'])
 def setup():
