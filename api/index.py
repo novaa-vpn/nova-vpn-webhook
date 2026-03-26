@@ -13,6 +13,8 @@ URL = os.environ.get('SUPABASE_URL', '').strip()
 KEY = os.environ.get('SUPABASE_KEY', '').strip()
 ADMIN_ID = os.environ.get('ADMIN_CHAT_ID', '').strip()
 
+# استفاده از Session برای افزایش سرعت درخواست‌ها به دیتابیس
+db_session = requests.Session()
 bot = telebot.TeleBot(TOKEN, threaded=False)
 
 # هدرهای مورد نیاز برای ارتباط با Supabase REST API
@@ -24,7 +26,7 @@ DB_HEADERS = {
 }
 
 # ==========================================
-# 🛠 توابع کمکی
+# 🛠 توابع کمکی بهینه‌سازی شده
 # ==========================================
 
 def f_price(amount):
@@ -35,12 +37,19 @@ def f_price(amount):
         return str(amount)
 
 def get_user(chat_id):
-    res = requests.get(f"{URL}/rest/v1/users?chat_id=eq.{chat_id}&select=*", headers=DB_HEADERS)
-    return res.json()[0] if res.json() else None
+    """دریافت اطلاعات کاربر با استفاده از سشن برای سرعت بیشتر"""
+    try:
+        res = db_session.get(f"{URL}/rest/v1/users?chat_id=eq.{chat_id}&select=*", headers=DB_HEADERS, timeout=5)
+        return res.json()[0] if res.json() else None
+    except:
+        return None
 
 def get_available_plans():
-    res = requests.get(f"{URL}/rest/v1/plans?is_active=eq.true&select=*", headers=DB_HEADERS)
-    return res.json()
+    try:
+        res = db_session.get(f"{URL}/rest/v1/plans?is_active=eq.true&select=*", headers=DB_HEADERS, timeout=5)
+        return res.json()
+    except:
+        return []
 
 def build_main_menu(user):
     lang = user.get('language', 'fa')
@@ -54,7 +63,7 @@ def build_main_menu(user):
     return markup
 
 # ==========================================
-# 📝 دیکشنری متون (دوزبانه با آدرس‌های واقعی ولت)
+# 📝 دیکشنری متون
 # ==========================================
 STRINGS = {
     'fa': {
@@ -81,7 +90,6 @@ STRINGS = {
             "🔹 **TON (Toncoin):**\n`UQCpWdG73bwuwFAp2EDQLLkl6VhTGpVVJDre8X02qvJ5OJem`\n\n"
             "🔹 **Tether (USDT-TRC20):**\n`TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3`\n\n"
             "🔹 **Ripple (XRP):**\n`rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F`\n\n"
-            "🔹 **Litecoin (LTC):**\n`آدرس_LTC_شما` (بزودی)\n\n"
             "⚠️ پس از واریز، فقط **هش تراکنش (TXID)** را در همینجا ارسال کنید."
         ),
         'invoice_msg': "🧾 **فاکتور خرید**\n📌 پلن: {plan}\n💵 مبلغ: {price} تومان\n\nلطفاً پرداخت را انجام داده و TXID را اینجا ارسال کنید:",
@@ -103,15 +111,13 @@ STRINGS = {
         'dash_title': "👤 **Nova Dashboard**\n\n🆔 ID: `{chat_id}`\n💰 Balance: `{balance}` T\n\n📦 **Your Services:**\n{services}",
         'wallet_title': (
             "💰 **Wallet Top-up (Low Fees)**\n\n"
-            "Please send the amount to one of the following addresses:\n\n"
-            "🔹 **TRON (TRX):**\n`TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3`\n\n"
-            "🔹 **TON (Toncoin):**\n`UQCpWdG73bwuwFAp2EDQLLkl6VhTGpVVJDre8X02qvJ5OJem`\n\n"
-            "🔹 **Tether (USDT-TRC20):**\n`TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3`\n\n"
-            "🔹 **Ripple (XRP):**\n`rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F`\n\n"
-            "⚠️ After payment, send the **TXID** here."
+            "🔹 **TRX/USDT:** `TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3`\n"
+            "🔹 **TON:** `UQCpWdG73bwuwFAp2EDQLLkl6VhTGpVVJDre8X02qvJ5OJem`\n"
+            "🔹 **XRP:** `rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F`\n\n"
+            "⚠️ Send **TXID** after payment."
         ),
         'invoice_msg': "🧾 **Invoice**\n📌 Plan: {plan}\n💵 Price: {price} T\n\nPlease pay and send TXID:",
-        'tx_received': "✅ TX received. Service will be delivered after admin approval.",
+        'tx_received': "✅ TX received. Pending admin approval.",
         'admin_panel': "🛠 **Nova Admin Panel**",
         'sales_closed': "❌ Sales are temporarily disabled.",
         'support_msg': "🎧 Support: @NovaVPN_Sup"
@@ -119,7 +125,7 @@ STRINGS = {
 }
 
 # ==========================================
-# 🤖 هندلرهای اصلی و سیستم رفرال
+# 🤖 هندلرهای بهینه‌سازی شده
 # ==========================================
 
 @bot.message_handler(commands=['start'])
@@ -127,26 +133,24 @@ def start_cmd(message):
     chat_id = message.chat.id
     user = get_user(chat_id)
     
-    # استخراج آیدی معرف از لینک دعوت
-    ref_id = None
-    if len(message.text.split()) > 1:
-        potential_ref = message.text.split()[1]
-        if potential_ref.isdigit() and int(potential_ref) != chat_id:
-            ref_id = int(potential_ref)
-
     if not user:
+        ref_id = None
+        if len(message.text.split()) > 1:
+            potential_ref = message.text.split()[1]
+            if potential_ref.isdigit() and int(potential_ref) != chat_id:
+                ref_id = int(potential_ref)
+
         role = 'admin' if str(chat_id) == ADMIN_ID else 'user'
         new_user = {
             'chat_id': chat_id, 'username': message.from_user.username,
             'role': role, 'language': 'fa', 'referrer_id': ref_id
         }
-        requests.post(f"{URL}/rest/v1/users", headers=DB_HEADERS, json=new_user)
+        db_session.post(f"{URL}/rest/v1/users", headers=DB_HEADERS, json=new_user)
         
-        # اگر معرف داشت، تعداد زیرمجموعه‌اش را یکی زیاد می‌کنیم
         if ref_id:
             ref_user = get_user(ref_id)
             if ref_user:
-                requests.patch(f"{URL}/rest/v1/users?chat_id=eq.{ref_id}", headers=DB_HEADERS, 
+                db_session.patch(f"{URL}/rest/v1/users?chat_id=eq.{ref_id}", headers=DB_HEADERS, 
                                json={'total_referrals': ref_user.get('total_referrals', 0) + 1})
 
         markup = telebot.types.InlineKeyboardMarkup()
@@ -162,23 +166,21 @@ def start_cmd(message):
 def callback_lang(call):
     chat_id = call.message.chat.id
     new_lang = call.data.split('_')[1]
-    requests.patch(f"{URL}/rest/v1/users?chat_id=eq.{chat_id}", headers=DB_HEADERS, json={'language': new_lang})
+    db_session.patch(f"{URL}/rest/v1/users?chat_id=eq.{chat_id}", headers=DB_HEADERS, json={'language': new_lang})
     bot.delete_message(chat_id, call.message.message_id)
     user = get_user(chat_id)
-    bot.send_message(chat_id, STRINGS[new_lang]['welcome'], reply_markup=build_main_menu(user))
-
-# ==========================================
-# 🛒 سیستم خرید، تایید ادمین و پورسانت
-# ==========================================
+    if user:
+        bot.send_message(chat_id, STRINGS[new_lang]['welcome'], reply_markup=build_main_menu(user))
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('buy_'))
 def handle_buy_plan(call):
     chat_id = call.message.chat.id
     plan_name = call.data.split('_', 1)[1]
     user = get_user(chat_id)
-    lang = user['language']
+    if not user: return
     
-    res = requests.get(f"{URL}/rest/v1/plans?internal_name=eq.{plan_name}", headers=DB_HEADERS).json()
+    lang = user['language']
+    res = db_session.get(f"{URL}/rest/v1/plans?internal_name=eq.{plan_name}", headers=DB_HEADERS).json()
     if not res: return
     plan = res[0]
     
@@ -187,8 +189,7 @@ def handle_buy_plan(call):
         return
 
     text = STRINGS[lang]['invoice_msg'].format(plan=plan['title_fa'], price=f_price(plan['price_toman']))
-    # ثبت تراکنش موقت برای انتظار TXID
-    requests.post(f"{URL}/rest/v1/transactions", headers=DB_HEADERS, json={
+    db_session.post(f"{URL}/rest/v1/transactions", headers=DB_HEADERS, json={
         'chat_id': chat_id, 'amount_toman': plan['price_toman'],
         'target_plan': plan_name, 'status': 'pending', 'txid_or_receipt': 'AWAITING'
     })
@@ -201,9 +202,8 @@ def handle_txid(message):
     user = get_user(chat_id)
     if not user: return
     
-    # آپدیت تراکنش با TXID واقعی
     update_url = f"{URL}/rest/v1/transactions?chat_id=eq.{chat_id}&txid_or_receipt=eq.AWAITING"
-    res = requests.patch(update_url, headers=DB_HEADERS, json={'txid_or_receipt': txid})
+    res = db_session.patch(update_url, headers=DB_HEADERS, json={'txid_or_receipt': txid})
     
     if res.status_code < 300:
         bot.send_message(chat_id, STRINGS[user['language']]['tx_received'])
@@ -216,70 +216,55 @@ def handle_txid(message):
 def admin_action(call):
     action, txid = call.data.split('_')
     if action == 'approve':
-        tx_list = requests.get(f"{URL}/rest/v1/transactions?txid_or_receipt=eq.{txid}", headers=DB_HEADERS).json()
+        tx_list = db_session.get(f"{URL}/rest/v1/transactions?txid_or_receipt=eq.{txid}", headers=DB_HEADERS).json()
         if not tx_list: return
         tx = tx_list[0]
         
-        # پیدا کردن کانفیگ آزاد
-        config = requests.get(f"{URL}/rest/v1/configs?plan_name=eq.{tx['target_plan']}&status=eq.available&limit=1", headers=DB_HEADERS).json()
+        config = db_session.get(f"{URL}/rest/v1/configs?plan_name=eq.{tx['target_plan']}&status=eq.available&limit=1", headers=DB_HEADERS).json()
         
         if config:
             conf = config[0]
-            # ۱. فروختن کانفیگ
-            requests.patch(f"{URL}/rest/v1/configs?id=eq.{conf['id']}", headers=DB_HEADERS, json={'status': 'sold', 'owner_id': tx['chat_id']})
-            # ۲. تایید تراکنش
-            requests.patch(f"{URL}/rest/v1/transactions?id=eq.{tx['id']}", headers=DB_HEADERS, json={'status': 'approved'})
+            db_session.patch(f"{URL}/rest/v1/configs?id=eq.{conf['id']}", headers=DB_HEADERS, json={'status': 'sold', 'owner_id': tx['chat_id']})
+            db_session.patch(f"{URL}/rest/v1/transactions?id=eq.{tx['id']}", headers=DB_HEADERS, json={'status': 'approved'})
             
-            # ۳. واریز پورسانت ۱۰ درصدی به معرف
             buyer = get_user(tx['chat_id'])
             if buyer and buyer['referrer_id']:
                 commission = int(tx['amount_toman'] * 0.1)
                 ref_user = get_user(buyer['referrer_id'])
                 if ref_user:
                     new_bal = ref_user['wallet_balance'] + commission
-                    requests.patch(f"{URL}/rest/v1/users?chat_id=eq.{buyer['referrer_id']}", headers=DB_HEADERS, json={'wallet_balance': new_bal})
-                    bot.send_message(buyer['referrer_id'], f"🎊 **هدیه نُوا!**\nمبلغ `{f_price(commission)}` تومان بابت خرید زیرمجموعه به کیف پول شما واریز شد.")
+                    db_session.patch(f"{URL}/rest/v1/users?chat_id=eq.{buyer['referrer_id']}", headers=DB_HEADERS, json={'wallet_balance': new_bal})
+                    bot.send_message(buyer['referrer_id'], f"🎊 **هدیه نُوا!**\nمبلغ `{f_price(commission)}` تومان پورسانت واریز شد.")
 
-            # ۴. ارسال سرویس برای مشتری
-            bot.send_message(tx['chat_id'], f"🎉 **سرویس شما فعال شد!**\n\n🚀 کانفیگ اختصاصی:\n`{conf['v2ray_uri']}`\n\n📊 [پنل مدیریت حجم]({conf['web_panel_url']})", parse_mode="Markdown")
-            bot.edit_message_text(f"✅ تایید شد و ارسال گشت: {txid}", call.message.chat.id, call.message.message_id)
+            bot.send_message(tx['chat_id'], f"🎉 **سرویس فعال شد!**\n\n🚀 کانفیگ:\n`{conf['v2ray_uri']}`\n\n📊 [پنل مدیریت حجم]({conf['web_panel_url']})", parse_mode="Markdown")
+            bot.edit_message_text(f"✅ تایید شد: {txid}", call.message.chat.id, call.message.message_id)
         else:
-            bot.answer_callback_query(call.id, "❌ انبار خالی است! ابتدا کانفیگ اضافه کنید.", show_alert=True)
+            bot.answer_callback_query(call.id, "❌ انبار خالی است!", show_alert=True)
     else:
         bot.edit_message_text(f"❌ تراکنش رد شد: {txid}", call.message.chat.id, call.message.message_id)
-
-# ==========================================
-# 🛠 پنل مدیریت (Admin Panel)
-# ==========================================
 
 @bot.message_handler(func=lambda m: m.text == "🛠 Admin Panel")
 def admin_menu(message):
     if str(message.chat.id) != ADMIN_ID: return
     markup = telebot.types.InlineKeyboardMarkup()
     markup.row(telebot.types.InlineKeyboardButton("📦 مدیریت فروش پلن‌ها", callback_data="admin_manage_plans"))
-    markup.row(telebot.types.InlineKeyboardButton("📊 آمار کاربران", callback_data="admin_stats"))
     bot.send_message(message.chat.id, STRINGS['fa']['admin_panel'], reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('admin_'))
 def admin_callbacks(call):
     if call.data == "admin_manage_plans":
-        plans = requests.get(f"{URL}/rest/v1/plans?select=*", headers=DB_HEADERS).json()
+        plans = db_session.get(f"{URL}/rest/v1/plans?select=*", headers=DB_HEADERS).json()
         markup = telebot.types.InlineKeyboardMarkup()
         for p in plans:
-            status = "✅ فعال" if p['is_active'] else "❌ غیرفعال"
+            status = "✅" if p['is_active'] else "❌"
             markup.row(telebot.types.InlineKeyboardButton(f"{status} | {p['title_fa']} ({f_price(p['price_toman'])})", callback_data=f"toggle_plan_{p['internal_name']}"))
-        bot.edit_message_text("وضعیت فروش هر پلن را مدیریت کنید:", call.message.chat.id, call.message.message_id, reply_markup=markup)
+        bot.edit_message_text("مدیریت وضعیت فروش:", call.message.chat.id, call.message.message_id, reply_markup=markup)
     
     elif call.data.startswith("toggle_plan_"):
         p_name = call.data.replace("toggle_plan_", "")
-        current = requests.get(f"{URL}/rest/v1/plans?internal_name=eq.{p_name}", headers=DB_HEADERS).json()[0]
-        requests.patch(f"{URL}/rest/v1/plans?internal_name=eq.{p_name}", headers=DB_HEADERS, json={'is_active': not current['is_active']})
-        # بازگشت به منوی قبل برای آپدیت لحظه‌ای دکمه‌ها
+        current = db_session.get(f"{URL}/rest/v1/plans?internal_name=eq.{p_name}", headers=DB_HEADERS).json()[0]
+        db_session.patch(f"{URL}/rest/v1/plans?internal_name=eq.{p_name}", headers=DB_HEADERS, json={'is_active': not current['is_active']})
         admin_callbacks(telebot.types.CallbackQuery(id=call.id, from_user=call.from_user, message=call.message, data="admin_manage_plans", chat_instance=call.chat_instance, json=None))
-
-# ==========================================
-# 🔘 لاجیک منوی اصلی
-# ==========================================
 
 @bot.message_handler(func=lambda m: True)
 def menu_logic(message):
@@ -299,8 +284,8 @@ def menu_logic(message):
         bot.send_message(chat_id, s['buy_title'], reply_markup=markup, parse_mode="Markdown")
         
     elif message.text == s['btn_dash']:
-        services = requests.get(f"{URL}/rest/v1/configs?owner_id=eq.{chat_id}&select=*", headers=DB_HEADERS).json()
-        srv_text = "\n".join([f"🔹 {s['plan_name']} | [پنل کاربری]({s['web_panel_url']})" for s in services]) if services else "شما اشتراک فعالی ندارید."
+        services = db_session.get(f"{URL}/rest/v1/configs?owner_id=eq.{chat_id}&select=*", headers=DB_HEADERS).json()
+        srv_text = "\n".join([f"🔹 {s['plan_name']} | [پنل]({s['web_panel_url']})" for s in services]) if services else "سرویسی ندارید."
         bot.send_message(chat_id, s['dash_title'].format(chat_id=chat_id, balance=f_price(user['wallet_balance']), services=srv_text), parse_mode="Markdown")
         
     elif message.text == s['btn_wallet']:
@@ -313,12 +298,8 @@ def menu_logic(message):
     elif message.text == s['btn_support']:
         bot.send_message(chat_id, s['support_msg'])
 
-# ==========================================
-# 🌐 مسیرهای Flask (ورسل)
-# ==========================================
-
 @app.route('/', methods=['GET'])
-def index(): return "✅ Nova VPN is online and secured!"
+def index(): return "✅ Nova VPN is online!"
 
 @app.route('/setup', methods=['GET'])
 def setup():
