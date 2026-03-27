@@ -2,10 +2,13 @@
 <html lang="fa">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+<!-- فونت حرفه‌ای -->
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;500;700&display=swap" rel="stylesheet">
 
 <style>
 
@@ -13,8 +16,8 @@
 
 body{
   margin:0;
-  font-family:sans-serif;
-  background:linear-gradient(180deg,#020617,#0f172a);
+  font-family:'Vazirmatn', sans-serif;
+  background:linear-gradient(180deg,#020617,#020617,#0f172a);
   color:white;
   direction:rtl;
 }
@@ -25,15 +28,15 @@ body{
   padding:15px;
 }
 
-/* header */
+/* HEADER */
 .header{
   text-align:center;
-  margin-bottom:10px;
+  margin-bottom:15px;
 }
 
-.header h2{
-  margin:0;
-  font-size:20px;
+.logo{
+  font-size:22px;
+  font-weight:700;
 }
 
 .secure{
@@ -41,16 +44,26 @@ body{
   color:#94a3b8;
 }
 
-/* card */
+/* BANNER */
+.banner{
+  background:linear-gradient(90deg,#22c55e,#16a34a);
+  padding:12px;
+  border-radius:12px;
+  text-align:center;
+  font-size:13px;
+  margin-bottom:10px;
+}
+
+/* CARD */
 .card{
   background:#0f172a;
   border:1px solid #1e293b;
   padding:15px;
-  border-radius:14px;
+  border-radius:16px;
   margin-top:12px;
 }
 
-/* buttons */
+/* BUTTON */
 button{
   width:100%;
   padding:14px;
@@ -58,8 +71,13 @@ button{
   border-radius:12px;
   margin-top:8px;
   font-size:14px;
-  font-weight:bold;
+  font-weight:600;
   cursor:pointer;
+  transition:0.2s;
+}
+
+button:active{
+  transform:scale(0.97);
 }
 
 .primary{
@@ -70,44 +88,37 @@ button{
   background:#1e293b;
 }
 
-/* plan grid */
+/* PLAN */
 .plans{
   display:flex;
   flex-direction:column;
   gap:8px;
 }
 
-/* crypto box */
+/* CRYPTO */
 .crypto-box{
   margin-top:12px;
   padding-top:10px;
   border-top:1px solid #334155;
   font-size:13px;
-  line-height:1.6;
-  word-break:break-word;
 }
 
-/* wallet */
 .wallet{
   background:#020617;
   padding:8px;
   border-radius:8px;
   font-size:12px;
   margin-top:5px;
-  overflow-wrap:anywhere;
 }
 
-/* copy */
 .copy-btn{
-  font-size:12px;
   color:#22c55e;
+  font-size:12px;
   margin-top:5px;
-  cursor:pointer;
 }
 
-/* qr */
 .qr{
-  margin-top:10px;
+  margin-top:8px;
   background:white;
   padding:6px;
   border-radius:10px;
@@ -115,7 +126,7 @@ button{
   justify-content:center;
 }
 
-/* input */
+/* INPUT */
 input,textarea{
   width:100%;
   padding:12px;
@@ -126,18 +137,38 @@ input,textarea{
   margin-top:8px;
 }
 
-/* footer */
+/* FOOTER */
 .footer{
-  margin-top:15px;
+  margin-top:10px;
   font-size:12px;
   color:#94a3b8;
-  line-height:1.6;
   text-align:center;
 }
 
-a{
-  color:#22c55e;
+/* SOCIAL BUTTONS */
+.socials{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+.socials a{
+  flex:1;
+  text-align:center;
+  padding:10px;
+  border-radius:10px;
   text-decoration:none;
+  font-size:13px;
+}
+
+.support{
+  background:#1e293b;
+  color:white;
+}
+
+.channel{
+  background:#22c55e;
+  color:black;
 }
 
 </style>
@@ -149,45 +180,50 @@ a{
 <div class="container">
 
 <div class="header">
-<h2>🔐 پنل امن VPN</h2>
-<div class="secure">اتصال رمزگذاری شده و ایمن</div>
+<div class="logo">🚀 Nova VPN</div>
+<div class="secure">اتصال امن | سرعت بالا | بدون قطعی</div>
 </div>
 
-<!-- plans -->
+<div class="banner">
+🔥 سرویس استارلینک واقعی | بدون قطعی | تست شده
+</div>
+
+<!-- PLANS -->
 <div class="card">
-<h3>💎 انتخاب پلن</h3>
+<h3>💎 انتخاب پلن VIP</h3>
 <div class="plans" id="plans"></div>
 </div>
 
-<!-- crypto -->
+<!-- CRYPTO -->
 <div class="card">
-<h3>💰 پرداخت با ارز دیجیتال</h3>
+<h3>💰 پرداخت سریع با ارز دیجیتال</h3>
 
 <div id="selectedPlan">یک پلن انتخاب کنید</div>
 <div id="crypto"></div>
 
 <div class="footer">
-⚠️ مبلغ دقیق را ارسال کنید — کارمزد بر عهده شماست  
+⚠️ مبلغ دقیق ارسال شود — کارمزد با شماست
 </div>
 </div>
 
-<!-- payment -->
+<!-- PAYMENT -->
 <div class="card">
-<h3>📤 ارسال پرداخت</h3>
+<h3>📤 ثبت پرداخت</h3>
 
 <input id="tx" placeholder="TX HASH">
 <textarea id="desc" placeholder="توضیحات (اختیاری)"></textarea>
 
-<button class="primary" onclick="send()">ارسال اطلاعات پرداخت</button>
+<button class="primary" onclick="send()">ثبت پرداخت</button>
 </div>
 
-<!-- support -->
+<!-- SOCIAL -->
 <div class="card">
-<h3>📞 پشتیبانی</h3>
 
-<div class="footer">
-<a href="https://t.me/NovaVPN_Sup">پشتیبانی</a><br>
-<a href="https://t.me/NovaVPN_Net">کانال رسمی</a>
+<h3>📢 ارتباط با ما</h3>
+
+<div class="socials">
+<a class="support" href="https://t.me/NovaVPN_Sup">پشتیبانی</a>
+<a class="channel" href="https://t.me/NovaVPN_Net">کانال</a>
 </div>
 
 </div>
@@ -213,7 +249,6 @@ const plans=[
 
 let prices={}
 
-// load prices
 async function loadPrices(){
 let r=await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether,tron,the-open-network,ripple&vs_currencies=usd")
 let d=await r.json()
@@ -226,7 +261,6 @@ XRP:d.ripple.usd
 }
 }
 
-// render plans
 function renderPlans(){
 let html=""
 plans.forEach(p=>{
@@ -235,13 +269,11 @@ html+=`<button class="secondary" onclick="selectPlan(${p.price},'${p.name}')">${
 document.getElementById("plans").innerHTML=html
 }
 
-// copy
 function copy(text){
 navigator.clipboard.writeText(text)
 alert("کپی شد")
 }
 
-// select plan
 function selectPlan(price,name){
 
 document.getElementById("selectedPlan").innerHTML=
@@ -271,18 +303,15 @@ html+=`
 
 document.getElementById("crypto").innerHTML=html
 
-// generate QR
 for(let c in wallets){
 QRCode.toCanvas(document.getElementById("qr_"+c), wallets[c])
 }
 
 }
 
-// send
 async function send(){
 
 let tx=document.getElementById("tx").value
-let desc=document.getElementById("desc").value
 
 if(!tx){
 alert("TX HASH را وارد کنید")
@@ -292,14 +321,10 @@ return
 await fetch("/api/submitReceipt",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-chat_id:1,
-image:tx,
-desc:desc
-})
+body:JSON.stringify({chat_id:1,image:tx})
 })
 
-alert("ارسال شد")
+alert("ثبت شد")
 }
 
 renderPlans()
