@@ -1,54 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="fa">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 <style>
-body{
-  font-family: sans-serif;
-  background: linear-gradient(180deg,#0f172a,#020617);
-  color:white;
-  margin:0;
-  padding:20px;
-}
 
-body.rtl{direction:rtl;}
-body.ltr{direction:ltr;}
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:linear-gradient(180deg,#020617,#0f172a);
+  color:white;
+  direction:rtl;
+}
 
 .container{
   max-width:420px;
   margin:auto;
+  padding:15px;
 }
 
+/* header */
 .header{
   text-align:center;
+  margin-bottom:10px;
+}
+
+.header h2{
+  margin:0;
+  font-size:20px;
 }
 
 .secure{
-  font-size:13px;
+  font-size:12px;
   color:#94a3b8;
 }
 
+/* card */
 .card{
   background:#0f172a;
   border:1px solid #1e293b;
-  padding:18px;
-  border-radius:16px;
-  margin-top:15px;
+  padding:15px;
+  border-radius:14px;
+  margin-top:12px;
 }
 
+/* buttons */
 button{
   width:100%;
-  padding:13px;
+  padding:14px;
   border:none;
   border-radius:12px;
-  margin-top:10px;
-  cursor:pointer;
+  margin-top:8px;
   font-size:14px;
   font-weight:bold;
+  cursor:pointer;
 }
 
 .primary{
@@ -59,33 +70,76 @@ button{
   background:#1e293b;
 }
 
-.langs{
+/* plan grid */
+.plans{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* crypto box */
+.crypto-box{
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px solid #334155;
+  font-size:13px;
+  line-height:1.6;
+  word-break:break-word;
+}
+
+/* wallet */
+.wallet{
+  background:#020617;
+  padding:8px;
+  border-radius:8px;
+  font-size:12px;
+  margin-top:5px;
+  overflow-wrap:anywhere;
+}
+
+/* copy */
+.copy-btn{
+  font-size:12px;
+  color:#22c55e;
+  margin-top:5px;
+  cursor:pointer;
+}
+
+/* qr */
+.qr{
+  margin-top:10px;
+  background:white;
+  padding:6px;
+  border-radius:10px;
   display:flex;
   justify-content:center;
-  gap:10px;
-  margin:10px 0;
 }
 
-.lang-btn{
-  background:#1e293b;
-  padding:6px 10px;
-}
-
-input{
+/* input */
+input,textarea{
   width:100%;
   padding:12px;
   border-radius:10px;
   border:1px solid #334155;
   background:#020617;
   color:white;
-  margin-top:10px;
+  margin-top:8px;
 }
 
-.note{
+/* footer */
+.footer{
+  margin-top:15px;
   font-size:12px;
   color:#94a3b8;
-  margin-top:10px;
+  line-height:1.6;
+  text-align:center;
 }
+
+a{
+  color:#22c55e;
+  text-decoration:none;
+}
+
 </style>
 
 </head>
@@ -95,201 +149,159 @@ input{
 <div class="container">
 
 <div class="header">
-<h2>🔐 VPN Secure Panel</h2>
-<div class="secure" id="secureText"></div>
+<h2>🔐 پنل امن VPN</h2>
+<div class="secure">اتصال رمزگذاری شده و ایمن</div>
 </div>
 
-<div class="langs">
-<button class="lang-btn" onclick="setLang('fa')">🇮🇷</button>
-<button class="lang-btn" onclick="setLang('en')">🇺🇸</button>
-</div>
-
+<!-- plans -->
 <div class="card">
-<div id="info"></div>
-<button class="primary" onclick="openSub()" id="subBtn"></button>
+<h3>💎 انتخاب پلن</h3>
+<div class="plans" id="plans"></div>
 </div>
 
+<!-- crypto -->
 <div class="card">
-<h3 id="plansTitle"></h3>
-<div id="plans"></div>
+<h3>💰 پرداخت با ارز دیجیتال</h3>
+
+<div id="selectedPlan">یک پلن انتخاب کنید</div>
+<div id="crypto"></div>
+
+<div class="footer">
+⚠️ مبلغ دقیق را ارسال کنید — کارمزد بر عهده شماست  
+</div>
 </div>
 
+<!-- payment -->
 <div class="card">
-<h3 id="cryptoTitle"></h3>
+<h3>📤 ارسال پرداخت</h3>
 
-<div id="selectedPlan">-</div>
-<div id="cryptoResult"></div>
+<input id="tx" placeholder="TX HASH">
+<textarea id="desc" placeholder="توضیحات (اختیاری)"></textarea>
 
-<div class="note" id="cryptoNote"></div>
+<button class="primary" onclick="send()">ارسال اطلاعات پرداخت</button>
 </div>
 
+<!-- support -->
 <div class="card">
-<input type="text" id="receiptInput">
-<button class="primary" onclick="sendReceipt()" id="sendReceiptBtn"></button>
+<h3>📞 پشتیبانی</h3>
+
+<div class="footer">
+<a href="https://t.me/NovaVPN_Sup">پشتیبانی</a><br>
+<a href="https://t.me/NovaVPN_Net">کانال رسمی</a>
+</div>
+
 </div>
 
 </div>
 
 <script>
 
-const tg = window.Telegram.WebApp
-tg.expand()
-
-const user = tg.initDataUnsafe.user || { id: 1 }
-
-let lang = localStorage.getItem("lang") || "en"
-let subLink = null
-let prices = {}
-
-// 🌍 texts
-const texts = {
-  en:{
-    secure:"Secure & Encrypted Connection",
-    loading:"Loading...",
-    balance:"Balance",
-    sub:"Subscription",
-    active:"Active",
-    inactive:"Inactive",
-    open:"Open Dashboard",
-    plans:"VIP Plans",
-    crypto:"Crypto Payment",
-    note:"⚠ Send exact amount. Network fees are your responsibility. TX HASH required.",
-    receipt:"Submit TX HASH",
-    receiptPlaceholder:"Enter TX HASH",
-    success:"Submitted successfully"
-  },
-  fa:{
-    secure:"اتصال امن و رمزگذاری شده",
-    loading:"در حال لود...",
-    balance:"موجودی",
-    sub:"وضعیت اشتراک",
-    active:"فعال",
-    inactive:"غیرفعال",
-    open:"ورود به پنل",
-    plans:"پلن‌های VIP",
-    crypto:"پرداخت با ارز دیجیتال",
-    note:"⚠ مبلغ دقیق را ارسال کنید. کارمزد بر عهده شماست. ارسال TX HASH الزامی است.",
-    receipt:"ارسال TX HASH",
-    receiptPlaceholder:"TX HASH را وارد کنید",
-    success:"با موفقیت ثبت شد"
-  }
+const wallets={
+TRX:"TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3",
+TON:"UQCpWdG73bwuwFAp2EDQLLkl6VhTGpVVJDre8X02qvJ5OJem",
+USDT:"TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3",
+XRP:"rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F"
 }
 
-function t(k){ return texts[lang][k] }
-
-function setLang(l){
-  lang = l
-  localStorage.setItem("lang", l)
-  applyDir()
-  renderTexts()
-}
-
-function applyDir(){
-  document.body.className = lang === "fa" ? "rtl" : "ltr"
-}
-
-function renderTexts(){
-  document.getElementById("secureText").innerText = t("secure")
-  document.getElementById("subBtn").innerText = t("open")
-  document.getElementById("plansTitle").innerText = t("plans")
-  document.getElementById("cryptoTitle").innerText = t("crypto")
-  document.getElementById("cryptoNote").innerText = t("note")
-  document.getElementById("sendReceiptBtn").innerText = t("receipt")
-  document.getElementById("receiptInput").placeholder = t("receiptPlaceholder")
-}
-
-async function loadProfile(){
-  let res = await fetch("/api/profile?chat_id="+user.id)
-  let data = await res.json()
-
-  subLink = data.sub_link
-
-  let status = subLink ? t("active") : t("inactive")
-
-  document.getElementById("info").innerHTML =
-  "💰 "+t("balance")+": "+(data.balance||0)+"<br>"+
-  "🔗 "+t("sub")+": "+status
-}
-
-function openSub(){
-  if(!subLink) return alert("No active subscription")
-  window.open(subLink,"_blank")
-}
-
-// 💎 wallets
-const wallets = {
-  TRX:"TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3",
-  TON:"UQCpWdG73bwuwFAp2EDQLLkl6VhTGpVVJDre8X02qvJ5OJem",
-  USDT:"TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3",
-  XRP:"rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F"
-}
-
-// 💰 plans
-const plans = [
-  {name:"1GB", price:8.78},
-  {name:"2GB", price:17.04},
-  {name:"3GB", price:24.43},
-  {name:"4GB", price:32.80},
-  {name:"5GB", price:47.59}
+const plans=[
+{name:"۱ گیگ",price:8.78},
+{name:"۲ گیگ",price:17.04},
+{name:"۳ گیگ",price:24.43},
+{name:"۴ گیگ",price:32.80},
+{name:"۵ گیگ",price:47.59}
 ]
 
-function renderPlans(){
-  let html=""
-  plans.forEach(p=>{
-    html+=`<button class="secondary" onclick="selectPlan(${p.price},'${p.name}')">${p.name} - $${p.price}</button>`
-  })
-  document.getElementById("plans").innerHTML=html
-}
+let prices={}
 
+// load prices
 async function loadPrices(){
-  let r=await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether,tron,the-open-network,ripple&vs_currencies=usd")
-  let d=await r.json()
+let r=await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether,tron,the-open-network,ripple&vs_currencies=usd")
+let d=await r.json()
 
-  prices={
-    USDT:d.tether.usd,
-    TRX:d.tron.usd,
-    TON:d["the-open-network"].usd,
-    XRP:d.ripple.usd
-  }
+prices={
+USDT:d.tether.usd,
+TRX:d.tron.usd,
+TON:d["the-open-network"].usd,
+XRP:d.ripple.usd
+}
 }
 
+// render plans
+function renderPlans(){
+let html=""
+plans.forEach(p=>{
+html+=`<button class="secondary" onclick="selectPlan(${p.price},'${p.name}')">${p.name} - $${p.price}</button>`
+})
+document.getElementById("plans").innerHTML=html
+}
+
+// copy
+function copy(text){
+navigator.clipboard.writeText(text)
+alert("کپی شد")
+}
+
+// select plan
 function selectPlan(price,name){
 
-document.getElementById("selectedPlan").innerHTML =
-name+" ($"+price+")"
+document.getElementById("selectedPlan").innerHTML=
+`پلن انتخابی: ${name} - $${price}`
 
 let html=""
 
 for(let c in prices){
+
 let amount=(price/prices[c]).toFixed(2)
 
 html+=`
-<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px">
+<div class="crypto-box">
+
 <b>${c}</b><br>
-Amount: ${amount}<br>
-Wallet: ${wallets[c]}
-</div>`
+مقدار: ${amount}
+
+<div class="wallet">${wallets[c]}</div>
+
+<div class="copy-btn" onclick="copy('${wallets[c]}')">📋 کپی آدرس</div>
+
+<div class="qr" id="qr_${c}"></div>
+
+</div>
+`
 }
 
-document.getElementById("cryptoResult").innerHTML=html
+document.getElementById("crypto").innerHTML=html
+
+// generate QR
+for(let c in wallets){
+QRCode.toCanvas(document.getElementById("qr_"+c), wallets[c])
 }
 
-async function sendReceipt(){
-let tx=document.getElementById("receiptInput").value
-if(!tx) return
+}
+
+// send
+async function send(){
+
+let tx=document.getElementById("tx").value
+let desc=document.getElementById("desc").value
+
+if(!tx){
+alert("TX HASH را وارد کنید")
+return
+}
 
 await fetch("/api/submitReceipt",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({chat_id:user.id,image:tx})
+body:JSON.stringify({
+chat_id:1,
+image:tx,
+desc:desc
+})
 })
 
-alert(t("success"))
+alert("ارسال شد")
 }
 
-applyDir()
-renderTexts()
-loadProfile()
 renderPlans()
 loadPrices()
 
