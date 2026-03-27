@@ -1,8 +1,5 @@
 {
   "routes":[
-    {"src":"/admin","dest":"/admin/index.html"},
-    {"src":"/admin/users","dest":"/admin/users.html"},
-    {"src":"/admin/receipts","dest":"/admin/receipts.html"},
     {"src":"/","dest":"/public/index.html"}
   ]
 }
