@@ -11,7 +11,7 @@ const { data, error } = await supabase
 .from("users")
 .select("*")
 .eq("chat_id",chat_id)
-.single()
+.maybeSingle()
 
 if(error) return res.status(500).json({error:error.message})
 
