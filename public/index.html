@@ -54,7 +54,19 @@ button{
 <div id="info">Loading...</div>
 <button onclick="openSub()" id="subBtn">Open Subscription</button>
 </div>
+<div class="card">
 
+<h3 id="buyTitle">Buy Subscription</h3>
+
+<button onclick="buyPlan('1month')">پلن 1 ماهه</button>
+<button onclick="buyPlan('3month')">پلن 3 ماهه</button>
+
+<br><br>
+
+<input type="text" id="receiptInput" placeholder="Receipt Image URL">
+<button onclick="sendReceipt()">ارسال رسید</button>
+
+</div>
 <script>
 
 const tg = window.Telegram.WebApp
