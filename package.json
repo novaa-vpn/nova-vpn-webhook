@@ -1,7 +1,7 @@
 {
-  "name": "nova-vpn",
-  "version": "1.0.0",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"
+  "name":"vpn-miniapp",
+  "version":"1.0.0",
+  "dependencies":{
+    "@supabase/supabase-js":"^2.39.0"
   }
 }
