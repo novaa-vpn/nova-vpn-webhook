@@ -10,83 +10,96 @@
 
 body{
   font-family: sans-serif;
-  background:#0f172a;
+  background: linear-gradient(180deg,#0f172a,#020617);
   color:white;
-  padding:20px;
   margin:0;
-  text-align:center;
-  transition:0.3s;
+  padding:20px;
 }
 
-/* 🌍 RTL / LTR */
-body.rtl{
-  direction: rtl;
-  text-align: right;
-}
-
-body.ltr{
-  direction: ltr;
-  text-align: left;
-}
+/* RTL / LTR */
+body.rtl{direction:rtl;}
+body.ltr{direction:ltr;}
 
 /* container */
 .container{
-  max-width:400px;
+  max-width:420px;
   margin:auto;
 }
 
-/* title */
-h2{
+/* header */
+.header{
   text-align:center;
+  margin-bottom:15px;
+}
+
+.header h2{
+  margin:0;
+}
+
+.secure{
+  font-size:13px;
+  color:#94a3b8;
 }
 
 /* card */
 .card{
-  background:#1e293b;
-  padding:20px;
-  border-radius:15px;
+  background:#0f172a;
+  border:1px solid #1e293b;
+  padding:18px;
+  border-radius:16px;
   margin-top:15px;
-  box-shadow:0 0 10px rgba(0,0,0,0.3);
+  box-shadow:0 0 20px rgba(0,0,0,0.4);
 }
 
 /* buttons */
 button{
-  background:#22c55e;
-  color:white;
+  width:100%;
+  padding:13px;
   border:none;
-  padding:12px;
-  border-radius:10px;
+  border-radius:12px;
   margin-top:10px;
   cursor:pointer;
-  width:100%;
   font-size:15px;
+  font-weight:bold;
 }
 
-button:hover{
-  opacity:0.9;
+.primary{
+  background:linear-gradient(90deg,#22c55e,#16a34a);
 }
 
-/* language buttons */
+.secondary{
+  background:#1e293b;
+}
+
+/* lang */
 .langs{
   display:flex;
   justify-content:center;
   gap:10px;
+  margin-bottom:10px;
 }
 
 .lang-btn{
-  background:#334155;
-  width:auto;
-  padding:8px 12px;
+  padding:6px 10px;
+  background:#1e293b;
 }
 
 /* input */
 input{
   width:100%;
-  padding:10px;
+  padding:12px;
   border-radius:10px;
-  border:none;
+  border:1px solid #334155;
+  background:#020617;
+  color:white;
   margin-top:10px;
-  box-sizing:border-box;
+}
+
+/* status */
+.status{
+  font-size:13px;
+  color:#94a3b8;
+  margin-top:5px;
 }
 
 </style>
@@ -97,7 +110,10 @@ input{
 
 <div class="container">
 
-<h2>🚀 VPN Panel</h2>
+<div class="header">
+<h2>🔐 VPN Secure Panel</h2>
+<div class="secure" id="secureText">Secure & Encrypted Connection</div>
+</div>
 
 <!-- 🌍 language -->
 <div class="langs">
@@ -108,19 +124,23 @@ input{
 <!-- 👤 profile -->
 <div class="card">
 <div id="info">Loading...</div>
-<button onclick="openSub()" id="subBtn">Open</button>
+
+<button class="primary" onclick="openSub()" id="subBtn"></button>
+
+<div class="status" id="statusText"></div>
 </div>
 
 <!-- 💰 buy -->
 <div class="card">
 
-<h3 id="buyTitle">Buy</h3>
+<h3 id="buyTitle"></h3>
 
-<button onclick="buyPlan('1month')" id="plan1"></button>
-<button onclick="buyPlan('3month')" id="plan3"></button>
+<button class="secondary" onclick="buyPlan('1month')" id="plan1"></button>
+<button class="secondary" onclick="buyPlan('3month')" id="plan3"></button>
 
 <input type="text" id="receiptInput">
-<button onclick="sendReceipt()" id="sendReceiptBtn"></button>
+
+<button class="primary" onclick="sendReceipt()" id="sendReceiptBtn"></button>
 
 </div>
 
@@ -136,47 +156,51 @@ const user = tg.initDataUnsafe.user || { id: 1 }
 let subLink = null
 let lang = localStorage.getItem("lang") || "en"
 
-// 🌍 texts
+// 🌍 متن حرفه‌ای
 const texts = {
   en:{
-    loading:"Loading...",
+    secure:"Secure & Encrypted Connection",
+    loading:"Loading your secure profile...",
     balance:"Balance",
     sub:"Subscription",
-    noSub:"Not available",
-    open:"Open Subscription",
-    noSubAlert:"No subscription yet",
-    buy:"Buy Subscription",
-    plan1:"1 Month Plan",
-    plan3:"3 Month Plan",
-    receiptPlaceholder:"Receipt image URL",
-    sendReceipt:"Send Receipt",
-    orderOk:"Order registered",
-    receiptOk:"Receipt sent",
-    receiptError:"Enter receipt link"
+    noSub:"Not active",
+    active:"Active",
+    inactive:"Inactive",
+    open:"Open Dashboard",
+    noSubAlert:"Your subscription is not active yet",
+    buy:"Choose Your Plan",
+    plan1:"1 Month Premium",
+    plan3:"3 Months Premium",
+    receiptPlaceholder:"Paste payment receipt link",
+    sendReceipt:"Submit Payment",
+    orderOk:"Your order has been submitted",
+    receiptOk:"Receipt sent for verification",
+    receiptError:"Please enter receipt link"
   },
   fa:{
-    loading:"در حال لود...",
+    secure:"اتصال امن و رمزگذاری شده",
+    loading:"در حال دریافت اطلاعات امن شما...",
     balance:"موجودی",
-    sub:"اشتراک",
-    noSub:"ندارد",
-    open:"مشاهده اشتراک",
-    noSubAlert:"هنوز اشتراک ثبت نشده",
-    buy:"خرید اشتراک",
-    plan1:"پلن ۱ ماهه",
-    plan3:"پلن ۳ ماهه",
-    receiptPlaceholder:"لینک عکس رسید",
-    sendReceipt:"ارسال رسید",
-    orderOk:"سفارش ثبت شد",
-    receiptOk:"رسید ارسال شد",
-    receiptError:"لینک رسید را وارد کنید"
+    sub:"وضعیت اشتراک",
+    noSub:"غیرفعال",
+    active:"فعال",
+    inactive:"غیرفعال",
+    open:"ورود به پنل اشتراک",
+    noSubAlert:"اشتراک شما هنوز فعال نشده",
+    buy:"انتخاب پلن اشتراک",
+    plan1:"پلن ویژه ۱ ماهه",
+    plan3:"پلن ویژه ۳ ماهه",
+    receiptPlaceholder:"لینک رسید پرداخت را وارد کنید",
+    sendReceipt:"ارسال رسید پرداخت",
+    orderOk:"سفارش شما ثبت شد",
+    receiptOk:"رسید برای بررسی ارسال شد",
+    receiptError:"لطفا لینک رسید را وارد کنید"
   }
 }
 
-function t(key){
-  return texts[lang][key]
-}
+function t(key){ return texts[lang][key] }
 
-// 🌍 تغییر زبان
+// 🌍 زبان
 function setLang(l){
   lang = l
   localStorage.setItem("lang", l)
@@ -185,27 +209,20 @@ function setLang(l){
   load()
 }
 
-// 🔥 RTL FIX
+// RTL
 function applyDirection(){
-  if(lang === "fa"){
-    document.body.classList.remove("ltr")
-    document.body.classList.add("rtl")
-  }else{
-    document.body.classList.remove("rtl")
-    document.body.classList.add("ltr")
-  }
+  document.body.className = lang === "fa" ? "rtl" : "ltr"
 }
 
-// 🎨 texts
+// متن‌ها
 function renderTexts(){
-
-document.getElementById("buyTitle").innerText = t("buy")
-document.getElementById("plan1").innerText = t("plan1")
-document.getElementById("plan3").innerText = t("plan3")
-document.getElementById("sendReceiptBtn").innerText = t("sendReceipt")
-document.getElementById("receiptInput").placeholder = t("receiptPlaceholder")
-document.getElementById("subBtn").innerText = t("open")
-
+  document.getElementById("secureText").innerText = t("secure")
+  document.getElementById("buyTitle").innerText = t("buy")
+  document.getElementById("plan1").innerText = t("plan1")
+  document.getElementById("plan3").innerText = t("plan3")
+  document.getElementById("sendReceiptBtn").innerText = t("sendReceipt")
+  document.getElementById("receiptInput").placeholder = t("receiptPlaceholder")
+  document.getElementById("subBtn").innerText = t("open")
 }
 
 // 🚀 load
@@ -218,68 +235,50 @@ let data = await res.json()
 
 subLink = data.sub_link
 
+let status = data.sub_link ? t("active") : t("inactive")
+
 document.getElementById("info").innerHTML =
 "💰 "+t("balance")+": "+(data.balance ?? 0) +
-"<br>🔗 "+t("sub")+": "+(data.sub_link ?? t("noSub"))
+"<br>🔗 "+t("sub")+": "+status
+
+document.getElementById("statusText").innerText =
+data.sub_link ? "✔ "+t("active") : "⚠ "+t("inactive")
 
 }
 
-// 🔗 open sub
+// 🔗 open
 function openSub(){
-
 if(!subLink){
 alert(t("noSubAlert"))
 return
 }
-
 window.open(subLink,"_blank")
-
 }
 
 // 💰 buy
 async function buyPlan(plan){
-
 await fetch("/api/buy",{
   method:"POST",
-  headers:{
-    "Content-Type":"application/json"
-  },
-  body:JSON.stringify({
-    chat_id:user.id,
-    plan:plan
-  })
+  headers:{ "Content-Type":"application/json" },
+  body:JSON.stringify({ chat_id:user.id, plan })
 })
-
 alert(t("orderOk"))
-
 }
 
 // 📤 receipt
 async function sendReceipt(){
-
 let img = document.getElementById("receiptInput").value
-
-if(!img){
-alert(t("receiptError"))
-return
-}
+if(!img){ alert(t("receiptError")); return }
 
 await fetch("/api/submitReceipt",{
   method:"POST",
-  headers:{
-    "Content-Type":"application/json"
-  },
-  body:JSON.stringify({
-    chat_id:user.id,
-    image:img
-  })
+  headers:{ "Content-Type":"application/json" },
+  body:JSON.stringify({ chat_id:user.id, image:img })
 })
 
 alert(t("receiptOk"))
-
 }
 
-// init
 applyDirection()
 renderTexts()
 load()
