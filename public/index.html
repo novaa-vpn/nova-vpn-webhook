@@ -7,33 +7,58 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
+
 body{
   font-family: sans-serif;
   background:#0f172a;
   color:white;
-  text-align:center;
   padding:20px;
+  margin:0;
+  text-align:center;
+  transition:0.3s;
 }
 
+/* 🌍 RTL / LTR */
+body.rtl{
+  direction: rtl;
+  text-align: right;
+}
+
+body.ltr{
+  direction: ltr;
+  text-align: left;
+}
+
+/* container */
+.container{
+  max-width:400px;
+  margin:auto;
+}
+
+/* title */
 h2{
-  margin-bottom:10px;
+  text-align:center;
 }
 
+/* card */
 .card{
   background:#1e293b;
   padding:20px;
   border-radius:15px;
-  margin-top:20px;
+  margin-top:15px;
+  box-shadow:0 0 10px rgba(0,0,0,0.3);
 }
 
+/* buttons */
 button{
   background:#22c55e;
   color:white;
   border:none;
-  padding:12px 20px;
+  padding:12px;
   border-radius:10px;
   margin-top:10px;
   cursor:pointer;
+  width:100%;
   font-size:15px;
 }
 
@@ -41,17 +66,27 @@ button:hover{
   opacity:0.9;
 }
 
-.lang-btn{
-  background:#334155;
-  margin:5px;
+/* language buttons */
+.langs{
+  display:flex;
+  justify-content:center;
+  gap:10px;
 }
 
+.lang-btn{
+  background:#334155;
+  width:auto;
+  padding:8px 12px;
+}
+
+/* input */
 input{
-  width:80%;
+  width:100%;
   padding:10px;
   border-radius:10px;
   border:none;
   margin-top:10px;
+  box-sizing:border-box;
 }
 
 </style>
@@ -60,33 +95,34 @@ input{
 
 <body>
 
+<div class="container">
+
 <h2>🚀 VPN Panel</h2>
 
-<!-- 🌍 Language -->
-<div>
-<button class="lang-btn" onclick="setLang('fa')">🇮🇷 فارسی</button>
-<button class="lang-btn" onclick="setLang('en')">🇺🇸 English</button>
+<!-- 🌍 language -->
+<div class="langs">
+<button class="lang-btn" onclick="setLang('fa')">🇮🇷</button>
+<button class="lang-btn" onclick="setLang('en')">🇺🇸</button>
 </div>
 
-<!-- 👤 Profile -->
+<!-- 👤 profile -->
 <div class="card">
 <div id="info">Loading...</div>
-<button onclick="openSub()" id="subBtn">Open Subscription</button>
+<button onclick="openSub()" id="subBtn">Open</button>
 </div>
 
-<!-- 💰 Buy -->
+<!-- 💰 buy -->
 <div class="card">
 
-<h3 id="buyTitle">Buy Subscription</h3>
+<h3 id="buyTitle">Buy</h3>
 
-<button onclick="buyPlan('1month')" id="plan1">1 Month Plan</button>
-<button onclick="buyPlan('3month')" id="plan3">3 Month Plan</button>
+<button onclick="buyPlan('1month')" id="plan1"></button>
+<button onclick="buyPlan('3month')" id="plan3"></button>
 
-<br><br>
+<input type="text" id="receiptInput">
+<button onclick="sendReceipt()" id="sendReceiptBtn"></button>
 
-<input type="text" id="receiptInput" placeholder="Receipt Image URL">
-
-<button onclick="sendReceipt()" id="sendReceiptBtn">Send Receipt</button>
+</div>
 
 </div>
 
@@ -100,7 +136,7 @@ const user = tg.initDataUnsafe.user || { id: 1 }
 let subLink = null
 let lang = localStorage.getItem("lang") || "en"
 
-// 🌍 translations
+// 🌍 texts
 const texts = {
   en:{
     loading:"Loading...",
@@ -112,7 +148,7 @@ const texts = {
     buy:"Buy Subscription",
     plan1:"1 Month Plan",
     plan3:"3 Month Plan",
-    receiptPlaceholder:"Receipt Image URL",
+    receiptPlaceholder:"Receipt image URL",
     sendReceipt:"Send Receipt",
     orderOk:"Order registered",
     receiptOk:"Receipt sent",
@@ -140,15 +176,27 @@ function t(key){
   return texts[lang][key]
 }
 
-// 🌍 change language
+// 🌍 تغییر زبان
 function setLang(l){
   lang = l
   localStorage.setItem("lang", l)
+  applyDirection()
   renderTexts()
   load()
 }
 
-// 🎨 update texts
+// 🔥 RTL FIX
+function applyDirection(){
+  if(lang === "fa"){
+    document.body.classList.remove("ltr")
+    document.body.classList.add("rtl")
+  }else{
+    document.body.classList.remove("rtl")
+    document.body.classList.add("ltr")
+  }
+}
+
+// 🎨 texts
 function renderTexts(){
 
 document.getElementById("buyTitle").innerText = t("buy")
@@ -160,7 +208,7 @@ document.getElementById("subBtn").innerText = t("open")
 
 }
 
-// 🚀 load profile
+// 🚀 load
 async function load(){
 
 document.getElementById("info").innerHTML = t("loading")
@@ -176,7 +224,7 @@ document.getElementById("info").innerHTML =
 
 }
 
-// 🔗 open subscription
+// 🔗 open sub
 function openSub(){
 
 if(!subLink){
@@ -206,7 +254,7 @@ alert(t("orderOk"))
 
 }
 
-// 📤 send receipt
+// 📤 receipt
 async function sendReceipt(){
 
 let img = document.getElementById("receiptInput").value
@@ -232,6 +280,7 @@ alert(t("receiptOk"))
 }
 
 // init
+applyDirection()
 renderTexts()
 load()
 
