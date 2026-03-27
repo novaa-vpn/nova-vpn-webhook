@@ -7,7 +7,6 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-
 body{
   font-family: sans-serif;
   background: linear-gradient(180deg,#0f172a,#020617);
@@ -16,24 +15,16 @@ body{
   padding:20px;
 }
 
-/* RTL / LTR */
 body.rtl{direction:rtl;}
 body.ltr{direction:ltr;}
 
-/* container */
 .container{
   max-width:420px;
   margin:auto;
 }
 
-/* header */
 .header{
   text-align:center;
-  margin-bottom:15px;
-}
-
-.header h2{
-  margin:0;
 }
 
 .secure{
@@ -41,17 +32,14 @@ body.ltr{direction:ltr;}
   color:#94a3b8;
 }
 
-/* card */
 .card{
   background:#0f172a;
   border:1px solid #1e293b;
   padding:18px;
   border-radius:16px;
   margin-top:15px;
-  box-shadow:0 0 20px rgba(0,0,0,0.4);
 }
 
-/* buttons */
 button{
   width:100%;
   padding:13px;
@@ -59,7 +47,7 @@ button{
   border-radius:12px;
   margin-top:10px;
   cursor:pointer;
-  font-size:15px;
+  font-size:14px;
   font-weight:bold;
 }
 
@@ -71,20 +59,18 @@ button{
   background:#1e293b;
 }
 
-/* lang */
 .langs{
   display:flex;
   justify-content:center;
   gap:10px;
-  margin-bottom:10px;
+  margin:10px 0;
 }
 
 .lang-btn{
-  padding:6px 10px;
   background:#1e293b;
+  padding:6px 10px;
 }
 
-/* input */
 input{
   width:100%;
   padding:12px;
@@ -95,13 +81,11 @@ input{
   margin-top:10px;
 }
 
-/* status */
-.status{
-  font-size:13px;
+.note{
+  font-size:12px;
   color:#94a3b8;
-  margin-top:5px;
+  margin-top:10px;
 }
-
 </style>
 
 </head>
@@ -112,36 +96,36 @@ input{
 
 <div class="header">
 <h2>🔐 VPN Secure Panel</h2>
-<div class="secure" id="secureText">Secure & Encrypted Connection</div>
+<div class="secure" id="secureText"></div>
 </div>
 
-<!-- 🌍 language -->
 <div class="langs">
 <button class="lang-btn" onclick="setLang('fa')">🇮🇷</button>
 <button class="lang-btn" onclick="setLang('en')">🇺🇸</button>
 </div>
 
-<!-- 👤 profile -->
 <div class="card">
-<div id="info">Loading...</div>
-
+<div id="info"></div>
 <button class="primary" onclick="openSub()" id="subBtn"></button>
-
-<div class="status" id="statusText"></div>
 </div>
 
-<!-- 💰 buy -->
 <div class="card">
+<h3 id="plansTitle"></h3>
+<div id="plans"></div>
+</div>
 
-<h3 id="buyTitle"></h3>
+<div class="card">
+<h3 id="cryptoTitle"></h3>
 
-<button class="secondary" onclick="buyPlan('1month')" id="plan1"></button>
-<button class="secondary" onclick="buyPlan('3month')" id="plan3"></button>
+<div id="selectedPlan">-</div>
+<div id="cryptoResult"></div>
 
+<div class="note" id="cryptoNote"></div>
+</div>
+
+<div class="card">
 <input type="text" id="receiptInput">
-
 <button class="primary" onclick="sendReceipt()" id="sendReceiptBtn"></button>
-
 </div>
 
 </div>
@@ -153,135 +137,161 @@ tg.expand()
 
 const user = tg.initDataUnsafe.user || { id: 1 }
 
-let subLink = null
 let lang = localStorage.getItem("lang") || "en"
+let subLink = null
+let prices = {}
 
-// 🌍 متن حرفه‌ای
+// 🌍 texts
 const texts = {
   en:{
     secure:"Secure & Encrypted Connection",
-    loading:"Loading your secure profile...",
+    loading:"Loading...",
     balance:"Balance",
     sub:"Subscription",
-    noSub:"Not active",
     active:"Active",
     inactive:"Inactive",
     open:"Open Dashboard",
-    noSubAlert:"Your subscription is not active yet",
-    buy:"Choose Your Plan",
-    plan1:"1 Month Premium",
-    plan3:"3 Months Premium",
-    receiptPlaceholder:"Paste payment receipt link",
-    sendReceipt:"Submit Payment",
-    orderOk:"Your order has been submitted",
-    receiptOk:"Receipt sent for verification",
-    receiptError:"Please enter receipt link"
+    plans:"VIP Plans",
+    crypto:"Crypto Payment",
+    note:"⚠ Send exact amount. Network fees are your responsibility. TX HASH required.",
+    receipt:"Submit TX HASH",
+    receiptPlaceholder:"Enter TX HASH",
+    success:"Submitted successfully"
   },
   fa:{
     secure:"اتصال امن و رمزگذاری شده",
-    loading:"در حال دریافت اطلاعات امن شما...",
+    loading:"در حال لود...",
     balance:"موجودی",
     sub:"وضعیت اشتراک",
-    noSub:"غیرفعال",
     active:"فعال",
     inactive:"غیرفعال",
-    open:"ورود به پنل اشتراک",
-    noSubAlert:"اشتراک شما هنوز فعال نشده",
-    buy:"انتخاب پلن اشتراک",
-    plan1:"پلن ویژه ۱ ماهه",
-    plan3:"پلن ویژه ۳ ماهه",
-    receiptPlaceholder:"لینک رسید پرداخت را وارد کنید",
-    sendReceipt:"ارسال رسید پرداخت",
-    orderOk:"سفارش شما ثبت شد",
-    receiptOk:"رسید برای بررسی ارسال شد",
-    receiptError:"لطفا لینک رسید را وارد کنید"
+    open:"ورود به پنل",
+    plans:"پلن‌های VIP",
+    crypto:"پرداخت با ارز دیجیتال",
+    note:"⚠ مبلغ دقیق را ارسال کنید. کارمزد بر عهده شماست. ارسال TX HASH الزامی است.",
+    receipt:"ارسال TX HASH",
+    receiptPlaceholder:"TX HASH را وارد کنید",
+    success:"با موفقیت ثبت شد"
   }
 }
 
-function t(key){ return texts[lang][key] }
+function t(k){ return texts[lang][k] }
 
-// 🌍 زبان
 function setLang(l){
   lang = l
   localStorage.setItem("lang", l)
-  applyDirection()
+  applyDir()
   renderTexts()
-  load()
 }
 
-// RTL
-function applyDirection(){
+function applyDir(){
   document.body.className = lang === "fa" ? "rtl" : "ltr"
 }
 
-// متن‌ها
 function renderTexts(){
   document.getElementById("secureText").innerText = t("secure")
-  document.getElementById("buyTitle").innerText = t("buy")
-  document.getElementById("plan1").innerText = t("plan1")
-  document.getElementById("plan3").innerText = t("plan3")
-  document.getElementById("sendReceiptBtn").innerText = t("sendReceipt")
-  document.getElementById("receiptInput").placeholder = t("receiptPlaceholder")
   document.getElementById("subBtn").innerText = t("open")
+  document.getElementById("plansTitle").innerText = t("plans")
+  document.getElementById("cryptoTitle").innerText = t("crypto")
+  document.getElementById("cryptoNote").innerText = t("note")
+  document.getElementById("sendReceiptBtn").innerText = t("receipt")
+  document.getElementById("receiptInput").placeholder = t("receiptPlaceholder")
 }
 
-// 🚀 load
-async function load(){
+async function loadProfile(){
+  let res = await fetch("/api/profile?chat_id="+user.id)
+  let data = await res.json()
 
-document.getElementById("info").innerHTML = t("loading")
+  subLink = data.sub_link
 
-let res = await fetch("/api/profile?chat_id="+user.id)
-let data = await res.json()
+  let status = subLink ? t("active") : t("inactive")
 
-subLink = data.sub_link
-
-let status = data.sub_link ? t("active") : t("inactive")
-
-document.getElementById("info").innerHTML =
-"💰 "+t("balance")+": "+(data.balance ?? 0) +
-"<br>🔗 "+t("sub")+": "+status
-
-document.getElementById("statusText").innerText =
-data.sub_link ? "✔ "+t("active") : "⚠ "+t("inactive")
-
+  document.getElementById("info").innerHTML =
+  "💰 "+t("balance")+": "+(data.balance||0)+"<br>"+
+  "🔗 "+t("sub")+": "+status
 }
 
-// 🔗 open
 function openSub(){
-if(!subLink){
-alert(t("noSubAlert"))
-return
-}
-window.open(subLink,"_blank")
+  if(!subLink) return alert("No active subscription")
+  window.open(subLink,"_blank")
 }
 
-// 💰 buy
-async function buyPlan(plan){
-await fetch("/api/buy",{
-  method:"POST",
-  headers:{ "Content-Type":"application/json" },
-  body:JSON.stringify({ chat_id:user.id, plan })
-})
-alert(t("orderOk"))
+// 💎 wallets
+const wallets = {
+  TRX:"TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3",
+  TON:"UQCpWdG73bwuwFAp2EDQLLkl6VhTGpVVJDre8X02qvJ5OJem",
+  USDT:"TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3",
+  XRP:"rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F"
 }
 
-// 📤 receipt
+// 💰 plans
+const plans = [
+  {name:"1GB", price:8.78},
+  {name:"2GB", price:17.04},
+  {name:"3GB", price:24.43},
+  {name:"4GB", price:32.80},
+  {name:"5GB", price:47.59}
+]
+
+function renderPlans(){
+  let html=""
+  plans.forEach(p=>{
+    html+=`<button class="secondary" onclick="selectPlan(${p.price},'${p.name}')">${p.name} - $${p.price}</button>`
+  })
+  document.getElementById("plans").innerHTML=html
+}
+
+async function loadPrices(){
+  let r=await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether,tron,the-open-network,ripple&vs_currencies=usd")
+  let d=await r.json()
+
+  prices={
+    USDT:d.tether.usd,
+    TRX:d.tron.usd,
+    TON:d["the-open-network"].usd,
+    XRP:d.ripple.usd
+  }
+}
+
+function selectPlan(price,name){
+
+document.getElementById("selectedPlan").innerHTML =
+name+" ($"+price+")"
+
+let html=""
+
+for(let c in prices){
+let amount=(price/prices[c]).toFixed(2)
+
+html+=`
+<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px">
+<b>${c}</b><br>
+Amount: ${amount}<br>
+Wallet: ${wallets[c]}
+</div>`
+}
+
+document.getElementById("cryptoResult").innerHTML=html
+}
+
 async function sendReceipt(){
-let img = document.getElementById("receiptInput").value
-if(!img){ alert(t("receiptError")); return }
+let tx=document.getElementById("receiptInput").value
+if(!tx) return
 
 await fetch("/api/submitReceipt",{
-  method:"POST",
-  headers:{ "Content-Type":"application/json" },
-  body:JSON.stringify({ chat_id:user.id, image:img })
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({chat_id:user.id,image:tx})
 })
 
-alert(t("receiptOk"))
+alert(t("success"))
 }
 
-applyDirection()
+applyDir()
 renderTexts()
-load()
+loadProfile()
+renderPlans()
+loadPrices()
 
 </script>
 
