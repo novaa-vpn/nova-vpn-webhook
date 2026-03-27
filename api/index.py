@@ -17,7 +17,7 @@ BOT_USERNAME = "NoovaVpn_Bot"
 
 # استفاده از Session جهانی برای حذف زمان Handshake در هر درخواست
 db_session = requests.Session()
-bot = telebot.TeleBot(TOKEN, threaded=False)
+bot = telebot.TeleBot(TOKEN, threaded=True, num_threads=50)
 
 # هدرهای بهینه‌شده برای دریافت مستقیم نتیجه پس از درج/ویرایش (کاهش یک مرحله درخواست)
 DB_HEADERS = {
