@@ -2,30 +2,126 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+body{
+  font-family: sans-serif;
+  background:#0f172a;
+  color:white;
+  text-align:center;
+  padding:20px;
+}
+
+.card{
+  background:#1e293b;
+  padding:20px;
+  border-radius:15px;
+  margin-top:20px;
+}
+
+button{
+  background:#22c55e;
+  color:white;
+  border:none;
+  padding:12px 20px;
+  border-radius:10px;
+  margin-top:10px;
+  cursor:pointer;
+  font-size:16px;
+}
+
+.lang-btn{
+  background:#334155;
+  margin:5px;
+}
+</style>
+
 </head>
 
 <body>
 
-<h2>VPN Panel</h2>
+<h2>🚀 VPN Panel</h2>
 
-<div id="info">در حال لود...</div>
+<div>
+<button class="lang-btn" onclick="setLang('fa')">🇮🇷 فارسی</button>
+<button class="lang-btn" onclick="setLang('en')">🇺🇸 English</button>
+</div>
+
+<div class="card">
+<div id="info">Loading...</div>
+<button onclick="openSub()" id="subBtn">Open Subscription</button>
+</div>
 
 <script>
 
 const tg = window.Telegram.WebApp
 tg.expand()
 
-const user = tg.initDataUnsafe.user
+const user = tg.initDataUnsafe.user || { id: 1 }
 
+let subLink = null
+let lang = localStorage.getItem("lang") || "en"
+
+// 🌍 متن‌ها
+const texts = {
+  en:{
+    loading:"Loading...",
+    balance:"Balance",
+    sub:"Subscription",
+    noSub:"Not available",
+    open:"Open Subscription",
+    noSubAlert:"No subscription yet"
+  },
+  fa:{
+    loading:"در حال لود...",
+    balance:"موجودی",
+    sub:"اشتراک",
+    noSub:"ندارد",
+    open:"مشاهده اشتراک",
+    noSubAlert:"هنوز اشتراک ثبت نشده"
+  }
+}
+
+function t(key){
+  return texts[lang][key]
+}
+
+function setLang(l){
+  lang = l
+  localStorage.setItem("lang", l)
+  load()
+}
+
+// 🚀 گرفتن دیتا
 async function load(){
+
+document.getElementById("info").innerHTML = t("loading")
 
 let res = await fetch("/api/profile?chat_id="+user.id)
 let data = await res.json()
 
+subLink = data.sub_link
+
 document.getElementById("info").innerHTML =
-"Balance: "+(data?.balance ?? 0) +
-"<br>Sub: "+(data?.sub_link ?? "ندارد")
+"💰 "+t("balance")+": "+(data.balance ?? 0) +
+"<br>🔗 "+t("sub")+": "+(data.sub_link ?? t("noSub"))
+
+document.getElementById("subBtn").innerText = t("open")
+
+}
+
+// 🔗 باز کردن لینک
+function openSub(){
+
+if(!subLink){
+alert(t("noSubAlert"))
+return
+}
+
+window.open(subLink,"_blank")
 
 }
 
