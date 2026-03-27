@@ -15,6 +15,10 @@ body{
   padding:20px;
 }
 
+h2{
+  margin-bottom:10px;
+}
+
 .card{
   background:#1e293b;
   padding:20px;
@@ -30,13 +34,26 @@ button{
   border-radius:10px;
   margin-top:10px;
   cursor:pointer;
-  font-size:16px;
+  font-size:15px;
+}
+
+button:hover{
+  opacity:0.9;
 }
 
 .lang-btn{
   background:#334155;
   margin:5px;
 }
+
+input{
+  width:80%;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  margin-top:10px;
+}
+
 </style>
 
 </head>
@@ -45,28 +62,34 @@ button{
 
 <h2>🚀 VPN Panel</h2>
 
+<!-- 🌍 Language -->
 <div>
 <button class="lang-btn" onclick="setLang('fa')">🇮🇷 فارسی</button>
 <button class="lang-btn" onclick="setLang('en')">🇺🇸 English</button>
 </div>
 
+<!-- 👤 Profile -->
 <div class="card">
 <div id="info">Loading...</div>
 <button onclick="openSub()" id="subBtn">Open Subscription</button>
 </div>
+
+<!-- 💰 Buy -->
 <div class="card">
 
 <h3 id="buyTitle">Buy Subscription</h3>
 
-<button onclick="buyPlan('1month')">پلن 1 ماهه</button>
-<button onclick="buyPlan('3month')">پلن 3 ماهه</button>
+<button onclick="buyPlan('1month')" id="plan1">1 Month Plan</button>
+<button onclick="buyPlan('3month')" id="plan3">3 Month Plan</button>
 
 <br><br>
 
 <input type="text" id="receiptInput" placeholder="Receipt Image URL">
-<button onclick="sendReceipt()">ارسال رسید</button>
+
+<button onclick="sendReceipt()" id="sendReceiptBtn">Send Receipt</button>
 
 </div>
+
 <script>
 
 const tg = window.Telegram.WebApp
@@ -77,7 +100,7 @@ const user = tg.initDataUnsafe.user || { id: 1 }
 let subLink = null
 let lang = localStorage.getItem("lang") || "en"
 
-// 🌍 متن‌ها
+// 🌍 translations
 const texts = {
   en:{
     loading:"Loading...",
@@ -85,7 +108,15 @@ const texts = {
     sub:"Subscription",
     noSub:"Not available",
     open:"Open Subscription",
-    noSubAlert:"No subscription yet"
+    noSubAlert:"No subscription yet",
+    buy:"Buy Subscription",
+    plan1:"1 Month Plan",
+    plan3:"3 Month Plan",
+    receiptPlaceholder:"Receipt Image URL",
+    sendReceipt:"Send Receipt",
+    orderOk:"Order registered",
+    receiptOk:"Receipt sent",
+    receiptError:"Enter receipt link"
   },
   fa:{
     loading:"در حال لود...",
@@ -93,7 +124,15 @@ const texts = {
     sub:"اشتراک",
     noSub:"ندارد",
     open:"مشاهده اشتراک",
-    noSubAlert:"هنوز اشتراک ثبت نشده"
+    noSubAlert:"هنوز اشتراک ثبت نشده",
+    buy:"خرید اشتراک",
+    plan1:"پلن ۱ ماهه",
+    plan3:"پلن ۳ ماهه",
+    receiptPlaceholder:"لینک عکس رسید",
+    sendReceipt:"ارسال رسید",
+    orderOk:"سفارش ثبت شد",
+    receiptOk:"رسید ارسال شد",
+    receiptError:"لینک رسید را وارد کنید"
   }
 }
 
@@ -101,13 +140,27 @@ function t(key){
   return texts[lang][key]
 }
 
+// 🌍 change language
 function setLang(l){
   lang = l
   localStorage.setItem("lang", l)
+  renderTexts()
   load()
 }
 
-// 🚀 گرفتن دیتا
+// 🎨 update texts
+function renderTexts(){
+
+document.getElementById("buyTitle").innerText = t("buy")
+document.getElementById("plan1").innerText = t("plan1")
+document.getElementById("plan3").innerText = t("plan3")
+document.getElementById("sendReceiptBtn").innerText = t("sendReceipt")
+document.getElementById("receiptInput").placeholder = t("receiptPlaceholder")
+document.getElementById("subBtn").innerText = t("open")
+
+}
+
+// 🚀 load profile
 async function load(){
 
 document.getElementById("info").innerHTML = t("loading")
@@ -121,11 +174,9 @@ document.getElementById("info").innerHTML =
 "💰 "+t("balance")+": "+(data.balance ?? 0) +
 "<br>🔗 "+t("sub")+": "+(data.sub_link ?? t("noSub"))
 
-document.getElementById("subBtn").innerText = t("open")
-
 }
 
-// 🔗 باز کردن لینک
+// 🔗 open subscription
 function openSub(){
 
 if(!subLink){
@@ -137,6 +188,51 @@ window.open(subLink,"_blank")
 
 }
 
+// 💰 buy
+async function buyPlan(plan){
+
+await fetch("/api/buy",{
+  method:"POST",
+  headers:{
+    "Content-Type":"application/json"
+  },
+  body:JSON.stringify({
+    chat_id:user.id,
+    plan:plan
+  })
+})
+
+alert(t("orderOk"))
+
+}
+
+// 📤 send receipt
+async function sendReceipt(){
+
+let img = document.getElementById("receiptInput").value
+
+if(!img){
+alert(t("receiptError"))
+return
+}
+
+await fetch("/api/submitReceipt",{
+  method:"POST",
+  headers:{
+    "Content-Type":"application/json"
+  },
+  body:JSON.stringify({
+    chat_id:user.id,
+    image:img
+  })
+})
+
+alert(t("receiptOk"))
+
+}
+
+// init
+renderTexts()
 load()
 
 </script>
