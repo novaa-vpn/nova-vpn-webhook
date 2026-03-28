@@ -1,1 +1,207 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مدیریت نُوا | Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700&display=swap');
+    body { font-family: 'Vazirmatn', sans-serif; background-color: #0f172a; color: #f8fafc; }
+    .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+    .loader { border: 3px solid rgba(255,255,255,0.1); border-top-color: #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="p-6">
 
+  <div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8 glass p-5 rounded-2xl">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 bg-blue-500/20 text-blue-500 rounded-xl flex items-center justify-center text-2xl border border-blue-500/20">
+          <i class="ph-bold ph-shield-star"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold">پنل مدیریت نُوا</h1>
+          <p class="text-sm text-slate-400">بررسی تراکنش‌ها و ارتباط با کاربران</p>
+        </div>
+      </div>
+      <div>
+        <button onclick="fetchPendingReceipts()" class="bg-slate-800 hover:bg-slate-700 text-sm px-4 py-2 rounded-lg flex items-center gap-2 transition">
+          <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی
+        </button>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Transactions Column -->
+      <div class="md:col-span-2 space-y-4">
+        <h2 class="font-bold text-lg mb-4 flex items-center gap-2">
+          <i class="ph-fill ph-receipt text-blue-400"></i> رسیدهای در انتظار تایید
+        </h2>
+        <div id="receipts-container" class="space-y-4">
+          <div class="text-center py-10 text-slate-500"><div class="loader mx-auto mb-3"></div>در حال دریافت اطلاعات...</div>
+        </div>
+      </div>
+
+      <!-- Quick Message / Actions Column -->
+      <div class="space-y-6">
+        <div class="glass p-5 rounded-2xl">
+          <h2 class="font-bold text-md mb-4 flex items-center gap-2">
+            <i class="ph-fill ph-paper-plane-tilt text-green-400"></i> ارسال پیام به کاربر
+          </h2>
+          <div class="space-y-3">
+            <input type="number" id="msg-chat-id" placeholder="آیدی عددی کاربر (Chat ID)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:border-blue-500 outline-none font-mono text-left">
+            <textarea id="msg-text" placeholder="متن پیام شما..." rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:border-blue-500 outline-none resize-none"></textarea>
+            <button onclick="sendMessage()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg text-sm transition flex justify-center items-center gap-2">
+              ارسال پیام به تلگرام کاربر
+            </button>
+          </div>
+        </div>
+        
+        <!-- Password for security -->
+        <div class="glass p-5 rounded-2xl border-red-500/20">
+          <h2 class="font-bold text-md mb-2 flex items-center gap-2 text-red-400">
+            <i class="ph-fill ph-lock-key"></i> رمز عبور ادمین
+          </h2>
+          <p class="text-xs text-slate-400 mb-3">برای انجام عملیات، رمز ادمین را وارد کنید:</p>
+          <input type="password" id="admin-pass" placeholder="Admin Secret" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:border-red-500 outline-none font-mono text-center" value="admin123">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    async function fetchPendingReceipts() {
+      const container = document.getElementById('receipts-container');
+      container.innerHTML = '<div class="text-center py-10 text-slate-500"><div class="loader mx-auto mb-3"></div>در حال دریافت...</div>';
+      
+      try {
+        const pass = document.getElementById('admin-pass').value;
+        const res = await fetch('/api/adminManage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get_pending', admin_pass: pass })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          container.innerHTML = `<div class="text-center py-8 text-red-400 glass rounded-xl">${data.error || 'خطا در احراز هویت'}</div>`;
+          return;
+        }
+
+        if (data.receipts.length === 0) {
+          container.innerHTML = `<div class="text-center py-10 text-slate-500 glass rounded-xl">هیچ رسید تایید نشده‌ای وجود ندارد.</div>`;
+          return;
+        }
+
+        container.innerHTML = data.receipts.map(r => `
+          <div class="glass p-5 rounded-xl border-l-4 border-l-blue-500" id="receipt-${r.id}">
+            <div class="flex justify-between items-start mb-3">
+              <div>
+                <span class="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">کاربر: <span class="font-mono text-slate-200">${r.chat_id}</span></span>
+                <span class="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded mr-2">پلن: <span class="text-blue-300">${r.target_plan}</span></span>
+              </div>
+              <span class="text-xs text-slate-500 font-mono">${new Date(r.created_at).toLocaleString('fa-IR')}</span>
+            </div>
+            
+            <div class="bg-slate-900/50 p-3 rounded-lg mb-4 font-mono text-sm text-white break-all border border-slate-700">
+              <span class="text-slate-500 text-xs mr-2">TXID:</span> ${r.txid_or_receipt}
+            </div>
+            
+            <div class="flex items-center gap-4 mb-4 text-sm">
+              <div>ارز پرداختی: <strong class="text-white">${r.crypto_amount || '?'} ${r.crypto_currency || ''}</strong></div>
+              <div class="text-slate-500">|</div>
+              <div>مبلغ معادل: <strong class="text-white">${Number(r.amount_toman).toLocaleString()} تومان</strong></div>
+            </div>
+
+            ${r.notes ? `<div class="text-sm text-slate-300 mb-4 bg-slate-800 p-3 rounded-lg border border-slate-700">📝 توضیحات: ${r.notes}</div>` : ''}
+            
+            <div class="flex gap-2">
+              <button onclick="handleAction('${r.id}', 'approve')" class="bg-green-600 hover:bg-green-500 text-white text-sm px-4 py-2 rounded-lg transition flex-1 flex justify-center items-center gap-1">
+                <i class="ph-bold ph-check"></i> تایید و تحویل سرویس
+              </button>
+              <button onclick="handleAction('${r.id}', 'reject')" class="bg-red-600/80 hover:bg-red-500 text-white text-sm px-4 py-2 rounded-lg transition flex justify-center items-center gap-1">
+                <i class="ph-bold ph-x"></i> رد تراکنش
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="text-center py-8 text-red-400 glass rounded-xl">خطا در ارتباط با سرور</div>`;
+      }
+    }
+
+    async function handleAction(txId, actionType) {
+      if(!confirm(`آیا از ${actionType === 'approve' ? 'تایید' : 'رد'} این تراکنش اطمینان دارید؟`)) return;
+      
+      const pass = document.getElementById('admin-pass').value;
+      const btn = event.currentTarget;
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<div class="loader"></div>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/adminManage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: actionType, tx_id: txId, admin_pass: pass })
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+          alert('✅ عملیات با موفقیت انجام شد و پیام به کاربر ارسال گردید.');
+          document.getElementById(`receipt-${txId}`).remove();
+        } else {
+          alert('❌ خطا: ' + (data.error || 'ناشناخته'));
+        }
+      } catch (e) {
+        alert('خطای ارتباط با سرور');
+      } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+      }
+    }
+
+    async function sendMessage() {
+      const chatId = document.getElementById('msg-chat-id').value;
+      const text = document.getElementById('msg-text').value;
+      const pass = document.getElementById('admin-pass').value;
+
+      if (!chatId || !text) return alert("آیدی و متن پیام الزامی است.");
+
+      const btn = event.currentTarget;
+      btn.innerText = 'در حال ارسال...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/adminManage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'send_message', target_chat_id: chatId, message_text: text, admin_pass: pass })
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+          alert('✅ پیام با موفقیت به تلگرام کاربر ارسال شد.');
+          document.getElementById('msg-text').value = '';
+        } else {
+          alert('❌ خطا: ' + (data.error || 'ناشناخته'));
+        }
+      } catch (e) {
+        alert('خطای ارتباط با سرور');
+      } finally {
+        btn.innerText = 'ارسال پیام به تلگرام کاربر';
+        btn.disabled = false;
+      }
+    }
+
+    window.onload = fetchPendingReceipts;
+  </script>
+</body>
+</html>
