@@ -8,8 +8,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // دریافت اطلاعات شخصی کاربر
-    const { data: user, error: userError } = await supabase
+    // ۱. دریافت اطلاعات اصلی کاربر
+    let { data: user, error: userError } = await supabase
       .from("users")
       .select("*")
       .eq("chat_id", chat_id)
@@ -17,31 +17,37 @@ export default async function handler(req, res) {
 
     if (userError) throw userError;
 
-    // اگر کاربر جدید است، آن را در دیتابیس می‌سازیم
-    let userData = user;
-    if (!userData) {
+    // ثبت‌نام سریع در صورتی که کاربر قبلاً با دکمه ربات استارت نکرده باشد
+    if (!user) {
       const { data: newUser, error: insertError } = await supabase
         .from("users")
-        .insert({ chat_id: chat_id, wallet_balance: 0, role: "user" })
+        .insert({ chat_id: chat_id, wallet_balance: 0, wallet_trx: 0, role: "user", total_referrals: 0 })
         .select()
         .single();
       
       if (insertError) throw insertError;
-      userData = newUser;
+      user = newUser;
     }
 
-    // دریافت لیست کانفیگ‌ها (سرویس‌های) فعال همین کاربر
+    // ۲. دریافت سرویس‌های خریداری شده (فعال) کاربر
     const { data: services } = await supabase
       .from("configs")
       .select("*")
       .eq("owner_id", chat_id)
       .eq("status", "sold");
 
+    // ۳. دریافت تاریخچه کامل تراکنش‌ها و مرتب‌سازی جدیدترین به قدیمی‌ترین
+    const { data: transactions } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("chat_id", chat_id)
+      .order('created_at', { ascending: false });
+
+    // بازگرداندن تمام اطلاعات برای نمایش در داشبورد
     return res.status(200).json({
-      chat_id: userData.chat_id,
-      balance: userData.wallet_balance || 0,
-      role: userData.role,
-      services: services || []
+      user: user,
+      services: services || [],
+      transactions: transactions || []
     });
 
   } catch (e) {
