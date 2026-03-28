@@ -1,120 +1,94 @@
-import { supabase } from "../lib/supabase"
+import { supabase } from "../lib/supabase";
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  const { action, admin_pass, tx_id, target_chat_id, message_text } = req.body;
+  const { action, admin_pass, tx_id, plan, v2ray, panel, message_text, target_chat_id } = req.body;
 
-  // یک رمز ساده برای جلوگیری از دسترسی افراد متفرقه به پنل (می‌توانید تغییر دهید)
   if (admin_pass !== 'admin123') {
-    return res.status(401).json({ error: "رمز عبور ادمین اشتباه است." });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+  const TOKEN = process.env.TELEGRAM_TOKEN;
 
-  // --- تابع کمکی برای ارسال پیام به تلگرام ---
-  const sendTelegramMessage = async (chatId, text) => {
+  const sendTg = async (id, text) => {
     try {
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+      await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: "Markdown" })
+        body: JSON.stringify({ chat_id: id, text, parse_mode: "Markdown" })
       });
-    } catch (err) {
-      console.error("Telegram sending error:", err);
-    }
+    } catch (e) { console.error(e); }
   };
 
   try {
-    // ۱. دریافت لیست تراکنش‌های معلق
     if (action === 'get_pending') {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .in('status', ['pending', 'pending_verification'])
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      return res.status(200).json({ receipts: data });
+      const { data } = await supabase.from('transactions').select('*').in('status', ['pending', 'pending_verification']).order('created_at', { ascending: false });
+      return res.status(200).json({ receipts: data || [] });
     }
 
-    // ۲. تایید فاکتور و تحویل کانفیگ
-    else if (action === 'approve') {
-      if (!tx_id) return res.status(400).json({ error: "آیدی تراکنش نامعتبر است." });
+    if (action === 'get_inventory') {
+      const { data } = await supabase.from('configs').select('plan_name').eq('status', 'available');
+      const stats = data.reduce((acc, curr) => {
+        acc[curr.plan_name] = (acc[curr.plan_name] || 0) + 1;
+        return acc;
+      }, {});
+      return res.status(200).json({ stats });
+    }
 
-      // گرفتن اطلاعات تراکنش
-      const { data: txData } = await supabase.from('transactions').select('*').eq('id', tx_id).single();
-      if (!txData) return res.status(404).json({ error: "تراکنش یافت نشد." });
+    if (action === 'add_config') {
+      const { error } = await supabase.from('configs').insert({ plan_name: plan, v2ray_uri: v2ray, web_panel_url: panel });
+      if (error) throw error;
+      return res.status(200).json({ ok: true });
+    }
 
-      // پیدا کردن یک کانفیگ آزاد در انبار برای این پلن
-      const { data: configData } = await supabase
-        .from('configs')
-        .select('*')
-        .eq('plan_name', txData.target_plan)
-        .eq('status', 'available')
-        .limit(1)
-        .single();
+    if (action === 'get_users') {
+      const { data } = await supabase.from('users').select('*').order('created_at', { ascending: false }).limit(50);
+      return res.status(200).json({ users: data || [] });
+    }
 
-      if (!configData) {
-        return res.status(400).json({ error: "انبار خالی است! هیچ کانفیگ آزادی برای این پلن وجود ندارد." });
-      }
+    if (action === 'approve') {
+      const { data: tx } = await supabase.from('transactions').select('*').eq('id', tx_id).single();
+      const { data: conf } = await supabase.from('configs').select('*').eq('plan_name', tx.target_plan).eq('status', 'available').limit(1).single();
+      
+      if (!conf) throw new Error("انبار خالی است!");
 
-      // فروش کانفیگ و تایید تراکنش
-      await supabase.from('configs').update({ status: 'sold', owner_id: txData.chat_id, sold_at: new Date() }).eq('id', configData.id);
+      await supabase.from('configs').update({ status: 'sold', owner_id: tx.chat_id, sold_at: new Date() }).eq('id', conf.id);
       await supabase.from('transactions').update({ status: 'approved', handled_at: new Date() }).eq('id', tx_id);
 
-      // --- محاسبه پورسانت معرف (0.5 ترون به ازای هر 1 گیگ) ---
-      const { data: buyer } = await supabase.from('users').select('*').eq('chat_id', txData.chat_id).single();
-      if (buyer && buyer.referrer_id) {
-        // بدست آوردن حجم پلن
-        const { data: planData } = await supabase.from('plans').select('gb_amount').eq('internal_name', txData.target_plan).single();
-        const gb = planData?.gb_amount || 0;
-        
-        if (gb > 0) {
-          const rewardTrx = gb * 0.5; // قانون شما: 0.5 TRX به ازای هر 1 گیگ
-          const { data: referrer } = await supabase.from('users').select('wallet_trx').eq('chat_id', buyer.referrer_id).single();
-          
-          if (referrer) {
-            await supabase.from('users').update({ wallet_trx: Number(referrer.wallet_trx || 0) + rewardTrx }).eq('chat_id', buyer.referrer_id);
-            // ارسال پیام تشویقی به معرف
-            await sendTelegramMessage(buyer.referrer_id, `🎊 **مژده! پورسانت جدید واریز شد!**\n\nزیرمجموعه شما یک خرید انجام داد.\nمبلغ \`${rewardTrx} TRX\` به عنوان پاداش به کیف پول شما در ربات اضافه شد.`);
-          }
+      // پورسانت معرف
+      const { data: user } = await supabase.from('users').select('referrer_id').eq('chat_id', tx.chat_id).single();
+      if (user?.referrer_id) {
+        const { data: planData } = await supabase.from('plans').select('gb_amount').eq('internal_name', tx.target_plan).single();
+        const reward = (planData?.gb_amount || 0) * 0.5;
+        if (reward > 0) {
+          const { data: ref } = await supabase.from('users').select('wallet_trx').eq('chat_id', user.referrer_id).single();
+          await supabase.from('users').update({ wallet_trx: (ref.wallet_trx || 0) + reward }).eq('chat_id', user.referrer_id);
+          await sendTg(user.referrer_id, `🎊 **پاداش دعوت!**\nمبلغ \`${reward} TRX\` بابت خرید زیرمجموعه به حساب شما واریز شد.`);
         }
       }
 
-      // ارسال پیام موفقیت و کانفیگ به مشتری
-      const successMsg = `🎉 **سفارش شما تایید شد!**\n\nسپاس از خرید شما. سرویس شما هم‌اکنون فعال است.\n\n🚀 **کانفیگ اختصاصی شما:**\n\`${configData.v2ray_uri}\`\n\n📊 **لینک مشاهده مصرف (پنل وب):**\n${configData.web_panel_url}\n\nتیم پشتیبانی نُوا همواره در کنار شماست.`;
-      await sendTelegramMessage(txData.chat_id, successMsg);
-
-      return res.status(200).json({ success: true });
+      await sendTg(tx.chat_id, `🎉 **سفارش تایید شد!**\n\n🚀 کانفیگ:\n\`${conf.v2ray_uri}\`\n\n📊 پنل مصرف:\n${conf.web_panel_url}`);
+      return res.status(200).json({ ok: true });
     }
 
-    // ۳. رد کردن فاکتور
-    else if (action === 'reject') {
-      if (!tx_id) return res.status(400).json({ error: "آیدی تراکنش نامعتبر است." });
-      
-      const { data: txData } = await supabase.from('transactions').select('chat_id').eq('id', tx_id).single();
-      await supabase.from('transactions').update({ status: 'rejected', handled_at: new Date() }).eq('id', tx_id);
-      
-      if (txData) {
-        await sendTelegramMessage(txData.chat_id, "❌ **سفارش شما رد شد.**\n\nمتأسفانه پرداخت شما توسط کارشناسان ما تایید نشد. این مشکل ممکن است به دلیل مغایرت مبلغ واریزی یا اشتباه بودن هش تراکنش (TXID) باشد.\n\nلطفاً در صورت بروز مشکل با پشتیبانی در تماس باشید.");
+    if (action === 'reject') {
+      const { data: tx } = await supabase.from('transactions').select('chat_id').eq('id', tx_id).single();
+      await supabase.from('transactions').update({ status: 'rejected' }).eq('id', tx_id);
+      await sendTg(tx.chat_id, "❌ **پرداخت شما تایید نشد.**\nدر صورت اشتباه، با پشتیبانی در تماس باشید.");
+      return res.status(200).json({ ok: true });
+    }
+
+    if (action === 'broadcast') {
+      const { data: users } = await supabase.from('users').select('chat_id');
+      for (const u of users) {
+        await sendTg(u.chat_id, message_text);
       }
-      return res.status(200).json({ success: true });
+      return res.status(200).json({ ok: true });
     }
 
-    // ۴. ارسال پیام دستی (پشتیبانی) به کاربر خاص
-    else if (action === 'send_message') {
-      if (!target_chat_id || !message_text) return res.status(400).json({ error: "اطلاعات پیام ناقص است." });
-      
-      const formattedMsg = `💬 **پیام از طرف مدیریت نُوا:**\n\n${message_text}`;
-      await sendTelegramMessage(target_chat_id, formattedMsg);
-      return res.status(200).json({ success: true });
-    }
-
-    return res.status(400).json({ error: "عملیات نامشخص" });
-
-  } catch (error) {
-    console.error("Admin Action Error:", error);
-    return res.status(500).json({ error: error.message });
+    return res.status(400).json({ error: "Invalid action" });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 }
