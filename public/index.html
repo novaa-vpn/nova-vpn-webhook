@@ -7,8 +7,8 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
-<!-- فونت حرفه‌ای -->
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;500;700&display=swap" rel="stylesheet">
+<!-- فونت‌ها -->
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;500;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
 
@@ -29,29 +29,40 @@ body{
 }
 
 /* HEADER */
-.header{
-  text-align:center;
-  margin-bottom:15px;
-}
-
 .logo{
-  font-size:22px;
-  font-weight:700;
+  font-family:'Orbitron', sans-serif;
+  font-size:24px;
+  text-align:center;
+  color:#22c55e;
+  text-shadow:0 0 10px #22c55e88;
 }
 
 .secure{
+  text-align:center;
   font-size:12px;
   color:#94a3b8;
+  margin-top:5px;
 }
 
-/* BANNER */
-.banner{
-  background:linear-gradient(90deg,#22c55e,#16a34a);
-  padding:12px;
-  border-radius:12px;
-  text-align:center;
+/* تبلیغ متحرک */
+.marquee{
+  margin-top:10px;
+  overflow:hidden;
+  background:#022c22;
+  padding:10px;
+  border-radius:10px;
   font-size:13px;
-  margin-bottom:10px;
+}
+
+.marquee span{
+  display:inline-block;
+  padding-left:100%;
+  animation:scroll 15s linear infinite;
+}
+
+@keyframes scroll{
+  0%{transform:translateX(0);}
+  100%{transform:translateX(-100%);}
 }
 
 /* CARD */
@@ -61,6 +72,24 @@ body{
   padding:15px;
   border-radius:16px;
   margin-top:12px;
+}
+
+/* PLAN */
+.plan{
+  background:#020617;
+  padding:12px;
+  border-radius:12px;
+  margin-top:8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+  border:1px solid transparent;
+}
+
+.plan.active{
+  border:1px solid #22c55e;
+  background:#022c22;
 }
 
 /* BUTTON */
@@ -73,26 +102,10 @@ button{
   font-size:14px;
   font-weight:600;
   cursor:pointer;
-  transition:0.2s;
-}
-
-button:active{
-  transform:scale(0.97);
 }
 
 .primary{
   background:linear-gradient(90deg,#22c55e,#16a34a);
-}
-
-.secondary{
-  background:#1e293b;
-}
-
-/* PLAN */
-.plans{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
 }
 
 /* CRYPTO */
@@ -105,16 +118,21 @@ button:active{
 
 .wallet{
   background:#020617;
-  padding:8px;
+  padding:10px;
   border-radius:8px;
   font-size:12px;
   margin-top:5px;
+  word-break:break-all;
 }
 
 .copy-btn{
-  color:#22c55e;
+  margin-top:6px;
+  padding:6px;
+  background:#1e293b;
+  border-radius:8px;
   font-size:12px;
-  margin-top:5px;
+  text-align:center;
+  cursor:pointer;
 }
 
 .qr{
@@ -137,15 +155,7 @@ input,textarea{
   margin-top:8px;
 }
 
-/* FOOTER */
-.footer{
-  margin-top:10px;
-  font-size:12px;
-  color:#94a3b8;
-  text-align:center;
-}
-
-/* SOCIAL BUTTONS */
+/* SOCIAL */
 .socials{
   display:flex;
   gap:8px;
@@ -155,55 +165,47 @@ input,textarea{
 .socials a{
   flex:1;
   text-align:center;
-  padding:10px;
-  border-radius:10px;
+  padding:12px;
+  border-radius:12px;
   text-decoration:none;
   font-size:13px;
 }
 
-.support{
-  background:#1e293b;
-  color:white;
-}
-
-.channel{
-  background:#22c55e;
-  color:black;
-}
+.support{background:#1e293b;color:white;}
+.channel{background:#22c55e;color:black;}
 
 </style>
-
 </head>
 
 <body>
 
 <div class="container">
 
-<div class="header">
-<div class="logo">🚀 Nova VPN</div>
-<div class="secure">اتصال امن | سرعت بالا | بدون قطعی</div>
-</div>
+<!-- HEADER -->
+<div class="logo">🔐 NOVA VPN</div>
+<div class="secure">Secure • Fast • No Disconnect</div>
 
-<div class="banner">
-🔥 سرویس استارلینک واقعی | بدون قطعی | تست شده
+<!-- تبلیغات -->
+<div class="marquee">
+<span>
+🔥 استارلینک واقعی | بدون قطعی | سرعت بالا 🚀
+💎 پنل اختصاصی | نمایش لحظه‌ای مصرف
+⚡ تحویل فوری پس از پرداخت
+🔒 امنیت بالا | آیپی ثابت | مناسب ترید
+</span>
 </div>
 
 <!-- PLANS -->
 <div class="card">
-<h3>💎 انتخاب پلن VIP</h3>
-<div class="plans" id="plans"></div>
+<h3>💎 انتخاب پلن</h3>
+<div id="plans"></div>
 </div>
 
 <!-- CRYPTO -->
 <div class="card">
-<h3>💰 پرداخت سریع با ارز دیجیتال</h3>
-
+<h3>💰 پرداخت</h3>
 <div id="selectedPlan">یک پلن انتخاب کنید</div>
 <div id="crypto"></div>
-
-<div class="footer">
-⚠️ مبلغ دقیق ارسال شود — کارمزد با شماست
-</div>
 </div>
 
 <!-- PAYMENT -->
@@ -211,15 +213,14 @@ input,textarea{
 <h3>📤 ثبت پرداخت</h3>
 
 <input id="tx" placeholder="TX HASH">
-<textarea id="desc" placeholder="توضیحات (اختیاری)"></textarea>
+<textarea id="desc" placeholder="توضیحات"></textarea>
 
 <button class="primary" onclick="send()">ثبت پرداخت</button>
 </div>
 
 <!-- SOCIAL -->
 <div class="card">
-
-<h3>📢 ارتباط با ما</h3>
+<h3>📢 ارتباط</h3>
 
 <div class="socials">
 <a class="support" href="https://t.me/NovaVPN_Sup">پشتیبانی</a>
@@ -249,6 +250,7 @@ const plans=[
 
 let prices={}
 
+// قیمت ارز
 async function loadPrices(){
 let r=await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether,tron,the-open-network,ripple&vs_currencies=usd")
 let d=await r.json()
@@ -261,20 +263,24 @@ XRP:d.ripple.usd
 }
 }
 
+// نمایش پلن
 function renderPlans(){
 let html=""
-plans.forEach(p=>{
-html+=`<button class="secondary" onclick="selectPlan(${p.price},'${p.name}')">${p.name} - $${p.price}</button>`
+plans.forEach((p,i)=>{
+html+=`
+<div class="plan" onclick="selectPlan(${p.price},'${p.name}',this)">
+<span>${p.name}</span>
+<span>$${p.price}</span>
+</div>`
 })
 document.getElementById("plans").innerHTML=html
 }
 
-function copy(text){
-navigator.clipboard.writeText(text)
-alert("کپی شد")
-}
+// انتخاب پلن
+function selectPlan(price,name,el){
 
-function selectPlan(price,name){
+document.querySelectorAll(".plan").forEach(p=>p.classList.remove("active"))
+el.classList.add("active")
 
 document.getElementById("selectedPlan").innerHTML=
 `پلن انتخابی: ${name} - $${price}`
@@ -294,6 +300,7 @@ html+=`
 <div class="wallet">${wallets[c]}</div>
 
 <div class="copy-btn" onclick="copy('${wallets[c]}')">📋 کپی آدرس</div>
+<div class="copy-btn" onclick="copy('${amount}')">💰 کپی مقدار</div>
 
 <div class="qr" id="qr_${c}"></div>
 
@@ -309,6 +316,13 @@ QRCode.toCanvas(document.getElementById("qr_"+c), wallets[c])
 
 }
 
+// کپی
+function copy(text){
+navigator.clipboard.writeText(text)
+alert("کپی شد")
+}
+
+// ارسال
 async function send(){
 
 let tx=document.getElementById("tx").value
