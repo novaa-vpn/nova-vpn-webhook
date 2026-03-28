@@ -3,20 +3,24 @@ import { supabase } from "../lib/supabase"
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  const { chat_id, plan, txid, amount } = req.body;
+  // دریافت مقادیر ارسال شده از فرم خرید در فرانت‌اند
+  const { chat_id, plan, txid, amount_toman, crypto_currency, crypto_amount, notes } = req.body;
 
   if (!chat_id || !txid || !plan) {
     return res.status(400).json({ error: "Missing required data" });
   }
 
   try {
-    // ثبت سفارش با وضعیت pending_verification برای سیستم تایید اتوماتیک
+    // درج تراکنش جدید با تمامی فیلدهای مورد نیاز و وضعیت اولیه اعتبارسنجی
     const { error } = await supabase.from("transactions").insert({
       chat_id: chat_id,
       txid_or_receipt: txid,
       target_plan: plan,
-      amount_toman: amount,
-      status: "pending_verification"
+      amount_toman: amount_toman,
+      crypto_currency: crypto_currency,
+      crypto_amount: crypto_amount,
+      notes: notes || null,
+      status: "pending_verification" // وضعیت اولیه
     });
 
     if (error) throw error;
