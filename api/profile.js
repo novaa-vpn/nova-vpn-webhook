@@ -1,4 +1,4 @@
-import { supabase } from "../lib/supabase"
+import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
   const { chat_id } = req.query;
@@ -6,6 +6,15 @@ export default async function handler(req, res) {
   if (!chat_id) {
     return res.status(400).json({ error: "chat_id required" });
   }
+
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    return res.status(500).json({ error: "Supabase credentials missing." });
+  }
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   try {
     // ۱. دریافت اطلاعات اصلی کاربر
