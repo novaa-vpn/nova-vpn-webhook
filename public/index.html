@@ -309,15 +309,14 @@
     tg.expand();
     tg.ready();
     
-    // User Data from Telegram
     const tgUser = tg.initDataUnsafe?.user || { id: 111222333, first_name: "کاربر مهمان" };
     const botUsername = "NoovaVpn_Bot";
     
     let currentUser = null;
     let currentPlan = null;
     let selectedCrypto = 'USDT';
+    let plans = []; // پلن‌ها از دیتابیس خوانده خواهند شد
     
-    // Crypto Wallets & Current API Prices (Fallback)
     const cryptoData = {
       USDT: { symbol: 'USDT', network: 'TRC20', wallet: 'TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3', price: 1.00 },
       TRX:  { symbol: 'TRX',  network: 'TRC20', wallet: 'TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3', price: 0.12 },
@@ -325,28 +324,16 @@
       XRP:  { symbol: 'XRP',  network: 'Ripple',wallet: 'rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F', price: 0.60 }
     };
 
-    // Prices as requested
-    const plans = [
-      { id: "starlink_1gb", name: "۱ گیگابایت", desc: "استارلینک (تضمینی)", priceUsd: 8.78, priceToman: "1,350,000" },
-      { id: "starlink_2gb", name: "۲ گیگابایت", desc: "استارلینک (تضمینی)", priceUsd: 17.04, priceToman: "2,650,000" },
-      { id: "starlink_3gb", name: "۳ گیگابایت", desc: "استارلینک (تضمینی)", priceUsd: 24.43, priceToman: "3,800,000" },
-      { id: "starlink_4gb", name: "۴ گیگابایت", desc: "استارلینک (تضمینی)", priceUsd: 32.80, priceToman: "5,100,000" },
-      { id: "starlink_5gb", name: "۵ گیگابایت", desc: "استارلینک (تضمینی)", priceUsd: 47.59, priceToman: "7,400,000" },
-      { id: "eco_25gb", name: "۲۵ گیگابایت (اقتصادی)", desc: "مخصوص اینستاگرام (فعلاً غیرفعال)", priceUsd: 37.94, priceToman: "5,900,000", disabled: true }
-    ];
-
     window.onload = async () => {
-      // Set UI defaults
       document.getElementById('buy-user-name').innerText = tgUser.first_name;
       document.getElementById('buy-user-id').innerText = `ID: ${tgUser.id}`;
       document.getElementById('user-name').innerText = tgUser.first_name;
       document.getElementById('user-id').innerText = `ID: ${tgUser.id}`;
       document.getElementById('ref-link').value = `https://t.me/${botUsername}?start=${tgUser.id}`;
       
-      renderPlans();
       updateCryptoUI();
       await fetchCryptoPrices();
-      await loadUserData();
+      await loadUserData(); // پلن‌ها هم اینجا دریافت می‌شوند
     };
 
     function switchTab(tabId, btnElement) {
@@ -369,33 +356,44 @@
 
     function renderPlans() {
       const container = document.getElementById('plans-container');
-      container.innerHTML = plans.map(p => `
-        <div class="glass plan-card p-4 rounded-xl flex justify-between items-center ${p.disabled ? 'disabled' : 'cursor-pointer'}" onclick="${p.disabled ? '' : `selectPlan('${p.id}', this)`}">
+      if (plans.length === 0) {
+        container.innerHTML = `<div class="glass p-4 rounded-xl text-center text-slate-400 text-sm">در حال حاضر محصولی برای فروش وجود ندارد.</div>`;
+        return;
+      }
+
+      container.innerHTML = plans.map(p => {
+        const isDisabled = !p.is_active;
+        // تبدیل تومان به دلار برای نمایش
+        const usdValue = (p.price_toman / (cryptoData.USDT.price > 1 ? cryptoData.USDT.price : 60000)).toFixed(2);
+        
+        return `
+        <div class="glass plan-card p-4 rounded-xl flex justify-between items-center ${isDisabled ? 'disabled' : 'cursor-pointer'}" onclick="${isDisabled ? '' : `selectPlan('${p.internal_name}', this, ${usdValue}, ${p.price_toman})`}">
           <div>
             <div class="text-sm font-bold text-white mb-1 flex items-center gap-1">
-              ${p.disabled ? '<i class="ph-fill ph-prohibit text-red-400"></i>' : '<i class="ph-fill ph-rocket text-blue-400"></i>'}
-              ${p.name}
+              ${isDisabled ? '<i class="ph-fill ph-prohibit text-red-400"></i>' : '<i class="ph-fill ph-rocket text-blue-400"></i>'}
+              ${p.title_fa}
             </div>
-            <div class="text-[10px] text-slate-400">${p.desc}</div>
+            <div class="text-[10px] text-slate-400">${isDisabled ? 'فعلا غیرفعال' : (p.gb_amount > 0 ? `${p.gb_amount} گیگابایت` : 'تضمینی و پرسرعت')}</div>
           </div>
           <div class="text-left">
-            <div class="text-green-400 font-mono text-sm font-bold">$${p.priceUsd}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">${p.priceToman} تومان</div>
+            <div class="text-green-400 font-mono text-sm font-bold">$${usdValue}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">${Number(p.price_toman).toLocaleString()} تومان</div>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     }
 
-    function selectPlan(planId, element) {
+    function selectPlan(planId, element, usdPrice, tomanPrice) {
       document.querySelectorAll('.plan-card').forEach(el => el.classList.remove('selected'));
       element.classList.add('selected');
-      currentPlan = plans.find(p => p.id === planId);
+      
+      const p = plans.find(x => x.internal_name === planId);
+      currentPlan = { id: planId, name: p.title_fa, priceUsd: usdPrice, priceToman: tomanPrice };
       
       const paymentSec = document.getElementById('payment-section');
       paymentSec.classList.remove('hidden');
       
       calculateExactAmount();
-      
       setTimeout(() => paymentSec.scrollIntoView({ behavior: 'smooth' }), 100);
     }
 
@@ -416,11 +414,17 @@
 
     function calculateExactAmount() {
       if(!currentPlan) return;
-      const usdValue = currentPlan.priceUsd;
       const cryptoPrice = cryptoData[selectedCrypto].price;
-      const exactAmount = (usdValue / cryptoPrice).toFixed(4); // 4 decimal places
+      // برای تتر قیمت ۱ در نظر گرفته شده، اگر نه قیمت دلاری تقسیم بر قیمت ارز
+      let exactAmount = 0;
+      if (selectedCrypto === 'USDT') {
+        exactAmount = currentPlan.priceUsd;
+      } else {
+        // برای تبدیل درست، قیمت تومانی محصول را به دلار تبدیل کرده و تقسیم بر قیمت ارز می‌کنیم
+        exactAmount = (currentPlan.priceUsd / cryptoPrice).toFixed(4); 
+      }
       
-      document.getElementById('plan-usd-value').innerText = usdValue;
+      document.getElementById('plan-usd-value').innerText = currentPlan.priceUsd;
       document.getElementById('exact-crypto-amount').innerText = exactAmount;
     }
 
@@ -450,7 +454,10 @@
         const res = await fetch(`/api/profile?chat_id=${tgUser.id}`);
         const data = await res.json();
         currentUser = data.user;
+        plans = data.plans || []; // ذخیره پلن‌ها در متغیر سراسری
         
+        renderPlans(); // رندر کردن پلن‌ها روی صفحه
+
         // Update Headers & Profile
         document.getElementById('header-balance-toman').innerText = Number(currentUser.wallet_balance || 0).toLocaleString() + " T";
         document.getElementById('header-balance-trx').innerText = Number(currentUser.wallet_trx || 0).toLocaleString() + " TRX";
