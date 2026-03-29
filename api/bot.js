@@ -1,10 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
-  // ۱. خواندن توکن از TELEGRAM_TOKEN یا ADMIN_TOKEN (بر اساس متغیرهای شما در ورسل)
-  const TOKEN = process.env.TELEGRAM_TOKEN || process.env.ADMIN_TOKEN;
+  // فقط از TELEGRAM_TOKEN می‌خوانیم تا تداخلی با رمزهای دیگر ایجاد نشود
+  const TOKEN = process.env.TELEGRAM_TOKEN;
+  
   if (!TOKEN) {
-    return res.status(500).json({ error: "توکن ربات تلگرام (TELEGRAM_TOKEN یا ADMIN_TOKEN) در متغیرهای محیطی Vercel یافت نشد." });
+    return res.status(500).json({ error: "لطفاً توکن BotFather را با نام TELEGRAM_TOKEN در ورسل ذخیره کنید." });
   }
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -14,7 +15,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers['host'];
-    // استفاده از توکن بررسی شده در مرحله ۱
+    // استفاده از توکن بررسی شده
     const webhookUrl = `${protocol}://${host}/${TOKEN}`;
     
     try {
@@ -59,7 +60,6 @@ export default async function handler(req, res) {
 
       // ---- دستور /start ----
       if (text.startsWith('/start')) {
-        // مدیریت لینک زیرمجموعه‌گیری
         let referrerId = null;
         const parts = text.split(' ');
         if (parts.length > 1 && !isNaN(parts[1])) {
@@ -67,7 +67,6 @@ export default async function handler(req, res) {
           if (referrerId === chatId) referrerId = null; 
         }
 
-        // ثبت‌نام یا آپدیت کاربر
         try {
           const { data: user } = await supabase.from('users').select('chat_id').eq('chat_id', chatId).maybeSingle();
           if (!user) {
@@ -85,7 +84,6 @@ export default async function handler(req, res) {
           }
         } catch (dbErr) { console.error("DB Error:", dbErr); }
 
-        // کیبورد هیبریدی (ترکیب مینی‌اپ و دکمه‌های متنی)
         const hybridKeyboard = {
           keyboard: [
             [{ text: "💎 باز کردن مینی اپ (سرعت بالا)", web_app: { url: `https://${req.headers['host']}/` } }],
@@ -100,7 +98,7 @@ export default async function handler(req, res) {
         await sendTg(chatId, welcomeText, hybridKeyboard);
       }
 
-      // ---- دکمه: خرید (اینترنت ضعیف) ----
+      // ---- دکمه: خرید ----
       else if (text === "🛒 خرید (اینترنت ضعیف)") {
         const { data: plans } = await supabase.from('plans').select('*').eq('is_active', true);
         if (!plans || plans.length === 0) {
@@ -116,7 +114,7 @@ export default async function handler(req, res) {
         await sendTg(chatId, "🛍 **لیست سرویس‌های موجود:**\nلطفاً پلن مورد نظر خود را انتخاب کنید:", { inline_keyboard: inlineKeyboard });
       }
 
-      // ---- دکمه: داشبورد من ----
+      // ---- دکمه: داشبورد ----
       else if (text === "👤 داشبورد من") {
         const { data: user } = await supabase.from('users').select('wallet_trx').eq('chat_id', chatId).maybeSingle();
         const { data: services } = await supabase.from('configs').select('*').eq('owner_id', chatId).eq('status', 'sold');
@@ -136,7 +134,7 @@ export default async function handler(req, res) {
 
       // ---- دکمه: لینک دعوت ----
       else if (text === "🔗 لینک دعوت من") {
-        const botUsername = "NoovaVpn_Bot"; // آیدی ربات خود را اینجا آپدیت کنید
+        const botUsername = "NoovaVpn_Bot"; 
         const refLink = `https://t.me/${botUsername}?start=${chatId}`;
         const refMsg = `🎁 **سیستم کسب درآمد نُوا**\n\nلینک اختصاصی شما:\n\`${refLink}\`\n\nبا دعوت هر نفر، به ازای هر ۱ گیگابایت خرید او، **۰.۵ ترون** پاداش می‌گیرید!`;
         await sendTg(chatId, refMsg);
@@ -147,9 +145,8 @@ export default async function handler(req, res) {
         await sendTg(chatId, "👨‍💻 جهت ارتباط با کارشناسان پشتیبانی به آیدی زیر پیام دهید:\n\n👉 @NovaVPN_Sup");
       }
 
-      // ---- دریافت هش تراکنش (TXID) ----
+      // ---- دریافت هش تراکنش ----
       else if (text.length >= 30 && text.match(/^[a-zA-Z0-9]+$/)) {
-        // بررسی اینکه آیا کاربر سفارش در حال انتظاری دارد یا خیر
         const { data: pendingTx } = await supabase.from('transactions').select('id').eq('chat_id', chatId).eq('status', 'pending_verification').order('created_at', { ascending: false }).limit(1).maybeSingle();
         
         if (pendingTx) {
@@ -160,32 +157,29 @@ export default async function handler(req, res) {
     }
 
     // --------------------------------------------------
-    // ۲. پردازش دکمه‌های شیشه‌ای (Callback Queries)
+    // ۲. پردازش دکمه‌های شیشه‌ای (Callback)
     // --------------------------------------------------
     else if (update.callback_query) {
       const call = update.callback_query;
       const chatId = call.message.chat.id;
       const data = call.data;
 
-      // وقتی کاربر روی خرید یک پلن کلیک می‌کند
       if (data.startsWith('buy_')) {
         const planName = data.replace('buy_', '');
         const { data: plan } = await supabase.from('plans').select('*').eq('internal_name', planName).maybeSingle();
         
         if (plan) {
-          // ایجاد فاکتور اولیه در دیتابیس
           await supabase.from('transactions').insert({
             chat_id: chatId, amount_toman: plan.price_toman, target_plan: planName, status: 'pending_verification', txid_or_receipt: 'AWAITING_TXID'
           });
 
-          const walletAddress = "TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3"; // آدرس ولت شما
+          const walletAddress = "TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3"; 
           const invoiceMsg = `🧾 **فاکتور خرید شما ایجاد شد**\n\n📌 **محصول:** ${plan.title_fa}\n💵 **مبلغ:** ${Number(plan.price_toman).toLocaleString()} تومان\n\n1️⃣ لطفاً معادل تتری/ترونی مبلغ فوق را به آدرس TRC20 زیر واریز کنید:\n\`${walletAddress}\`\n\n2️⃣ **پس از واریز، هش تراکنش (TXID) را همینجا کپی کرده و در ربات ارسال کنید.**`;
           
           await sendTg(chatId, invoiceMsg);
         }
       }
       
-      // تلگرام نیاز دارد که به Callback ها پاسخ داده شود تا لودینگ دکمه قطع شود
       await fetch(`https://api.telegram.org/bot${TOKEN}/answerCallbackQuery`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ callback_query_id: call.id })
       });
