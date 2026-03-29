@@ -1,4 +1,4 @@
-import { supabase } from "../lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
   // ۱. فقط متد POST مجاز است
@@ -9,17 +9,27 @@ export default async function handler(req, res) {
   const { action, admin_pass, tx_id, plan, v2ray, panel, message_text, target_chat_id } = req.body;
   
   // ۲. بررسی امنیت (رمز عبور)
-  // حتماً این رمز را با رمزی که در فایل index.html ادمین وارد می‌کنید ست کنید
   const SECRET_PASS = process.env.ADMIN_PASSWORD || "Nova@Manager2026";
 
   if (admin_pass !== SECRET_PASS) {
     return res.status(401).json({ error: "خطای امنیتی: رمز عبور اشتباه است." });
   }
 
+  // ۳. بررسی متغیرهای محیطی درون تابع (برای جلوگیری از کرش کردن سرور در صورت نبود متغیرها)
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
   const TOKEN = process.env.TELEGRAM_TOKEN;
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    return res.status(500).json({ error: "متغیرهای دیتابیس (SUPABASE_URL و SUPABASE_ANON_KEY) در تنظیمات Vercel یافت نشدند!" });
+  }
+
+  // اتصال ایمن به دیتابیس
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // تابع کمکی ارسال پیام تلگرام
   const sendTg = async (id, text) => {
+    if (!TOKEN) return;
     try {
       await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
         method: 'POST',
@@ -48,11 +58,9 @@ export default async function handler(req, res) {
     if (action === 'approve') {
       if (!tx_id) throw new Error("آیدی تراکنش ارسال نشده است.");
 
-      // دریافت اطلاعات تراکنش
       const { data: tx, error: txErr } = await supabase.from('transactions').select('*').eq('id', tx_id).maybeSingle();
       if (txErr || !tx) throw new Error("تراکنش در دیتابیس یافت نشد.");
 
-      // پیدا کردن کانفیگ خالی در انبار
       const { data: conf, error: confErr } = await supabase
         .from('configs')
         .select('*')
@@ -63,22 +71,12 @@ export default async function handler(req, res) {
       
       if (confErr || !conf) throw new Error("انبار خالی است! ابتدا از تب انبار، کانفیگ اضافه کنید.");
 
-      // ۱. رزرو کانفیگ برای کاربر
-      const { error: updConfErr } = await supabase.from('configs').update({ 
-        status: 'sold', 
-        owner_id: tx.chat_id, 
-        sold_at: new Date() 
-      }).eq('id', conf.id);
+      const { error: updConfErr } = await supabase.from('configs').update({ status: 'sold', owner_id: tx.chat_id, sold_at: new Date() }).eq('id', conf.id);
       if (updConfErr) throw updConfErr;
 
-      // ۲. تایید نهایی تراکنش
-      const { error: updTxErr } = await supabase.from('transactions').update({ 
-        status: 'approved', 
-        handled_at: new Date() 
-      }).eq('id', tx_id);
+      const { error: updTxErr } = await supabase.from('transactions').update({ status: 'approved', handled_at: new Date() }).eq('id', tx_id);
       if (updTxErr) throw updTxErr;
 
-      // ۳. محاسبه و واریز پورسانت ترون (0.5 TRX به ازای هر 1 گیگ)
       const { data: buyer } = await supabase.from('users').select('referrer_id').eq('chat_id', tx.chat_id).maybeSingle();
       if (buyer?.referrer_id) {
         const { data: planData } = await supabase.from('plans').select('gb_amount').eq('internal_name', tx.target_plan).maybeSingle();
@@ -94,7 +92,6 @@ export default async function handler(req, res) {
         }
       }
 
-      // ۴. ارسال پیام موفقیت و کانفیگ به مشتری
       const successMsg = `🎉 **سفارش شما تایید شد!**\n\n🚀 **کانفیگ اختصاصی شما:**\n\`${conf.v2ray_uri}\`\n\n📊 **پنل مشاهده مصرف:**\n${conf.web_panel_url}`;
       await sendTg(tx.chat_id, successMsg);
 
@@ -126,20 +123,33 @@ export default async function handler(req, res) {
 
     // --- عملیات افزودن کانفیگ جدید ---
     if (action === 'add_config') {
-      const { error } = await supabase.from('configs').insert({ 
-        plan_name: plan, 
-        v2ray_uri: v2ray, 
-        web_panel_url: panel 
-      });
+      const { error } = await supabase.from('configs').insert({ plan_name: plan, v2ray_uri: v2ray, web_panel_url: panel });
       if (error) throw error;
+      return res.status(200).json({ ok: true });
+    }
+    
+    // --- عملیات دریافت لیست کاربران ---
+    if (action === 'get_users') {
+      const { data, error } = await supabase.from('users').select('*').order('joined_at', { ascending: false }).limit(50);
+      if (error) throw error;
+      return res.status(200).json({ users: data || [] });
+    }
+    
+    // --- عملیات ارسال پیام همگانی ---
+    if (action === 'broadcast') {
+      if (!message_text) throw new Error("متن پیام خالی است.");
+      const { data: users } = await supabase.from('users').select('chat_id');
+      if (users) {
+        for (const u of users) {
+          await sendTg(u.chat_id, message_text);
+        }
+      }
       return res.status(200).json({ ok: true });
     }
 
     return res.status(400).json({ error: "عملیات نامعتبر است." });
 
   } catch (err) {
-    // چاپ خطای دقیق در لاگ ورسل برای عیب‌یابی راحت‌تر
-    console.error("🚨 CRITICAL ADMIN ERROR:", err.message);
     return res.status(500).json({ error: err.message });
   }
 }
