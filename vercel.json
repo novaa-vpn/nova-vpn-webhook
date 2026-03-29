@@ -1,15 +1,41 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/admin", "destination": "/admin/index.html" },
-    { "source": "/setup", "destination": "/api/bot.js" },
-    { "source": "/api/adminManage", "destination": "/api/adminManage.js" },
-    { "source": "/api/cryptoPrice", "destination": "/api/cryptoPrice.js" },
-    { "source": "/api/profile", "destination": "/api/profile.js" },
-    { "source": "/api/submitReceipt", "destination": "/api/submitReceipt.js" },
-    { "source": "/api/checkTronPayment", "destination": "/api/checkTronPayment.js" },
-    { "source": "/:token([0-9]+:[a-zA-Z0-9_-]+)", "destination": "/api/bot.js" },
-    { "source": "/(.*)", "destination": "/public/index.html" }
+    {
+      "source": "/admin",
+      "destination": "/public/admin/index.html"
+    },
+    {
+      "source": "/setup",
+      "destination": "/api/bot.js"
+    },
+    {
+      "source": "/api/adminManage",
+      "destination": "/api/adminManage.js"
+    },
+    {
+      "source": "/api/cryptoPrice",
+      "destination": "/api/cryptoPrice.js"
+    },
+    {
+      "source": "/api/profile",
+      "destination": "/api/profile.js"
+    },
+    {
+      "source": "/api/submitReceipt",
+      "destination": "/api/submitReceipt.js"
+    },
+    {
+      "source": "/api/checkTronPayment",
+      "destination": "/api/checkTronPayment.js"
+    },
+    {
+      "source": "/:token([0-9]+:[a-zA-Z0-9_-]+)",
+      "destination": "/api/bot.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/public/index.html"
+    }
   ]
 }
-
