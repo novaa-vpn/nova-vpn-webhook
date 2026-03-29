@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
   const TOKEN = process.env.TELEGRAM_TOKEN;
   
-  // آدرس ولت‌های شما برای هر ارز (بر اساس کدهای فرانت‌اند)
+  // آدرس ولت‌های شما
   const WALLETS = {
     USDT: "TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3",
     TRX:  "TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3",
@@ -20,7 +20,6 @@ export default async function handler(req, res) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   try {
-    // ۱. پیدا کردن تمام تراکنش‌های معلق
     const { data: pendingTxs, error: txError } = await supabase
       .from('transactions')
       .select('*')
@@ -32,14 +31,49 @@ export default async function handler(req, res) {
     }
 
     let results = [];
+    let processedTxidsInThisRun = new Set(); // جلوگیری از ثبت همزمان دو سفارش با یک هش در یک لحظه
 
-    // ۲. بررسی تک تک تراکنش‌ها در شبکه‌های مختلف
     for (const tx of pendingTxs) {
       const txid = tx.txid_or_receipt;
       const currency = tx.crypto_currency;
       let isPaymentValid = false;
       
       if (!txid || txid.length < 10) continue;
+
+      // ==========================================
+      // 🛡️ سیستم امنیتی ضد کلاهبرداری (Anti-Fraud)
+      // ==========================================
+      // ۱. بررسی اینکه آیا این هش در همین لحظه پردازش شده است؟
+      if (processedTxidsInThisRun.has(txid)) {
+        await supabase.from('transactions').update({ status: 'rejected', notes: 'هش تکراری (همزمان)' }).eq('id', tx.id);
+        results.push({ txid, status: "Rejected - Duplicate TXID" });
+        continue;
+      }
+
+      // ۲. بررسی در دیتابیس که آیا این هش قبلاً به کاربر دیگری کانفیگ داده است؟
+      const { data: usedTx } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('txid_or_receipt', txid)
+        .eq('status', 'approved')
+        .limit(1)
+        .maybeSingle();
+
+      if (usedTx) {
+        // این هش قبلاً استفاده شده است! کلاهبرداری تشخیص داده شد.
+        await supabase.from('transactions').update({ status: 'rejected', notes: 'این رسید قبلاً استفاده شده است!' }).eq('id', tx.id);
+        results.push({ txid, status: "Rejected - Already Used TXID" });
+        
+        // ارسال پیام اخطار به کاربر سوءاستفاده‌گر
+        await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: tx.chat_id, text: "❌ **اخطار امنیتی:**\n\nهش تراکنشی که ارسال کردید قبلاً در سیستم ثبت و استفاده شده است. از ارسال رسیدهای تکراری خودداری کنید." })
+        });
+        continue; // پرش به تراکنش بعدی
+      }
+
+      // اضافه کردن هش به لیست بررسی شده‌های این دوره
+      processedTxidsInThisRun.add(txid);
 
       try {
         // ==========================================
@@ -75,12 +109,9 @@ export default async function handler(req, res) {
           
           if (data && data.actions && data.actions.length > 0) {
             for (const action of data.actions) {
-              // بررسی موفق بودن تراکنش و نوع آن
               if (action.type === 'TonTransfer' && action.status === 'ok') {
                 const transfer = action.TonTransfer;
-                const amountPaid = transfer.amount / 1e9; // تون ۹ صفر اعشار دارد
-                
-                // در شبکه تون با یک ارفاق جزئی 0.05 چک میکنیم
+                const amountPaid = transfer.amount / 1e9; 
                 if (amountPaid >= (tx.crypto_amount - 0.05)) {
                   isPaymentValid = true;
                   break;
@@ -98,7 +129,7 @@ export default async function handler(req, res) {
           
           if (data && data.meta && data.meta.TransactionResult === "tesSUCCESS") {
             if (data.Destination === WALLETS.XRP) {
-              const amountPaid = parseFloat(data.Amount) / 1e6; // ریپل ۶ صفر اعشار دارد
+              const amountPaid = parseFloat(data.Amount) / 1e6; 
               if (amountPaid >= (tx.crypto_amount - 0.5)) isPaymentValid = true;
             }
           }
@@ -146,7 +177,8 @@ export default async function handler(req, res) {
             });
           }
         } else {
-          results.push({ txid, status: "Invalid or Not Confirmed" });
+          // تراکنش هنوز تایید نشده یا مبلغ اشتباه است
+          results.push({ txid, status: "Invalid Amount or Not Confirmed Yet" });
         }
 
       } catch (err) {
