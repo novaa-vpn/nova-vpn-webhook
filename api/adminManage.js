@@ -130,7 +130,8 @@ export default async function handler(req, res) {
     
     // --- عملیات دریافت لیست کاربران ---
     if (action === 'get_users') {
-      const { data, error } = await supabase.from('users').select('*').order('joined_at', { ascending: false }).limit(50);
+      // اصلاح نام ستون از joined_at به created_at
+      const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false }).limit(50);
       if (error) throw error;
       return res.status(200).json({ users: data || [] });
     }
