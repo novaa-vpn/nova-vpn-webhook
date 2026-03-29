@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { action, admin_pass, tx_id, plan, v2ray, panel, message_text, target_chat_id } = req.body;
+  const { action, admin_pass, tx_id, plan, v2ray, panel, message_text, target_chat_id, plan_id, title_fa, price_toman, gb_amount } = req.body;
   
   // ۲. بررسی امنیت (رمز عبور)
   const SECRET_PASS = process.env.ADMIN_PASSWORD || "Nova@Manager2026";
@@ -130,7 +130,6 @@ export default async function handler(req, res) {
     
     // --- عملیات دریافت لیست کاربران ---
     if (action === 'get_users') {
-      // اصلاح نام ستون از joined_at به created_at
       const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false }).limit(50);
       if (error) throw error;
       return res.status(200).json({ users: data || [] });
@@ -145,6 +144,38 @@ export default async function handler(req, res) {
           await sendTg(u.chat_id, message_text);
         }
       }
+      return res.status(200).json({ ok: true });
+    }
+
+    // --- عملیات ارسال پیام به یک کاربر خاص ---
+    if (action === 'send_message') {
+      if (!target_chat_id || !message_text) throw new Error("آیدی کاربر یا متن پیام وارد نشده است.");
+      await sendTg(target_chat_id, `💬 **پیام از پشتیبانی نُوا:**\n\n${message_text}`);
+      return res.status(200).json({ ok: true });
+    }
+
+    // --- عملیات حذف کاربر ---
+    if (action === 'delete_user') {
+      if (!target_chat_id) throw new Error("آیدی کاربر نامعتبر است.");
+      // به دلیل وابستگی‌های دیتابیس (سفارشات/تراکنش‌ها)، امن‌ترین کار پاک کردن رکورد از جدول است
+      const { error } = await supabase.from('users').delete().eq('chat_id', target_chat_id);
+      if (error) throw new Error("امکان حذف کاربر نیست! (ممکن است کاربر سفارش فعالی داشته باشد)");
+      return res.status(200).json({ ok: true });
+    }
+
+    // --- عملیات ایجاد پلن (سرویس) جدید ---
+    if (action === 'add_plan') {
+      if (!plan_id || !title_fa || !price_toman) throw new Error("اطلاعات محصول جدید ناقص است.");
+      
+      const { error } = await supabase.from('plans').insert({
+        internal_name: plan_id,
+        title_fa: title_fa,
+        title_en: title_fa,
+        price_toman: price_toman,
+        gb_amount: gb_amount || 0,
+        is_active: true
+      });
+      if (error) throw new Error("خطا در ثبت محصول. ممکن است نام سیستمی (ID) تکراری باشد.");
       return res.status(200).json({ ok: true });
     }
 
