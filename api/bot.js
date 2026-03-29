@@ -1,10 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
-  // ۱. بررسی وجود توکن قبل از هر کاری
-  const TOKEN = process.env.TELEGRAM_TOKEN;
+  // ۱. خواندن توکن از TELEGRAM_TOKEN یا ADMIN_TOKEN (بر اساس متغیرهای شما در ورسل)
+  const TOKEN = process.env.TELEGRAM_TOKEN || process.env.ADMIN_TOKEN;
   if (!TOKEN) {
-    return res.status(500).json({ error: "TELEGRAM_TOKEN is missing from Environment Variables." });
+    return res.status(500).json({ error: "توکن ربات تلگرام (TELEGRAM_TOKEN یا ADMIN_TOKEN) در متغیرهای محیطی Vercel یافت نشد." });
   }
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
