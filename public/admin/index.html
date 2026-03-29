@@ -2,325 +2,592 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nova Admin | مدیریت یکپارچه</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nova VPN</title>
+  
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700&display=swap');
-    body { font-family: 'Vazirmatn', sans-serif; background-color: #020617; color: #f1f5f9; }
-    .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
-    .nav-tab.active { background: #3b82f6; color: white; }
-    .loader { border: 2px solid #334155; border-top-color: #3b82f6; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700&family=Orbitron:wght@700&display=swap');
+    
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background: linear-gradient(180deg, #020617, #0f172a);
+      color: #f8fafc;
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: 85px; 
+      min-height: 100vh;
+    }
+    .brand-font { font-family: 'Orbitron', sans-serif; }
+    
+    .glass {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    ::-webkit-scrollbar { width: 0px; }
+    
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .plan-card { transition: all 0.2s; border: 1px solid rgba(255,255,255,0.05); }
+    .plan-card.selected { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); transform: scale(1.02); }
+    .plan-card.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
+    
+    .crypto-btn { transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); }
+    .crypto-btn.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(15px);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex; justify-content: space-around; padding: 12px 0 20px 0; z-index: 50;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center;
+      color: #64748b; font-size: 11px; gap: 4px; transition: all 0.2s;
+    }
+    .nav-item.active { color: #22c55e; }
+    .nav-item i { font-size: 24px; transition: transform 0.2s; }
+    .nav-item.active i { transform: translateY(-2px); }
+
+    .status-badge { padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; }
+    .status-pending { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+    .status-pending_verification { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .status-approved { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .status-rejected { background: rgba(239, 68, 68, 0.2); color: #f87171; }
   </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="antialiased">
 
-  <div class="max-w-6xl mx-auto">
-    <!-- Header -->
-    <header class="flex flex-col md:flex-row justify-between items-center mb-8 glass p-6 rounded-3xl gap-4">
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-900/40">
-          <i class="ph-bold ph-lightning"></i>
-        </div>
-        <div>
-          <h1 class="text-xl font-bold">مرکز کنترل نُوا وی‌پی‌ان</h1>
-          <p class="text-xs text-slate-400">مدیریت تراکنش‌ها، کاربران و انبار کانفیگ</p>
-        </div>
+  <!-- Header -->
+  <header class="p-4 flex items-center justify-between sticky top-0 z-40 glass border-b-0">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-900/40 flex items-center justify-center border border-green-500/20">
+        <i class="ph-fill ph-shield-check text-2xl text-green-500 shadow-green-500"></i>
       </div>
-      <div class="flex gap-2">
-        <!-- ⚠️ رمز عبور اختصاصی خود را در این فیلد وارد کنید -->
-        <input type="password" id="admin-pass" placeholder="رمز عبور خود را وارد کنید..." class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm font-mono focus:border-blue-500 outline-none text-left" dir="ltr">
-        <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-500 p-2.5 rounded-xl transition shadow-lg shadow-blue-900/20">
-          <i class="ph-bold ph-arrows-clockwise text-xl"></i>
+      <div>
+        <h1 class="brand-font text-white tracking-widest text-xl leading-none shadow-green-500/50 drop-shadow-md">NOVA</h1>
+        <p class="text-[10px] text-green-400 font-bold tracking-widest mt-1">STARLINK VIP</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <!-- Toman Balance -->
+      <div class="glass px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10">
+        <i class="ph-fill ph-wallet text-slate-400"></i>
+        <span id="header-balance-toman" class="text-[10px] font-mono font-bold text-slate-200">... T</span>
+      </div>
+      <!-- TRX Balance -->
+      <div class="glass px-2.5 py-1 rounded-full flex items-center gap-1 border border-red-500/20 bg-red-500/5">
+        <i class="ph-fill ph-coin text-red-400"></i>
+        <span id="header-balance-trx" class="text-[10px] font-mono font-bold text-red-400">... TRX</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="p-4">
+    
+    <!-- TAB 1: BUY (Default Tab) -->
+    <section id="tab-buy" class="tab-content active">
+      
+      <!-- User Info Quick View -->
+      <div class="flex items-center justify-between bg-slate-800/50 rounded-xl p-3 mb-4 border border-white/5">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+            <i class="ph-fill ph-user text-slate-300"></i>
+          </div>
+          <span id="buy-user-name" class="text-sm font-bold text-slate-200">--</span>
+        </div>
+        <button onclick="copyMyId()" class="text-[10px] bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1 hover:bg-slate-700 text-slate-300">
+          <span id="buy-user-id" class="font-mono">ID: --</span>
+          <i class="ph-bold ph-copy"></i>
         </button>
       </div>
-    </header>
 
-    <!-- Navigation Tabs -->
-    <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
-      <button onclick="switchTab('receipts')" class="nav-tab active glass px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2">
-        <i class="ph ph-receipt"></i> بررسی تراکنش‌ها
-      </button>
-      <button onclick="switchTab('inventory')" class="nav-tab glass px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2">
-        <i class="ph ph-package"></i> مدیریت انبار
-      </button>
-      <button onclick="switchTab('users')" class="nav-tab glass px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2">
-        <i class="ph ph-users"></i> کاربران
-      </button>
-      <button onclick="switchTab('broadcast')" class="nav-tab glass px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2">
-        <i class="ph ph-megaphone"></i> ارسال پیام
-      </button>
-    </div>
-
-    <!-- Tab Contents -->
-    <div id="tab-receipts" class="tab-content block">
-      <div class="grid grid-cols-1 gap-4" id="receipts-list">
-        <div class="text-center py-20 text-slate-500">لطفاً رمز عبور را وارد کرده و دکمه بروزرسانی را بزنید.</div>
+      <!-- Warnings -->
+      <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-5">
+        <h4 class="text-red-400 font-bold text-xs mb-2 flex items-center gap-1"><i class="ph-fill ph-warning-circle text-base"></i> نکات مهم واریزی (حتماً بخوانید)</h4>
+        <ul class="text-[11px] text-red-200/80 space-y-1.5 list-disc list-inside">
+          <li>کارمزد شبکه به عهده کاربر است.</li>
+          <li>مبلغ باید <strong class="text-white">دقیقاً</strong> معادل مقدار محاسبه شده واریز شود.</li>
+          <li>ارسال هش تراکنش <strong class="text-white">(TX HASH)</strong> الزامی است.</li>
+          <li>در صورت اختلاف مبلغ، سفارش تایید نخواهد شد!</li>
+        </ul>
       </div>
-    </div>
 
-    <div id="tab-inventory" class="tab-content hidden">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="glass p-6 rounded-3xl">
-          <h3 class="font-bold mb-4 flex items-center justify-between">
-            <span class="flex items-center gap-2"><i class="ph-fill ph-plus-circle text-green-400"></i> افزودن کانفیگ جدید</span>
-            <button onclick="createNewPlan()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-lg hover:bg-slate-700">+ تعریف پلن جدید</button>
-          </h3>
-          <div class="space-y-3">
-            <select id="inv-plan" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
-              <!-- پلن‌های پیش‌فرض -->
-              <option value="starlink_1gb">استارلینک ۱ گیگ</option>
-              <option value="starlink_2gb">استارلینک ۲ گیگ</option>
-              <option value="starlink_3gb">استارلینک ۳ گیگ</option>
-              <option value="starlink_4gb">استارلینک ۴ گیگ</option>
-              <option value="starlink_5gb">استارلینک ۵ گیگ</option>
-              <option value="eco_25gb">اقتصادی ۲۵ گیگ</option>
-            </select>
-            <input type="text" id="inv-v2ray" placeholder="vless://... (کد کانفیگ)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono" dir="ltr">
-            <input type="text" id="inv-panel" placeholder="https://... (لینک پنل وب)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono" dir="ltr">
-            <button onclick="addConfig()" class="w-full bg-green-600 py-3 rounded-xl font-bold shadow-lg shadow-green-900/20 active:scale-95 transition">افزودن به انبار</button>
+      <h3 class="font-bold text-slate-200 mb-3 text-sm">۱. انتخاب سرویس (تضمینی بدون قطعی)</h3>
+      <div class="grid grid-cols-1 gap-3 mb-5" id="plans-container">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Payment Box -->
+      <div id="payment-section" class="hidden animation-fadeIn mb-10">
+        <h3 class="font-bold text-slate-200 mb-3 text-sm">۲. انتخاب شبکه پرداخت</h3>
+        
+        <!-- Crypto Selector -->
+        <div class="grid grid-cols-4 gap-2 mb-4" id="crypto-selector">
+          <button class="crypto-btn rounded-xl py-3 flex flex-col items-center gap-1 selected" onclick="selectCrypto('USDT', this)">
+            <img src="https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/tron/assets/TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t/logo.png" class="w-6 h-6 object-contain" alt="USDT">
+            <span class="text-[10px] font-bold">USDT</span>
+          </button>
+          <button class="crypto-btn rounded-xl py-3 flex flex-col items-center gap-1" onclick="selectCrypto('TRX', this)">
+            <img src="https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/tron/info/logo.png" class="w-6 h-6 object-contain" alt="TRX">
+            <span class="text-[10px] font-bold">TRX</span>
+          </button>
+          <button class="crypto-btn rounded-xl py-3 flex flex-col items-center gap-1" onclick="selectCrypto('TON', this)">
+            <img src="https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ton/info/logo.png" class="w-6 h-6 object-contain" alt="TON">
+            <span class="text-[10px] font-bold">TON</span>
+          </button>
+          <button class="crypto-btn rounded-xl py-3 flex flex-col items-center gap-1" onclick="selectCrypto('XRP', this)">
+            <img src="https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/xrp/info/logo.png" class="w-6 h-6 object-contain" alt="XRP">
+            <span class="text-[10px] font-bold">XRP</span>
+          </button>
+        </div>
+
+        <div class="glass rounded-2xl p-5 border border-blue-500/30 relative overflow-hidden">
+          <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-400"></div>
+          
+          <!-- Exact Amount Calculator -->
+          <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-4 text-center mt-2">
+            <p class="text-[10px] text-blue-200 mb-1">مبلغ دقیق قابل پرداخت:</p>
+            <div class="flex items-end justify-center gap-1">
+              <span id="exact-crypto-amount" class="text-3xl font-bold font-mono text-white">0.00</span>
+              <span id="selected-crypto-symbol" class="text-sm font-bold text-blue-400 mb-1">USDT</span>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1 font-mono">≈ $<span id="plan-usd-value">0.00</span></p>
+          </div>
+
+          <div class="mb-4">
+            <div class="flex justify-between items-end mb-2">
+              <p class="text-[11px] text-slate-300">آدرس کیف پول <span id="wallet-network-label" class="font-bold text-white">TRC20</span>:</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="text" id="wallet-address" readonly 
+                     class="bg-slate-900 border border-slate-700 text-slate-300 text-[11px] rounded-lg p-3 w-full font-mono focus:outline-none">
+              <button onclick="copyToClipboard('wallet-address')" class="bg-blue-600 p-3 rounded-lg text-white hover:bg-blue-500 active:bg-blue-700">
+                <i class="ph-bold ph-copy text-lg"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/50 rounded-xl p-4 mb-2">
+            <h3 class="text-xs font-bold text-slate-200 mb-2">۳. ثبت رسید پرداختی</h3>
+            
+            <input type="text" id="txid-input" placeholder="هش تراکنش (TX HASH)..." 
+                   class="bg-slate-950 border border-slate-700 text-white text-xs rounded-lg p-3 w-full focus:outline-none focus:border-blue-500 font-mono mb-2">
+            
+            <textarea id="tx-notes" placeholder="توضیحات (اختیاری)..." rows="2"
+                      class="bg-slate-950 border border-slate-700 text-white text-xs rounded-lg p-3 w-full focus:outline-none focus:border-blue-500 font-mono mb-4 resize-none"></textarea>
+            
+            <button id="submit-btn" onclick="submitPayment()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-900/50 active:scale-[0.98] transition-all text-sm flex justify-center items-center gap-2">
+              <i class="ph-bold ph-check-circle text-lg"></i> ثبت و درخواست کانفیگ
+            </button>
           </div>
         </div>
-        <div class="glass p-6 rounded-3xl">
-          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-chart-pie text-blue-400"></i> وضعیت موجودی انبار</h3>
-          <div id="inventory-status" class="space-y-3">
-            <div class="text-center py-5 text-slate-500 text-sm">در حال دریافت آمار...</div>
+      </div>
+    </section>
+
+    <!-- TAB 2: DASHBOARD (Services) -->
+    <section id="tab-dashboard" class="tab-content">
+      <div class="glass rounded-2xl p-5 mb-5 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 blur-3xl rounded-full pointer-events-none"></div>
+        <div class="flex items-center gap-4 relative z-10">
+          <div class="w-14 h-14 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center">
+            <i class="ph-fill ph-user text-3xl text-slate-400"></i>
+          </div>
+          <div>
+            <h2 id="user-name" class="text-base font-bold text-white mb-1">در حال بارگذاری...</h2>
+            <div class="flex items-center gap-2">
+              <button onclick="copyMyId()" class="text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-700 font-mono flex items-center gap-1 active:bg-slate-800">
+                <span id="user-id">ID: ---</span>
+                <i class="ph-bold ph-copy"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div id="tab-users" class="tab-content hidden">
-      <div class="glass overflow-hidden rounded-3xl border border-white/5 overflow-x-auto">
-        <table class="w-full text-right text-sm whitespace-nowrap">
-          <thead class="bg-slate-900/50 text-slate-400">
-            <tr>
-              <th class="p-4">کاربر</th>
-              <th class="p-4">موجودی T</th>
-              <th class="p-4">موجودی TRX</th>
-              <th class="p-4">زیرمجموعه</th>
-              <th class="p-4 text-center">عملیات</th>
-            </tr>
-          </thead>
-          <tbody id="users-table-body">
-            <!-- Users list populated by JS -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div id="tab-broadcast" class="tab-content hidden">
-      <div class="glass p-8 rounded-3xl max-w-2xl mx-auto">
-        <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="ph-fill ph-broadcast text-red-400"></i> ارسال پیام به تمام کاربران</h3>
-        <p class="text-xs text-slate-400 mb-6 leading-relaxed">این پیام برای تمامی افرادی که ربات را استارت کرده‌اند ارسال خواهد شد. لطفاً در استفاده از این ابزار احتیاط کنید.</p>
-        <textarea id="bc-text" rows="6" placeholder="متن پیام خود را بنویسید..." class="w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-blue-500 mb-4 resize-none"></textarea>
-        <button onclick="sendBroadcast()" class="w-full bg-red-600 hover:bg-red-500 py-4 rounded-2xl font-bold shadow-lg shadow-red-900/30 active:scale-95 transition flex justify-center items-center gap-2">
-          <i class="ph-bold ph-paper-plane-tilt"></i> شروع عملیات ارسال گروهی
+      <div class="flex items-center justify-between mb-4 mt-2">
+        <h3 class="font-bold text-slate-200 text-sm">سرویس‌های فعال من</h3>
+        <button class="text-xs text-green-400 flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded" onclick="loadUserData()">
+          <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی
         </button>
       </div>
-    </div>
 
-  </div>
+      <div id="active-services" class="space-y-3">
+        <div class="glass rounded-xl p-8 text-center text-slate-400 text-sm">
+          <i class="ph-fill ph-plugs text-4xl mb-3 text-slate-600"></i>
+          <p>در حال دریافت اطلاعات...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: PROFILE (Referral & Transactions) -->
+    <section id="tab-profile" class="tab-content">
+      
+      <!-- Affiliate / Referral -->
+      <div class="glass rounded-2xl p-5 mb-5 border border-red-500/20 relative overflow-hidden">
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-red-500/10 blur-3xl rounded-full pointer-events-none"></div>
+        
+        <div class="flex justify-between items-start mb-3 relative z-10">
+          <div class="flex items-center gap-2">
+            <i class="ph-fill ph-gift text-3xl text-red-400"></i>
+            <div>
+              <h3 class="font-bold text-slate-200 text-sm">کسب درآمد بدون سرمایه</h3>
+              <p class="text-[10px] text-slate-400">سیستم هوشمند دعوت دوستان</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-slate-900/80 border border-slate-700 rounded-xl p-3 mb-4 text-[11px] text-slate-300 leading-relaxed">
+          شما می‌توانید حتی بدون داشتن اشتراک، درآمد کسب کنید! لینک زیر را برای دوستان خود بفرستید. 
+          به ازای هر **۱ گیگابایت** خرید آن‌ها، <strong class="text-red-400">۰.۵ ترون (TRX)</strong> به کیف پول شما در ربات اضافه می‌شود. 
+          <br><span class="text-slate-500 text-[10px]">(مثال: خرید پلن ۵ گیگ توسط دوست شما = ۲.۵ ترون سود خالص برای شما)</span>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2 mb-4">
+          <div class="bg-slate-900 rounded-lg p-3 border border-slate-700 text-center">
+            <div class="text-[10px] text-slate-400 mb-1">دعوت‌های موفق</div>
+            <div class="text-lg font-bold text-white font-mono" id="ref-count">0</div>
+          </div>
+          <div class="bg-slate-900 rounded-lg p-3 border border-red-900/30 text-center">
+            <div class="text-[10px] text-red-300/70 mb-1">درآمد کل شما</div>
+            <div class="text-lg font-bold text-red-400 font-mono" id="ref-earnings">0 <span class="text-[10px]">TRX</span></div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input type="text" id="ref-link" readonly 
+                 class="bg-slate-900 border border-slate-700 text-slate-300 text-[10px] rounded-lg p-3 w-full font-mono focus:outline-none" dir="ltr">
+          <button onclick="copyToClipboard('ref-link')" class="bg-red-600 p-3 rounded-lg text-white hover:bg-red-500">
+            اشتراک گذاری <i class="ph-bold ph-share-network ml-1"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Transaction History -->
+      <div class="mb-3">
+        <h3 class="font-bold text-slate-200 text-sm flex items-center gap-1">
+          <i class="ph-fill ph-receipt text-slate-400"></i> تاریخچه سفارشات و پرداخت‌ها
+        </h3>
+      </div>
+      
+      <div id="tx-history" class="space-y-2">
+        <div class="glass rounded-xl p-5 text-center text-slate-500 text-xs">
+          در حال بارگذاری...
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('buy', this)">
+      <i class="ph-fill ph-shopping-cart"></i>
+      <span>خرید سرویس</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('dashboard', this)">
+      <i class="ph-fill ph-squares-four"></i>
+      <span>سرویس‌های من</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('profile', this)">
+      <i class="ph-fill ph-user-circle"></i>
+      <span>پروفایل و درآمد</span>
+    </button>
+  </nav>
 
   <script>
-    let activeTab = 'receipts';
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.ready();
+    
+    const tgUser = tg.initDataUnsafe?.user || { id: 111222333, first_name: "کاربر مهمان" };
+    const botUsername = "NoovaVpn_Bot";
+    
+    let currentUser = null;
+    let currentPlan = null;
+    let selectedCrypto = 'USDT';
+    let plans = []; 
+    
+    const cryptoData = {
+      USDT: { symbol: 'USDT', network: 'TRC20', wallet: 'TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3', price: 1.00 },
+      TRX:  { symbol: 'TRX',  network: 'TRC20', wallet: 'TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3', price: 0.12 },
+      TON:  { symbol: 'TON',  network: 'TON',   wallet: 'UQCpWdG73bwuwFAp2EDQLLkl6VhTGpVVJDre8X02qvJ5OJem', price: 5.00 },
+      XRP:  { symbol: 'XRP',  network: 'Ripple',wallet: 'rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F', price: 0.60 }
+    };
 
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-      event.currentTarget.classList.add('active');
-      activeTab = tabId;
-      refreshData();
+    window.onload = async () => {
+      document.getElementById('buy-user-name').innerText = tgUser.first_name;
+      document.getElementById('buy-user-id').innerText = `ID: ${tgUser.id}`;
+      document.getElementById('user-name').innerText = tgUser.first_name;
+      document.getElementById('user-id').innerText = `ID: ${tgUser.id}`;
+      document.getElementById('ref-link').value = `https://t.me/${botUsername}?start=${tgUser.id}`;
+      
+      updateCryptoUI();
+      await fetchCryptoPrices();
+      await loadUserData(); 
+    };
+
+    function switchTab(tabId, btnElement) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+      btnElement.classList.add('active');
+      window.scrollTo(0, 0);
     }
 
-    // هسته اصلی ارتباط با سرور
-    async function apiCall(action, params = {}) {
-      const pass = document.getElementById('admin-pass').value;
-      if(!pass) {
-        alert("لطفاً رمز عبور مدیریت را در بالای صفحه وارد کنید.");
-        return null;
+    function copyMyId() {
+      const tempInput = document.createElement("input");
+      tempInput.value = tgUser.id;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand("copy");
+      document.body.removeChild(tempInput);
+      tg.showAlert("آیدی شما کپی شد! ✅");
+    }
+
+    function renderPlans() {
+      const container = document.getElementById('plans-container');
+      if (plans.length === 0) {
+        container.innerHTML = `<div class="glass p-4 rounded-xl text-center text-slate-400 text-sm">در حال حاضر محصولی برای فروش وجود ندارد.</div>`;
+        return;
+      }
+
+      container.innerHTML = plans.map(p => {
+        const isDisabled = !p.is_active;
+        // خواندن هوشمند قیمت دلاری از دیتابیس (price_usd)
+        const exactUsd = p.price_usd ? p.price_usd : (p.price_toman / 60000).toFixed(2);
+        
+        return `
+        <div class="glass plan-card p-4 rounded-xl flex justify-between items-center ${isDisabled ? 'disabled' : 'cursor-pointer'}" onclick="${isDisabled ? '' : `selectPlan('${p.internal_name}', this, ${exactUsd}, ${p.price_toman})`}">
+          <div>
+            <div class="text-sm font-bold text-white mb-1 flex items-center gap-1">
+              ${isDisabled ? '<i class="ph-fill ph-prohibit text-red-400"></i>' : '<i class="ph-fill ph-rocket text-blue-400"></i>'}
+              ${p.title_fa}
+            </div>
+            <div class="text-[10px] text-slate-400">${isDisabled ? 'فعلا غیرفعال' : (p.gb_amount > 0 ? `${p.gb_amount} گیگابایت` : 'تضمینی و پرسرعت')}</div>
+          </div>
+          <div class="text-left">
+            <div class="text-green-400 font-mono text-sm font-bold">$${exactUsd}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">${Number(p.price_toman).toLocaleString()} تومان</div>
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    function selectPlan(planId, element, usdPrice, tomanPrice) {
+      document.querySelectorAll('.plan-card').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      
+      const p = plans.find(x => x.internal_name === planId);
+      currentPlan = { id: planId, name: p.title_fa, priceUsd: usdPrice, priceToman: tomanPrice };
+      
+      const paymentSec = document.getElementById('payment-section');
+      paymentSec.classList.remove('hidden');
+      
+      calculateExactAmount();
+      setTimeout(() => paymentSec.scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+
+    function selectCrypto(symbol, element) {
+      document.querySelectorAll('.crypto-btn').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      selectedCrypto = symbol;
+      updateCryptoUI();
+      if(currentPlan) calculateExactAmount();
+    }
+
+    function updateCryptoUI() {
+      const data = cryptoData[selectedCrypto];
+      document.getElementById('wallet-address').value = data.wallet;
+      document.getElementById('wallet-network-label').innerText = data.network;
+      document.getElementById('selected-crypto-symbol').innerText = data.symbol;
+    }
+
+    function calculateExactAmount() {
+      if(!currentPlan) return;
+      const cryptoPrice = cryptoData[selectedCrypto].price;
+      let exactAmount = 0;
+      
+      if (selectedCrypto === 'USDT') {
+        exactAmount = currentPlan.priceUsd;
+      } else {
+        // تبدیل دقیق و زنده قیمت دلاری محصول به رمزارز انتخابی
+        exactAmount = (currentPlan.priceUsd / cryptoPrice).toFixed(2); 
       }
       
+      document.getElementById('plan-usd-value').innerText = currentPlan.priceUsd;
+      document.getElementById('exact-crypto-amount').innerText = exactAmount;
+    }
+
+    function copyToClipboard(elementId) {
+      const copyText = document.getElementById(elementId);
+      copyText.select();
+      copyText.setSelectionRange(0, 99999); 
+      document.execCommand("copy");
+      tg.showAlert("با موفقیت کپی شد ✅");
+    }
+
+    // API Calls
+    async function fetchCryptoPrices() {
       try {
-        const res = await fetch('/api/adminManage', {
+        const res = await fetch('/api/cryptoPrice');
+        const data = await res.json();
+        if(data.USDT) cryptoData.USDT.price = data.USDT;
+        if(data.TRX) cryptoData.TRX.price = data.TRX;
+        if(data.TON) cryptoData.TON.price = data.TON;
+        if(data.XRP) cryptoData.XRP.price = data.XRP;
+        if(currentPlan) calculateExactAmount();
+      } catch (e) { console.error("Price fetch failed"); }
+    }
+
+    async function loadUserData() {
+      try {
+        const res = await fetch(`/api/profile?chat_id=${tgUser.id}`);
+        const data = await res.json();
+        currentUser = data.user;
+        plans = data.plans || []; 
+        
+        renderPlans(); 
+
+        // Update Headers & Profile
+        document.getElementById('header-balance-toman').innerText = Number(currentUser.wallet_balance || 0).toLocaleString() + " T";
+        document.getElementById('header-balance-trx').innerText = Number(currentUser.wallet_trx || 0).toLocaleString() + " TRX";
+        document.getElementById('ref-count').innerText = currentUser.total_referrals || 0;
+        document.getElementById('ref-earnings').innerHTML = `${Number(currentUser.wallet_trx || 0).toLocaleString()} <span class="text-[10px]">TRX</span>`;
+
+        // Render Services
+        const srvContainer = document.getElementById('active-services');
+        if (data.services && data.services.length > 0) {
+          srvContainer.innerHTML = data.services.map(s => {
+            const pInfo = plans.find(pl => pl.internal_name === s.plan_name) || {title_fa: s.plan_name};
+            return `
+            <div class="glass p-4 rounded-xl flex justify-between items-center border-r-2 border-green-500">
+              <div>
+                <div class="text-sm font-bold text-white">${pInfo.title_fa}</div>
+                <div class="text-[10px] text-slate-400 mt-1 font-mono">${s.created_at.split('T')[0]}</div>
+              </div>
+              <a href="${s.web_panel_url}" target="_blank" class="bg-slate-800 border border-slate-700 text-green-400 text-[11px] px-3 py-1.5 rounded-lg">مشاهده پنل</a>
+            </div>
+          `}).join('');
+        } else {
+          srvContainer.innerHTML = `<div class="glass rounded-xl p-6 text-center text-slate-500 text-xs">سرویس فعالی یافت نشد.</div>`;
+        }
+
+        renderTransactionHistory(data.transactions);
+
+      } catch (e) { console.error("Profile fetch failed", e); }
+    }
+
+    function renderTransactionHistory(transactions) {
+      const txContainer = document.getElementById('tx-history');
+      if (transactions && transactions.length > 0) {
+        txContainer.innerHTML = transactions.map(tx => {
+          let statusHtml = ''; let statusText = '';
+          if(tx.status === 'pending') { statusHtml = 'status-pending'; statusText = 'در انتظار بررسی'; }
+          else if(tx.status === 'pending_verification') { statusHtml = 'status-pending_verification'; statusText = 'در حال اعتبارسنجی'; }
+          else if(tx.status === 'approved') { statusHtml = 'status-approved'; statusText = 'تایید شده'; }
+          else { statusHtml = 'status-rejected'; statusText = 'رد شده'; }
+          
+          return `
+          <div class="glass p-3 rounded-lg border border-slate-800 relative">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-[10px] text-slate-400 font-mono">${tx.created_at.split('T')[0]}</span>
+              <span class="status-badge ${statusHtml}">${statusText}</span>
+            </div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="text-xs font-bold text-white">${tx.crypto_amount || 0} ${tx.crypto_currency || ''}</span>
+              <span class="text-[10px] text-slate-500">(${Number(tx.amount_toman).toLocaleString()} T)</span>
+            </div>
+            <div class="text-[10px] text-slate-400 font-mono break-all line-clamp-1 mb-1">هش: ${tx.txid_or_receipt}</div>
+            ${tx.notes ? `<div class="text-[10px] text-blue-300/70 bg-blue-900/20 px-2 py-1 rounded mt-1">📝 ${tx.notes}</div>` : ''}
+          </div>
+        `}).join('');
+      } else {
+        txContainer.innerHTML = `<div class="glass rounded-xl p-4 text-center text-slate-500 text-[11px]">تاکنون تراکنشی نداشته‌اید.</div>`;
+      }
+    }
+
+    async function submitPayment() {
+      const txid = document.getElementById('txid-input').value.trim();
+      const notes = document.getElementById('tx-notes').value.trim();
+      if (!txid) return tg.showAlert("❌ وارد کردن هش تراکنش الزامی است!");
+      if (!currentPlan) return tg.showAlert("لطفاً یک پلن انتخاب کنید.");
+
+      const exactCryptoAmount = document.getElementById('exact-crypto-amount').innerText;
+      const btn = document.getElementById('submit-btn');
+      btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-lg"></i> در حال ارتباط با سرور...`;
+      btn.disabled = true;
+
+      try {
+        const payload = {
+          chat_id: tgUser.id,
+          plan: currentPlan.id,
+          txid: txid,
+          // ارسال قیمت تومانی دقیق (برطرف شدن باگ replace برای اعداد)
+          amount_toman: currentPlan.priceToman,
+          crypto_currency: selectedCrypto,
+          crypto_amount: parseFloat(exactCryptoAmount),
+          notes: notes
+        };
+
+        const res = await fetch('/api/submitReceipt', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, admin_pass: pass, ...params })
+          body: JSON.stringify(payload)
         });
-        const data = await res.json();
-        
-        if (!res.ok) {
-          if (res.status === 401) alert("خطا: رمز عبور وارد شده اشتباه است!");
-          else alert(data.error || 'خطای سرور');
-          return null;
-        }
-        return data;
-      } catch (err) {
-        alert("خطای ارتباط با سرور. لاگ‌های ورسل را بررسی کنید.");
-        return null;
-      }
-    }
 
-    async function refreshData() {
-      if (activeTab === 'receipts') loadReceipts();
-      if (activeTab === 'inventory') loadInventory();
-      if (activeTab === 'users') loadUsers();
-    }
-
-    // --- توابع تب رسیدها ---
-    async function loadReceipts() {
-      const container = document.getElementById('receipts-list');
-      container.innerHTML = '<div class="text-center py-10 text-slate-500"><div class="loader mx-auto mb-3"></div>در حال دریافت...</div>';
-      
-      const data = await apiCall('get_pending');
-      if (!data) {
-        container.innerHTML = '<div class="text-center py-10 text-red-500">خطا در دریافت اطلاعات.</div>';
-        return;
-      }
-
-      if (data.receipts.length === 0) {
-        container.innerHTML = '<div class="glass p-10 text-center text-slate-500 rounded-3xl">هیچ تراکنش معلقی وجود ندارد.</div>';
-        return;
-      }
-
-      container.innerHTML = data.receipts.map(r => `
-        <div class="glass p-5 rounded-2xl border-r-4 border-blue-500 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div class="flex-1 w-full">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="bg-slate-800 px-2 py-1 rounded text-xs font-mono text-slate-300">ID: ${r.chat_id}</span>
-              <span class="bg-blue-900/30 text-blue-400 px-2 py-1 rounded text-xs font-bold">${r.target_plan}</span>
+        if (res.ok) {
+          tg.showAlert("✅ تراکنش ثبت شد! در بخش پروفایل وضعیت آن را پیگیری کنید.");
+          
+          document.getElementById('txid-input').value = "";
+          document.getElementById('tx-notes').value = "";
+          
+          // Optimistic UI Update - Show immediately in history
+          const txContainer = document.getElementById('tx-history');
+          const newTxHTML = `
+            <div class="glass p-3 rounded-lg border border-blue-500/30 bg-blue-500/5">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] text-slate-400 font-mono">همین الان</span>
+                <span class="status-badge status-pending_verification">در حال اعتبارسنجی شبکه</span>
+              </div>
+              <div class="flex items-center gap-1 mb-1">
+                <span class="text-xs font-bold text-white">${payload.crypto_amount} ${payload.crypto_currency}</span>
+                <span class="text-[10px] text-slate-500">(${Number(payload.amount_toman).toLocaleString()} T)</span>
+              </div>
+              <div class="text-[10px] text-slate-400 font-mono break-all line-clamp-1 mb-1">هش: ${payload.txid}</div>
+              ${payload.notes ? `<div class="text-[10px] text-blue-300/70 bg-blue-900/20 px-2 py-1 rounded mt-1">📝 ${payload.notes}</div>` : ''}
             </div>
-            <div class="text-sm font-mono text-white break-all bg-black/30 p-2 rounded border border-white/5">${r.txid_or_receipt}</div>
-            <div class="mt-2 text-xs text-slate-400">مبلغ: <span class="text-white">${Number(r.amount_toman).toLocaleString()} T</span> | ارز: <span class="text-white">${r.crypto_amount || '?'} ${r.crypto_currency || ''}</span></div>
-            ${r.notes ? `<div class="mt-2 text-xs bg-yellow-500/10 text-yellow-200 p-2 rounded border border-yellow-500/20">📝 توضیحات: ${r.notes}</div>` : ''}
-          </div>
-          <div class="flex gap-2 w-full md:w-auto">
-            <button onclick="txAction('${r.id}', 'approve')" class="flex-1 md:flex-none bg-green-600 hover:bg-green-500 px-6 py-3 rounded-xl font-bold text-xs transition">تایید و تحویل</button>
-            <button onclick="txAction('${r.id}', 'reject')" class="flex-1 md:flex-none bg-red-600/50 hover:bg-red-500 px-6 py-3 rounded-xl font-bold text-xs transition">رد تراکنش</button>
-          </div>
-        </div>
-      `).join('');
-    }
+          `;
+          
+          if(txContainer.innerHTML.includes("تاکنون تراکنشی نداشته‌اید")) {
+            txContainer.innerHTML = newTxHTML;
+          } else {
+            txContainer.insertAdjacentHTML('afterbegin', newTxHTML);
+          }
 
-    async function txAction(id, type) {
-      if (!confirm(`آیا از ${type === 'approve' ? 'تایید' : 'رد'} این تراکنش اطمینان دارید؟`)) return;
-      const data = await apiCall(type, { tx_id: id });
-      if (data) {
-        alert("عملیات با موفقیت انجام شد.");
-        loadReceipts();
+          // Switch to profile tab
+          const profileBtn = document.querySelectorAll('.nav-item')[2];
+          switchTab('profile', profileBtn);
+          
+        } else {
+          tg.showAlert("❌ خطا در ثبت. لطفاً مجدداً تلاش کنید.");
+        }
+      } catch (e) {
+        tg.showAlert("خطای ارتباط با سرور.");
+      } finally {
+        btn.innerHTML = `<i class="ph-bold ph-check-circle text-lg"></i> ثبت و درخواست کانفیگ`;
+        btn.disabled = false;
       }
     }
-
-    // --- توابع تب انبار ---
-    async function loadInventory() {
-      const data = await apiCall('get_inventory');
-      if (!data) return;
-      const container = document.getElementById('inventory-status');
-      
-      if (Object.keys(data.stats).length === 0) {
-        container.innerHTML = '<div class="text-slate-500 text-sm text-center">انبار شما کاملاً خالی است.</div>';
-        return;
-      }
-      
-      container.innerHTML = Object.entries(data.stats).map(([plan, count]) => `
-        <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-white/5">
-          <span class="text-sm font-bold text-slate-300">${plan}</span>
-          <span class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full text-xs font-mono font-bold">${count} موجود</span>
-        </div>
-      `).join('');
-    }
-
-    async function addConfig() {
-      const plan = document.getElementById('inv-plan').value;
-      const v2ray = document.getElementById('inv-v2ray').value;
-      const panel = document.getElementById('inv-panel').value;
-      if (!v2ray || !panel) return alert('کد کانفیگ و لینک پنل الزامی است.');
-      
-      const data = await apiCall('add_config', { plan, v2ray, panel });
-      if (data) {
-        alert('کانفیگ با موفقیت به انبار اضافه شد!');
-        document.getElementById('inv-v2ray').value = '';
-        document.getElementById('inv-panel').value = '';
-        loadInventory();
-      }
-    }
-
-    async function createNewPlan() {
-      const plan_id = prompt("شناسه سیستمی (انگلیسی، بدون فاصله، مثلا: gold_10gb):");
-      if(!plan_id) return;
-      const title_fa = prompt("نام نمایشی در ربات (مثلا: VIP طلایی ۱۰ گیگ):");
-      if(!title_fa) return;
-      const price_toman = prompt("قیمت به تومان (فقط عدد انگلیسی، مثلا: 50000):");
-      if(!price_toman) return;
-      // پراپمت جدید برای گرفتن قیمت دلاری
-      const price_usd = prompt("قیمت دلاری برای پرداخت با تتر/ترون (مثلا: 8.50):");
-      if(!price_usd) return;
-      const gb_amount = prompt("مقدار گیگابایت (جهت محاسبه پورسانت - فقط عدد):", "0");
-
-      const res = await apiCall('add_plan', { 
-        plan_id: plan_id, 
-        title_fa: title_fa, 
-        price_toman: Number(price_toman),
-        price_usd: Number(price_usd),
-        gb_amount: Number(gb_amount || 0)
-      });
-
-      if (res) {
-        alert("محصول جدید با موفقیت به دیتابیس اضافه شد! برای نمایش در لیستِ بالا، صفحه را رفرش کنید.");
-      }
-    }
-
-    // --- توابع تب کاربران ---
-    async function loadUsers() {
-      const data = await apiCall('get_users');
-      if (!data) return;
-      
-      document.getElementById('users-table-body').innerHTML = data.users.map(u => `
-        <tr class="border-b border-white/5 hover:bg-white/5 transition">
-          <td class="p-4 font-mono text-xs text-slate-300">${u.chat_id}<br><span class="text-[10px] text-slate-500">@${u.username || 'n/a'}</span></td>
-          <td class="p-4 font-mono text-blue-400">${Number(u.wallet_balance || 0).toLocaleString()}</td>
-          <td class="p-4 font-mono text-red-400">${u.wallet_trx || 0}</td>
-          <td class="p-4 text-center text-slate-300">${u.total_referrals || 0}</td>
-          <td class="p-4 flex gap-2 justify-center">
-            <button onclick="sendUserMsg('${u.chat_id}')" class="bg-blue-600/20 text-blue-400 p-2 rounded-lg hover:bg-blue-600/40 transition" title="ارسال پیام خصوصی"><i class="ph-fill ph-chat-text"></i></button>
-            <button onclick="deleteUser('${u.chat_id}')" class="bg-red-600/20 text-red-400 p-2 rounded-lg hover:bg-red-600/40 transition" title="حذف کاربر"><i class="ph-fill ph-trash"></i></button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    async function sendUserMsg(chatId) {
-      const msg = prompt(`متن پیام خود را برای کاربر ${chatId} وارد کنید:`);
-      if (!msg) return;
-      const res = await apiCall('send_message', { target_chat_id: chatId, message_text: msg });
-      if (res) alert("پیام با موفقیت به تلگرام کاربر ارسال شد.");
-    }
-
-    async function deleteUser(chatId) {
-      if (!confirm(`⚠️ اخطار: آیا از حذف کامل کاربر ${chatId} اطمینان دارید؟`)) return;
-      const res = await apiCall('delete_user', { target_chat_id: chatId });
-      if (res) {
-        alert("کاربر با موفقیت حذف شد.");
-        loadUsers();
-      }
-    }
-
-    // --- توابع تب پیام همگانی ---
-    async function sendBroadcast() {
-      const text = document.getElementById('bc-text').value;
-      if (!text) return alert("متن پیام نمی‌تواند خالی باشد.");
-      if (!confirm('آیا مطمئن هستید که می‌خواهید این پیام را به تمام کاربران ربات ارسال کنید؟')) return;
-      
-      const data = await apiCall('broadcast', { message_text: text });
-      if (data) {
-        alert('درخواست ارسال همگانی با موفقیت ثبت شد.');
-        document.getElementById('bc-text').value = '';
-      }
-    }
-
   </script>
 </body>
 </html>
