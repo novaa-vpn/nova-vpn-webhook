@@ -1,7 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
+  // ۱. بررسی وجود توکن قبل از هر کاری
   const TOKEN = process.env.TELEGRAM_TOKEN;
+  if (!TOKEN) {
+    return res.status(500).json({ error: "TELEGRAM_TOKEN is missing from Environment Variables." });
+  }
+
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 
@@ -9,6 +14,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers['host'];
+    // استفاده از توکن بررسی شده در مرحله ۱
     const webhookUrl = `${protocol}://${host}/${TOKEN}`;
     
     try {
