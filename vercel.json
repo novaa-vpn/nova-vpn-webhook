@@ -12,3 +12,4 @@
     { "source": "/(.*)", "destination": "/public/index.html" }
   ]
 }
+
