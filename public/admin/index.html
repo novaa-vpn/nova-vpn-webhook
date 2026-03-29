@@ -30,7 +30,8 @@
         </div>
       </div>
       <div class="flex gap-2">
-        <input type="password" id="admin-pass" value="admin123" placeholder="Admin Key" class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm font-mono focus:border-blue-500 outline-none">
+        <!-- ⚠️ رمز عبور اختصاصی خود را در این فیلد وارد کنید -->
+        <input type="password" id="admin-pass" placeholder="رمز عبور خود را وارد کنید..." class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm font-mono focus:border-blue-500 outline-none text-left" dir="ltr">
         <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-500 p-2.5 rounded-xl transition shadow-lg shadow-blue-900/20">
           <i class="ph-bold ph-arrows-clockwise text-xl"></i>
         </button>
@@ -49,57 +50,62 @@
         <i class="ph ph-users"></i> کاربران
       </button>
       <button onclick="switchTab('broadcast')" class="nav-tab glass px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2">
-        <i class="ph ph-megaphone"></i> پیام همگانی
+        <i class="ph ph-megaphone"></i> ارسال پیام
       </button>
     </div>
 
     <!-- Tab Contents -->
     <div id="tab-receipts" class="tab-content block">
       <div class="grid grid-cols-1 gap-4" id="receipts-list">
-        <div class="text-center py-20 text-slate-500">در حال دریافت تراکنش‌ها...</div>
+        <div class="text-center py-20 text-slate-500">لطفاً رمز عبور را وارد کرده و دکمه بروزرسانی را بزنید.</div>
       </div>
     </div>
 
     <div id="tab-inventory" class="tab-content hidden">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="glass p-6 rounded-3xl">
-          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-plus-circle text-green-400"></i> افزودن کانفیگ جدید</h3>
+          <h3 class="font-bold mb-4 flex items-center justify-between">
+            <span class="flex items-center gap-2"><i class="ph-fill ph-plus-circle text-green-400"></i> افزودن کانفیگ جدید</span>
+            <button onclick="createNewPlan()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-lg hover:bg-slate-700">+ تعریف پلن جدید</button>
+          </h3>
           <div class="space-y-3">
             <select id="inv-plan" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
+              <!-- پلن‌های پیش‌فرض -->
               <option value="starlink_1gb">استارلینک ۱ گیگ</option>
               <option value="starlink_2gb">استارلینک ۲ گیگ</option>
               <option value="starlink_3gb">استارلینک ۳ گیگ</option>
               <option value="starlink_4gb">استارلینک ۴ گیگ</option>
               <option value="starlink_5gb">استارلینک ۵ گیگ</option>
+              <option value="eco_25gb">اقتصادی ۲۵ گیگ</option>
             </select>
-            <input type="text" id="inv-v2ray" placeholder="vless://... (کد کانفیگ)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
-            <input type="text" id="inv-panel" placeholder="https://... (لینک پنل وب)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
+            <input type="text" id="inv-v2ray" placeholder="vless://... (کد کانفیگ)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono" dir="ltr">
+            <input type="text" id="inv-panel" placeholder="https://... (لینک پنل وب)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono" dir="ltr">
             <button onclick="addConfig()" class="w-full bg-green-600 py-3 rounded-xl font-bold shadow-lg shadow-green-900/20 active:scale-95 transition">افزودن به انبار</button>
           </div>
         </div>
         <div class="glass p-6 rounded-3xl">
           <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-chart-pie text-blue-400"></i> وضعیت موجودی انبار</h3>
           <div id="inventory-status" class="space-y-3">
-            <!-- Stats -->
+            <div class="text-center py-5 text-slate-500 text-sm">در حال دریافت آمار...</div>
           </div>
         </div>
       </div>
     </div>
 
     <div id="tab-users" class="tab-content hidden">
-      <div class="glass overflow-hidden rounded-3xl border border-white/5">
-        <table class="w-full text-right text-sm">
+      <div class="glass overflow-hidden rounded-3xl border border-white/5 overflow-x-auto">
+        <table class="w-full text-right text-sm whitespace-nowrap">
           <thead class="bg-slate-900/50 text-slate-400">
             <tr>
               <th class="p-4">کاربر</th>
               <th class="p-4">موجودی T</th>
               <th class="p-4">موجودی TRX</th>
               <th class="p-4">زیرمجموعه</th>
-              <th class="p-4">عملیات</th>
+              <th class="p-4 text-center">عملیات</th>
             </tr>
           </thead>
           <tbody id="users-table-body">
-            <!-- Users -->
+            <!-- Users list populated by JS -->
           </tbody>
         </table>
       </div>
@@ -109,8 +115,8 @@
       <div class="glass p-8 rounded-3xl max-w-2xl mx-auto">
         <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="ph-fill ph-broadcast text-red-400"></i> ارسال پیام به تمام کاربران</h3>
         <p class="text-xs text-slate-400 mb-6 leading-relaxed">این پیام برای تمامی افرادی که ربات را استارت کرده‌اند ارسال خواهد شد. لطفاً در استفاده از این ابزار احتیاط کنید.</p>
-        <textarea id="bc-text" rows="6" placeholder="متن پیام شما..." class="w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-blue-500 mb-4 resize-none"></textarea>
-        <button onclick="sendBroadcast()" class="w-full bg-red-600 py-4 rounded-2xl font-bold shadow-lg shadow-red-900/30 active:scale-95 transition flex justify-center items-center gap-2">
+        <textarea id="bc-text" rows="6" placeholder="متن پیام خود را بنویسید..." class="w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-blue-500 mb-4 resize-none"></textarea>
+        <button onclick="sendBroadcast()" class="w-full bg-red-600 hover:bg-red-500 py-4 rounded-2xl font-bold shadow-lg shadow-red-900/30 active:scale-95 transition flex justify-center items-center gap-2">
           <i class="ph-bold ph-paper-plane-tilt"></i> شروع عملیات ارسال گروهی
         </button>
       </div>
@@ -130,8 +136,14 @@
       refreshData();
     }
 
+    // هسته اصلی ارتباط با سرور
     async function apiCall(action, params = {}) {
       const pass = document.getElementById('admin-pass').value;
+      if(!pass) {
+        alert("لطفاً رمز عبور مدیریت را در بالای صفحه وارد کنید.");
+        return null;
+      }
+      
       try {
         const res = await fetch('/api/adminManage', {
           method: 'POST',
@@ -139,10 +151,15 @@
           body: JSON.stringify({ action, admin_pass: pass, ...params })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'خطا در عملیات');
+        
+        if (!res.ok) {
+          if (res.status === 401) alert("خطا: رمز عبور وارد شده اشتباه است!");
+          else alert(data.error || 'خطای سرور');
+          return null;
+        }
         return data;
       } catch (err) {
-        alert(err.message);
+        alert("خطای ارتباط با سرور. لاگ‌های ورسل را بررسی کنید.");
         return null;
       }
     }
@@ -153,10 +170,16 @@
       if (activeTab === 'users') loadUsers();
     }
 
+    // --- توابع تب رسیدها ---
     async function loadReceipts() {
       const container = document.getElementById('receipts-list');
+      container.innerHTML = '<div class="text-center py-10 text-slate-500"><div class="loader mx-auto mb-3"></div>در حال دریافت...</div>';
+      
       const data = await apiCall('get_pending');
-      if (!data) return;
+      if (!data) {
+        container.innerHTML = '<div class="text-center py-10 text-red-500">خطا در دریافت اطلاعات.</div>';
+        return;
+      }
 
       if (data.receipts.length === 0) {
         container.innerHTML = '<div class="glass p-10 text-center text-slate-500 rounded-3xl">هیچ تراکنش معلقی وجود ندارد.</div>';
@@ -171,30 +194,40 @@
               <span class="bg-blue-900/30 text-blue-400 px-2 py-1 rounded text-xs font-bold">${r.target_plan}</span>
             </div>
             <div class="text-sm font-mono text-white break-all bg-black/30 p-2 rounded border border-white/5">${r.txid_or_receipt}</div>
-            <div class="mt-2 text-xs text-slate-400">مبلغ: <span class="text-white">${Number(r.amount_toman).toLocaleString()} T</span> | ارز: <span class="text-white">${r.crypto_amount} ${r.crypto_currency}</span></div>
-            ${r.notes ? `<div class="mt-2 text-xs bg-yellow-500/10 text-yellow-200 p-2 rounded border border-yellow-500/20">📝 ${r.notes}</div>` : ''}
+            <div class="mt-2 text-xs text-slate-400">مبلغ: <span class="text-white">${Number(r.amount_toman).toLocaleString()} T</span> | ارز: <span class="text-white">${r.crypto_amount || '?'} ${r.crypto_currency || ''}</span></div>
+            ${r.notes ? `<div class="mt-2 text-xs bg-yellow-500/10 text-yellow-200 p-2 rounded border border-yellow-500/20">📝 توضیحات: ${r.notes}</div>` : ''}
           </div>
           <div class="flex gap-2 w-full md:w-auto">
-            <button onclick="txAction('${r.id}', 'approve')" class="flex-1 md:flex-none bg-green-600 px-6 py-3 rounded-xl font-bold text-xs">تایید</button>
-            <button onclick="txAction('${r.id}', 'reject')" class="flex-1 md:flex-none bg-red-600/50 px-6 py-3 rounded-xl font-bold text-xs">رد</button>
+            <button onclick="txAction('${r.id}', 'approve')" class="flex-1 md:flex-none bg-green-600 hover:bg-green-500 px-6 py-3 rounded-xl font-bold text-xs transition">تایید و تحویل</button>
+            <button onclick="txAction('${r.id}', 'reject')" class="flex-1 md:flex-none bg-red-600/50 hover:bg-red-500 px-6 py-3 rounded-xl font-bold text-xs transition">رد تراکنش</button>
           </div>
         </div>
       `).join('');
     }
 
     async function txAction(id, type) {
-      if (!confirm('مطمئن هستید؟')) return;
+      if (!confirm(`آیا از ${type === 'approve' ? 'تایید' : 'رد'} این تراکنش اطمینان دارید؟`)) return;
       const data = await apiCall(type, { tx_id: id });
-      if (data) loadReceipts();
+      if (data) {
+        alert("عملیات با موفقیت انجام شد.");
+        loadReceipts();
+      }
     }
 
+    // --- توابع تب انبار ---
     async function loadInventory() {
       const data = await apiCall('get_inventory');
       if (!data) return;
       const container = document.getElementById('inventory-status');
+      
+      if (Object.keys(data.stats).length === 0) {
+        container.innerHTML = '<div class="text-slate-500 text-sm text-center">انبار شما کاملاً خالی است.</div>';
+        return;
+      }
+      
       container.innerHTML = Object.entries(data.stats).map(([plan, count]) => `
         <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-white/5">
-          <span class="text-sm font-bold">${plan}</span>
+          <span class="text-sm font-bold text-slate-300">${plan}</span>
           <span class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full text-xs font-mono font-bold">${count} موجود</span>
         </div>
       `).join('');
@@ -204,40 +237,90 @@
       const plan = document.getElementById('inv-plan').value;
       const v2ray = document.getElementById('inv-v2ray').value;
       const panel = document.getElementById('inv-panel').value;
-      if (!v2ray || !panel) return alert('تمام فیلدها را پر کنید');
+      if (!v2ray || !panel) return alert('کد کانفیگ و لینک پنل الزامی است.');
+      
       const data = await apiCall('add_config', { plan, v2ray, panel });
       if (data) {
-        alert('با موفقیت اضافه شد');
+        alert('کانفیگ با موفقیت به انبار اضافه شد!');
         document.getElementById('inv-v2ray').value = '';
         document.getElementById('inv-panel').value = '';
         loadInventory();
       }
     }
 
+    async function createNewPlan() {
+      const plan_id = prompt("شناسه سیستمی (انگلیسی، بدون فاصله، مثلا: gold_10gb):");
+      if(!plan_id) return;
+      const title_fa = prompt("نام نمایشی در ربات (مثلا: VIP طلایی ۱۰ گیگ):");
+      if(!title_fa) return;
+      const price_toman = prompt("قیمت به تومان (فقط عدد انگلیسی، مثلا: 50000):");
+      if(!price_toman) return;
+      // پراپمت جدید برای گرفتن قیمت دلاری
+      const price_usd = prompt("قیمت دلاری برای پرداخت با تتر/ترون (مثلا: 8.50):");
+      if(!price_usd) return;
+      const gb_amount = prompt("مقدار گیگابایت (جهت محاسبه پورسانت - فقط عدد):", "0");
+
+      const res = await apiCall('add_plan', { 
+        plan_id: plan_id, 
+        title_fa: title_fa, 
+        price_toman: Number(price_toman),
+        price_usd: Number(price_usd),
+        gb_amount: Number(gb_amount || 0)
+      });
+
+      if (res) {
+        alert("محصول جدید با موفقیت به دیتابیس اضافه شد! برای نمایش در لیستِ بالا، صفحه را رفرش کنید.");
+      }
+    }
+
+    // --- توابع تب کاربران ---
     async function loadUsers() {
       const data = await apiCall('get_users');
       if (!data) return;
+      
       document.getElementById('users-table-body').innerHTML = data.users.map(u => `
         <tr class="border-b border-white/5 hover:bg-white/5 transition">
-          <td class="p-4 font-mono text-xs">${u.chat_id}<br><span class="text-[10px] text-slate-500">@${u.username || 'n/a'}</span></td>
+          <td class="p-4 font-mono text-xs text-slate-300">${u.chat_id}<br><span class="text-[10px] text-slate-500">@${u.username || 'n/a'}</span></td>
           <td class="p-4 font-mono text-blue-400">${Number(u.wallet_balance || 0).toLocaleString()}</td>
           <td class="p-4 font-mono text-red-400">${u.wallet_trx || 0}</td>
-          <td class="p-4 text-center">${u.total_referrals || 0}</td>
-          <td class="p-4">
-            <button onclick="editUser('${u.chat_id}')" class="bg-slate-800 p-2 rounded-lg text-slate-400"><i class="ph ph-note-pencil"></i></button>
+          <td class="p-4 text-center text-slate-300">${u.total_referrals || 0}</td>
+          <td class="p-4 flex gap-2 justify-center">
+            <button onclick="sendUserMsg('${u.chat_id}')" class="bg-blue-600/20 text-blue-400 p-2 rounded-lg hover:bg-blue-600/40 transition" title="ارسال پیام خصوصی"><i class="ph-fill ph-chat-text"></i></button>
+            <button onclick="deleteUser('${u.chat_id}')" class="bg-red-600/20 text-red-400 p-2 rounded-lg hover:bg-red-600/40 transition" title="حذف کاربر"><i class="ph-fill ph-trash"></i></button>
           </td>
         </tr>
       `).join('');
     }
 
-    async function sendBroadcast() {
-      const text = document.getElementById('bc-text').value;
-      if (!text || !confirm('پیام برای تمام کاربران ارسال شود؟')) return;
-      const data = await apiCall('broadcast', { message_text: text });
-      if (data) alert('درخواست ارسال به صف تلگرام فرستاده شد.');
+    async function sendUserMsg(chatId) {
+      const msg = prompt(`متن پیام خود را برای کاربر ${chatId} وارد کنید:`);
+      if (!msg) return;
+      const res = await apiCall('send_message', { target_chat_id: chatId, message_text: msg });
+      if (res) alert("پیام با موفقیت به تلگرام کاربر ارسال شد.");
     }
 
-    window.onload = refreshData;
+    async function deleteUser(chatId) {
+      if (!confirm(`⚠️ اخطار: آیا از حذف کامل کاربر ${chatId} اطمینان دارید؟`)) return;
+      const res = await apiCall('delete_user', { target_chat_id: chatId });
+      if (res) {
+        alert("کاربر با موفقیت حذف شد.");
+        loadUsers();
+      }
+    }
+
+    // --- توابع تب پیام همگانی ---
+    async function sendBroadcast() {
+      const text = document.getElementById('bc-text').value;
+      if (!text) return alert("متن پیام نمی‌تواند خالی باشد.");
+      if (!confirm('آیا مطمئن هستید که می‌خواهید این پیام را به تمام کاربران ربات ارسال کنید؟')) return;
+      
+      const data = await apiCall('broadcast', { message_text: text });
+      if (data) {
+        alert('درخواست ارسال همگانی با موفقیت ثبت شد.');
+        document.getElementById('bc-text').value = '';
+      }
+    }
+
   </script>
 </body>
 </html>
