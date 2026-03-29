@@ -315,7 +315,7 @@
     let currentUser = null;
     let currentPlan = null;
     let selectedCrypto = 'USDT';
-    let plans = []; // پلن‌ها از دیتابیس خوانده خواهند شد
+    let plans = []; 
     
     const cryptoData = {
       USDT: { symbol: 'USDT', network: 'TRC20', wallet: 'TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3', price: 1.00 },
@@ -333,7 +333,7 @@
       
       updateCryptoUI();
       await fetchCryptoPrices();
-      await loadUserData(); // پلن‌ها هم اینجا دریافت می‌شوند
+      await loadUserData(); 
     };
 
     function switchTab(tabId, btnElement) {
@@ -363,11 +363,11 @@
 
       container.innerHTML = plans.map(p => {
         const isDisabled = !p.is_active;
-        // تبدیل تومان به دلار برای نمایش
-        const usdValue = (p.price_toman / (cryptoData.USDT.price > 1 ? cryptoData.USDT.price : 60000)).toFixed(2);
+        // خواندن هوشمند قیمت دلاری از دیتابیس (price_usd)
+        const exactUsd = p.price_usd ? p.price_usd : (p.price_toman / 60000).toFixed(2);
         
         return `
-        <div class="glass plan-card p-4 rounded-xl flex justify-between items-center ${isDisabled ? 'disabled' : 'cursor-pointer'}" onclick="${isDisabled ? '' : `selectPlan('${p.internal_name}', this, ${usdValue}, ${p.price_toman})`}">
+        <div class="glass plan-card p-4 rounded-xl flex justify-between items-center ${isDisabled ? 'disabled' : 'cursor-pointer'}" onclick="${isDisabled ? '' : `selectPlan('${p.internal_name}', this, ${exactUsd}, ${p.price_toman})`}">
           <div>
             <div class="text-sm font-bold text-white mb-1 flex items-center gap-1">
               ${isDisabled ? '<i class="ph-fill ph-prohibit text-red-400"></i>' : '<i class="ph-fill ph-rocket text-blue-400"></i>'}
@@ -376,7 +376,7 @@
             <div class="text-[10px] text-slate-400">${isDisabled ? 'فعلا غیرفعال' : (p.gb_amount > 0 ? `${p.gb_amount} گیگابایت` : 'تضمینی و پرسرعت')}</div>
           </div>
           <div class="text-left">
-            <div class="text-green-400 font-mono text-sm font-bold">$${usdValue}</div>
+            <div class="text-green-400 font-mono text-sm font-bold">$${exactUsd}</div>
             <div class="text-[10px] text-slate-400 mt-0.5">${Number(p.price_toman).toLocaleString()} تومان</div>
           </div>
         </div>
@@ -415,13 +415,13 @@
     function calculateExactAmount() {
       if(!currentPlan) return;
       const cryptoPrice = cryptoData[selectedCrypto].price;
-      // برای تتر قیمت ۱ در نظر گرفته شده، اگر نه قیمت دلاری تقسیم بر قیمت ارز
       let exactAmount = 0;
+      
       if (selectedCrypto === 'USDT') {
         exactAmount = currentPlan.priceUsd;
       } else {
-        // برای تبدیل درست، قیمت تومانی محصول را به دلار تبدیل کرده و تقسیم بر قیمت ارز می‌کنیم
-        exactAmount = (currentPlan.priceUsd / cryptoPrice).toFixed(4); 
+        // تبدیل دقیق و زنده قیمت دلاری محصول به رمزارز انتخابی
+        exactAmount = (currentPlan.priceUsd / cryptoPrice).toFixed(2); 
       }
       
       document.getElementById('plan-usd-value').innerText = currentPlan.priceUsd;
@@ -454,9 +454,9 @@
         const res = await fetch(`/api/profile?chat_id=${tgUser.id}`);
         const data = await res.json();
         currentUser = data.user;
-        plans = data.plans || []; // ذخیره پلن‌ها در متغیر سراسری
+        plans = data.plans || []; 
         
-        renderPlans(); // رندر کردن پلن‌ها روی صفحه
+        renderPlans(); 
 
         // Update Headers & Profile
         document.getElementById('header-balance-toman').innerText = Number(currentUser.wallet_balance || 0).toLocaleString() + " T";
@@ -468,11 +468,11 @@
         const srvContainer = document.getElementById('active-services');
         if (data.services && data.services.length > 0) {
           srvContainer.innerHTML = data.services.map(s => {
-            const pInfo = plans.find(pl => pl.id === s.plan_name) || {name: s.plan_name};
+            const pInfo = plans.find(pl => pl.internal_name === s.plan_name) || {title_fa: s.plan_name};
             return `
             <div class="glass p-4 rounded-xl flex justify-between items-center border-r-2 border-green-500">
               <div>
-                <div class="text-sm font-bold text-white">${pInfo.name}</div>
+                <div class="text-sm font-bold text-white">${pInfo.title_fa}</div>
                 <div class="text-[10px] text-slate-400 mt-1 font-mono">${s.created_at.split('T')[0]}</div>
               </div>
               <a href="${s.web_panel_url}" target="_blank" class="bg-slate-800 border border-slate-700 text-green-400 text-[11px] px-3 py-1.5 rounded-lg">مشاهده پنل</a>
@@ -532,7 +532,8 @@
           chat_id: tgUser.id,
           plan: currentPlan.id,
           txid: txid,
-          amount_toman: currentPlan.priceToman.replace(/,/g, ''),
+          // ارسال قیمت تومانی دقیق (برطرف شدن باگ replace برای اعداد)
+          amount_toman: currentPlan.priceToman,
           crypto_currency: selectedCrypto,
           crypto_amount: parseFloat(exactCryptoAmount),
           notes: notes
@@ -581,7 +582,7 @@
           tg.showAlert("❌ خطا در ثبت. لطفاً مجدداً تلاش کنید.");
         }
       } catch (e) {
-        tg.showAlert("خطای اینترنت.");
+        tg.showAlert("خطای ارتباط با سرور.");
       } finally {
         btn.innerHTML = `<i class="ph-bold ph-check-circle text-lg"></i> ثبت و درخواست کانفیگ`;
         btn.disabled = false;
