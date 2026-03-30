@@ -34,23 +34,34 @@ export default async function handler(req, res) {
     let processedTxidsInThisRun = new Set(); // جلوگیری از ثبت همزمان دو سفارش با یک هش در یک لحظه
 
     for (const tx of pendingTxs) {
-      const txid = tx.txid_or_receipt;
+      // حذف فاصله‌های خالی احتمالی در ابتدا و انتهای هش
+      const txid = tx.txid_or_receipt ? tx.txid_or_receipt.trim() : "";
       const currency = tx.crypto_currency;
       let isPaymentValid = false;
-      
-      if (!txid || txid.length < 10) continue;
 
       // ==========================================
-      // 🛡️ سیستم امنیتی ضد کلاهبرداری (Anti-Fraud)
+      // 🛡️ لایه امنیتی ۰: بررسی فرمت استاندارد هش
       // ==========================================
-      // ۱. بررسی اینکه آیا این هش در همین لحظه پردازش شده است؟
+      // هش‌های ترون و ریپل 64 کاراکتر هگزادسیمال هستند. شبکه تون ممکن است Base64 باشد.
+      // این ریجکس (Regex) مطمئن می‌شود که کاربر حتماً یک رشته طولانی و معتبر از حروف و اعداد داده است.
+      const txidRegex = /^[a-zA-Z0-9\+\/\-\_=]{40,90}$/;
+      if (!txidRegex.test(txid)) {
+        await supabase.from('transactions').update({ status: 'rejected', notes: '❌ فرمت هش نامعتبر است' }).eq('id', tx.id);
+        results.push({ txid, status: "Rejected - Invalid Format" });
+        continue; // پرش به تراکنش بعدی بدون درگیری با بلاک‌چین
+      }
+
+      // ==========================================
+      // 🛡️ لایه امنیتی ۱: بررسی تکراری نبودن هش
+      // ==========================================
+      // بررسی اینکه آیا این هش در همین لحظه پردازش شده است؟ (حمله همزمان)
       if (processedTxidsInThisRun.has(txid)) {
-        await supabase.from('transactions').update({ status: 'rejected', notes: 'هش تکراری (همزمان)' }).eq('id', tx.id);
+        await supabase.from('transactions').update({ status: 'rejected', notes: 'هش تکراری در سیستم' }).eq('id', tx.id);
         results.push({ txid, status: "Rejected - Duplicate TXID" });
         continue;
       }
 
-      // ۲. بررسی در دیتابیس که آیا این هش قبلاً به کاربر دیگری کانفیگ داده است؟
+      // بررسی در دیتابیس که آیا این هش قبلاً توسط شخص دیگری (یا همین شخص برای سفارش دیگر) استفاده شده؟
       const { data: usedTx } = await supabase
         .from('transactions')
         .select('id')
@@ -60,19 +71,16 @@ export default async function handler(req, res) {
         .maybeSingle();
 
       if (usedTx) {
-        // این هش قبلاً استفاده شده است! کلاهبرداری تشخیص داده شد.
         await supabase.from('transactions').update({ status: 'rejected', notes: 'این رسید قبلاً استفاده شده است!' }).eq('id', tx.id);
         results.push({ txid, status: "Rejected - Already Used TXID" });
         
-        // ارسال پیام اخطار به کاربر سوءاستفاده‌گر
         await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chat_id: tx.chat_id, text: "❌ **اخطار امنیتی:**\n\nهش تراکنشی که ارسال کردید قبلاً در سیستم ثبت و استفاده شده است. از ارسال رسیدهای تکراری خودداری کنید." })
         });
-        continue; // پرش به تراکنش بعدی
+        continue; 
       }
 
-      // اضافه کردن هش به لیست بررسی شده‌های این دوره
       processedTxidsInThisRun.add(txid);
 
       try {
@@ -88,6 +96,7 @@ export default async function handler(req, res) {
               for (const t of scanData.trc20TransferInfo) {
                 if (t.symbol === "USDT" && t.to_address === WALLETS.USDT) {
                   const amountPaid = parseFloat(t.amount_str) / 1e6; 
+                  // بررسی دقیق مبلغ
                   if (amountPaid >= (tx.crypto_amount - 0.1)) isPaymentValid = true;
                 }
               }
@@ -95,6 +104,7 @@ export default async function handler(req, res) {
               const contract = scanData.contractData;
               if (contract.to_address === WALLETS.TRX) {
                 const amountPaid = parseFloat(contract.amount) / 1e6; 
+                // بررسی دقیق مبلغ
                 if (amountPaid >= (tx.crypto_amount - 1)) isPaymentValid = true;
               }
             }
@@ -136,12 +146,13 @@ export default async function handler(req, res) {
         }
 
         // ==========================================
-        // 🚀 عملیات تحویل خودکار (در صورت معتبر بودن)
+        // 🚀 لایه امنیتی نهایی: لینک کردن و تحویل
         // ==========================================
         if (isPaymentValid) {
           const { data: conf } = await supabase.from('configs').select('*').eq('plan_name', tx.target_plan).eq('status', 'available').limit(1).maybeSingle();
           
           if (conf) {
+            // در این مرحله کانفیگ کاملاً به آیدی شخص (tx.chat_id) گره می‌خورد!
             await supabase.from('configs').update({ status: 'sold', owner_id: tx.chat_id, sold_at: new Date() }).eq('id', conf.id);
             await supabase.from('transactions').update({ status: 'approved', handled_at: new Date() }).eq('id', tx.id);
 
@@ -177,7 +188,7 @@ export default async function handler(req, res) {
             });
           }
         } else {
-          // تراکنش هنوز تایید نشده یا مبلغ اشتباه است
+          // تراکنش هنوز در شبکه بلاک‌چین تایید نشده یا مبلغ اشتباه بوده است
           results.push({ txid, status: "Invalid Amount or Not Confirmed Yet" });
         }
 
