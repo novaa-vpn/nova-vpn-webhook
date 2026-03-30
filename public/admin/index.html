@@ -3,147 +3,214 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nova Admin | مدیریت یکپارچه</title>
+  <title>Nova CRM | مدیریت ارتباط با مشتری</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700&display=swap');
-    body { font-family: 'Vazirmatn', sans-serif; background-color: #020617; color: #f1f5f9; }
-    .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
-    .nav-tab.active { background: #3b82f6; color: white; }
-    .loader { border: 2px solid #334155; border-top-color: #3b82f6; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    body { font-family: 'Vazirmatn', sans-serif; background-color: #020617; color: #f1f5f9; overflow: hidden; }
+    .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    .sidebar-item { transition: all 0.2s ease; border-right: 3px solid transparent; }
+    .sidebar-item.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-right-color: #3b82f6; }
+    .sidebar-item:hover:not(.active) { background: rgba(255,255,255,0.02); }
+
+    .chat-bubble-user { background: rgba(30, 41, 59, 0.8); border-radius: 16px 16px 4px 16px; border: 1px solid rgba(255,255,255,0.05); }
+    .chat-bubble-admin { background: rgba(59, 130, 246, 0.2); border-radius: 16px 16px 16px 4px; border: 1px solid rgba(59, 130, 246, 0.3); }
+    
+    .view-section { display: none; animation: fade 0.3s; height: 100%; overflow-y: auto; padding: 20px; }
+    .view-section.active { display: block; }
+    @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="flex h-screen w-screen">
 
-  <div class="max-w-6xl mx-auto">
-    <!-- Header -->
-    <header class="flex flex-col md:flex-row justify-between items-center mb-8 glass p-6 rounded-3xl gap-4">
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-900/40">
-          <i class="ph-bold ph-lightning"></i>
-        </div>
-        <div>
-          <h1 class="text-xl font-bold">مرکز کنترل نُوا وی‌پی‌ان</h1>
-          <p class="text-xs text-slate-400">مدیریت تراکنش‌ها، کاربران و انبار کانفیگ</p>
-        </div>
+  <!-- Sidebar -->
+  <aside class="w-64 glass border-l border-white/10 flex flex-col z-20 shrink-0 hidden md:flex">
+    <div class="p-6 border-b border-white/5 flex items-center gap-3">
+      <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/50">
+        <i class="ph-bold ph-lightning text-xl"></i>
       </div>
-      <div class="flex gap-2">
-        <!-- ⚠️ رمز عبور اختصاصی خود را در این فیلد وارد کنید -->
-        <input type="password" id="admin-pass" placeholder="رمز عبور خود را وارد کنید..." class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm font-mono focus:border-blue-500 outline-none text-left" dir="ltr">
-        <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-500 p-2.5 rounded-xl transition shadow-lg shadow-blue-900/20">
-          <i class="ph-bold ph-arrows-clockwise text-xl"></i>
-        </button>
-      </div>
-    </header>
-
-    <!-- Navigation Tabs -->
-    <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
-      <button onclick="switchTab('receipts')" class="nav-tab active glass px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2">
-        <i class="ph ph-receipt"></i> بررسی تراکنش‌ها
-      </button>
-      <button onclick="switchTab('inventory')" class="nav-tab glass px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2">
-        <i class="ph ph-package"></i> مدیریت انبار
-      </button>
-      <button onclick="switchTab('users')" class="nav-tab glass px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2">
-        <i class="ph ph-users"></i> کاربران
-      </button>
-      <button onclick="switchTab('broadcast')" class="nav-tab glass px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2">
-        <i class="ph ph-megaphone"></i> ارسال پیام
-      </button>
-    </div>
-
-    <!-- Tab Contents -->
-    <div id="tab-receipts" class="tab-content block">
-      <div class="grid grid-cols-1 gap-4" id="receipts-list">
-        <div class="text-center py-20 text-slate-500">لطفاً رمز عبور را وارد کرده و دکمه بروزرسانی را بزنید.</div>
+      <div>
+        <h1 class="font-bold text-lg tracking-wide">NOVA CRM</h1>
+        <p class="text-[10px] text-slate-400">مدیریت هوشمند مشتریان</p>
       </div>
     </div>
 
-    <div id="tab-inventory" class="tab-content hidden">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="glass p-6 rounded-3xl">
-          <h3 class="font-bold mb-4 flex items-center justify-between">
-            <span class="flex items-center gap-2"><i class="ph-fill ph-plus-circle text-green-400"></i> افزودن کانفیگ جدید</span>
-            <button onclick="createNewPlan()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-lg hover:bg-slate-700">+ تعریف پلن جدید</button>
-          </h3>
-          <div class="space-y-3">
-            <select id="inv-plan" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
-              <!-- پلن‌های پیش‌فرض -->
-              <option value="starlink_1gb">استارلینک ۱ گیگ</option>
-              <option value="starlink_2gb">استارلینک ۲ گیگ</option>
-              <option value="starlink_3gb">استارلینک ۳ گیگ</option>
-              <option value="starlink_4gb">استارلینک ۴ گیگ</option>
-              <option value="starlink_5gb">استارلینک ۵ گیگ</option>
-              <option value="eco_25gb">اقتصادی ۲۵ گیگ</option>
-            </select>
-            <input type="text" id="inv-v2ray" placeholder="vless://... (کد کانفیگ)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono" dir="ltr">
-            <input type="text" id="inv-panel" placeholder="https://... (لینک پنل وب)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono" dir="ltr">
-            <button onclick="addConfig()" class="w-full bg-green-600 py-3 rounded-xl font-bold shadow-lg shadow-green-900/20 active:scale-95 transition">افزودن به انبار</button>
+    <div class="p-4 border-b border-white/5">
+      <input type="password" id="admin-pass" value="Nova@Manager2026" placeholder="Admin Key" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono focus:border-blue-500 outline-none text-left" dir="ltr">
+    </div>
+
+    <nav class="flex-1 overflow-y-auto py-4 flex flex-col gap-1">
+      <button onclick="switchView('receipts', this)" class="sidebar-item active px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+        <i class="ph-fill ph-receipt text-lg"></i> تراکنش‌های معلق
+      </button>
+      <button onclick="switchView('tickets', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right relative">
+        <i class="ph-fill ph-chats-teardrop text-lg"></i> مرکز پیام (پشتیبانی)
+      </button>
+      <button onclick="switchView('users', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+        <i class="ph-fill ph-users text-lg"></i> پرونده مشتریان
+      </button>
+      <button onclick="switchView('inventory', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+        <i class="ph-fill ph-package text-lg"></i> مدیریت محصولات و انبار
+      </button>
+      <button onclick="switchView('broadcast', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+        <i class="ph-fill ph-megaphone text-lg text-red-400"></i> پیام همگانی کانال
+      </button>
+    </nav>
+    
+    <div class="p-4 border-t border-white/5">
+      <button onclick="refreshAll()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-bold transition flex justify-center items-center gap-2">
+        <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی اطلاعات
+      </button>
+    </div>
+  </aside>
+
+  <!-- Mobile Header (Visible only on small screens) -->
+  <div class="md:hidden fixed top-0 left-0 w-full glass p-4 flex justify-between items-center z-30 border-b border-white/10">
+    <h1 class="font-bold">NOVA CRM</h1>
+    <select onchange="switchView(this.value, null)" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+      <option value="receipts">تراکنش‌ها</option>
+      <option value="tickets">پشتیبانی</option>
+      <option value="users">مشتریان</option>
+      <option value="inventory">انبار</option>
+      <option value="broadcast">پیام همگانی</option>
+    </select>
+  </div>
+
+  <!-- Main Content -->
+  <main class="flex-1 bg-[#020617] h-full pt-16 md:pt-0 relative">
+    
+    <!-- 1. Receipts -->
+    <section id="view-receipts" class="view-section active">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-receipt text-blue-500"></i> بررسی تراکنش‌های معلق</h2>
+      <div class="grid grid-cols-1 gap-4 max-w-4xl" id="receipts-list">
+        <div class="glass p-10 text-center text-slate-500 rounded-3xl">در حال دریافت تراکنش‌ها...</div>
+      </div>
+    </section>
+
+    <!-- 2. Tickets (CRM Chat) -->
+    <section id="view-tickets" class="view-section p-0 md:p-6">
+      <div class="h-full max-w-6xl mx-auto glass md:rounded-3xl border-0 md:border border-white/5 flex flex-col md:flex-row overflow-hidden">
+        <!-- Users List -->
+        <div class="w-full md:w-80 border-l border-white/5 bg-slate-900/30 flex flex-col h-1/3 md:h-full">
+          <div class="p-4 border-b border-white/5 bg-slate-900/80 font-bold text-sm">لیست گفتگوها</div>
+          <div class="flex-1 overflow-y-auto" id="ticket-users-list">
+            <!-- Chat List items -->
+            <div class="p-5 text-center text-xs text-slate-500">درحال لود...</div>
           </div>
         </div>
-        <div class="glass p-6 rounded-3xl">
-          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-chart-pie text-blue-400"></i> وضعیت موجودی انبار</h3>
-          <div id="inventory-status" class="space-y-3">
-            <div class="text-center py-5 text-slate-500 text-sm">در حال دریافت آمار...</div>
+        <!-- Chat Area -->
+        <div class="flex-1 flex flex-col bg-slate-950/50 h-2/3 md:h-full relative">
+          <div class="p-4 border-b border-white/5 bg-slate-900/80 flex justify-between items-center h-14 shrink-0">
+            <span class="font-bold text-sm" id="chat-header-name">یک چت را انتخاب کنید</span>
+            <span class="text-xs font-mono text-slate-500" id="chat-header-id"></span>
+          </div>
+          
+          <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-history">
+            <div class="h-full flex items-center justify-center text-slate-500 text-sm">پیامی برای نمایش وجود ندارد.</div>
+          </div>
+          
+          <div class="p-4 bg-slate-900/80 border-t border-white/5 shrink-0 flex gap-2">
+            <input type="text" id="reply-input" placeholder="پاسخ متنی به مشتری..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 text-sm outline-none focus:border-blue-500" disabled>
+            <button id="reply-btn" onclick="sendReply()" class="bg-blue-600 px-6 rounded-xl font-bold active:scale-95 transition disabled:opacity-50" disabled><i class="ph-bold ph-paper-plane-right"></i></button>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div id="tab-users" class="tab-content hidden">
-      <div class="glass overflow-hidden rounded-3xl border border-white/5 overflow-x-auto">
-        <table class="w-full text-right text-sm whitespace-nowrap">
+    <!-- 3. Users CRM -->
+    <section id="view-users" class="view-section">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-users text-blue-500"></i> پرونده مشتریان</h2>
+      <div class="glass overflow-hidden rounded-3xl border border-white/5">
+        <table class="w-full text-right text-sm">
           <thead class="bg-slate-900/50 text-slate-400">
             <tr>
               <th class="p-4">کاربر</th>
-              <th class="p-4">موجودی T</th>
-              <th class="p-4">موجودی TRX</th>
+              <th class="p-4">کیف پول (T)</th>
+              <th class="p-4">پاداش (TRX)</th>
               <th class="p-4">زیرمجموعه</th>
               <th class="p-4 text-center">عملیات</th>
             </tr>
           </thead>
-          <tbody id="users-table-body">
-            <!-- Users list populated by JS -->
-          </tbody>
+          <tbody id="users-table-body"></tbody>
         </table>
       </div>
-    </div>
+    </section>
 
-    <div id="tab-broadcast" class="tab-content hidden">
-      <div class="glass p-8 rounded-3xl max-w-2xl mx-auto">
-        <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="ph-fill ph-broadcast text-red-400"></i> ارسال پیام به تمام کاربران</h3>
-        <p class="text-xs text-slate-400 mb-6 leading-relaxed">این پیام برای تمامی افرادی که ربات را استارت کرده‌اند ارسال خواهد شد. لطفاً در استفاده از این ابزار احتیاط کنید.</p>
-        <textarea id="bc-text" rows="6" placeholder="متن پیام خود را بنویسید..." class="w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-blue-500 mb-4 resize-none"></textarea>
-        <button onclick="sendBroadcast()" class="w-full bg-red-600 hover:bg-red-500 py-4 rounded-2xl font-bold shadow-lg shadow-red-900/30 active:scale-95 transition flex justify-center items-center gap-2">
-          <i class="ph-bold ph-paper-plane-tilt"></i> شروع عملیات ارسال گروهی
+    <!-- 4. Inventory & Plans -->
+    <section id="view-inventory" class="view-section">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-package text-blue-500"></i> مدیریت محصولات و انبار</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="glass p-6 rounded-3xl">
+          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-plus-circle text-green-400"></i> شارژ انبار کانفیگ</h3>
+          <div class="space-y-3">
+            <select id="inv-plan" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none"></select>
+            <input type="text" id="inv-v2ray" placeholder="vless://... (کد کانفیگ)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
+            <input type="text" id="inv-panel" placeholder="https://... (لینک پنل وب)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
+            <button onclick="addConfig()" class="w-full bg-green-600 py-3 rounded-xl font-bold active:scale-95 transition">افزودن به موجودی</button>
+          </div>
+        </div>
+        <div class="glass p-6 rounded-3xl">
+          <h3 class="font-bold mb-4">آمار موجودی (کانفیگ‌های آزاد)</h3>
+          <div id="inventory-status" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <div class="glass p-6 rounded-3xl mb-6 border border-white/5">
+        <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-tag text-purple-400"></i> ایجاد محصول جدید</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input type="text" id="p-id" placeholder="شناسه سیستمی (انگلیسی)" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
+          <input type="text" id="p-title" placeholder="نام فارسی نمایشی" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
+          <input type="number" id="p-toman" placeholder="قیمت به تومان" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
+          <input type="number" step="0.01" id="p-usd" placeholder="قیمت به دلار" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
+          <button onclick="addNewPlan()" class="md:col-span-4 bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-bold text-sm transition">ثبت محصول در دیتابیس</button>
+        </div>
+      </div>
+      
+      <div id="plans-list" class="space-y-3"></div>
+    </section>
+
+    <!-- 5. Broadcast -->
+    <section id="view-broadcast" class="view-section">
+      <div class="glass p-8 rounded-3xl max-w-2xl mx-auto mt-10">
+        <h3 class="font-bold text-xl mb-4 flex items-center gap-2"><i class="ph-fill ph-megaphone text-red-500"></i> ارسال پیام همگانی (Broadcast)</h3>
+        <p class="text-sm text-slate-400 mb-6 leading-relaxed">این ابزار، متن شما را برای تک‌تک کاربرانی که تا به حال ربات را استارت کرده‌اند ارسال می‌کند. بسیار سریع و بدون افت سرعت سرور.</p>
+        <textarea id="bc-text" rows="6" placeholder="متن اطلاعیه شما..." class="w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-blue-500 mb-4 resize-none"></textarea>
+        <button onclick="sendBroadcast()" class="w-full bg-red-600 py-4 rounded-2xl font-bold shadow-lg shadow-red-900/30 active:scale-95 transition flex justify-center items-center gap-2">
+          <i class="ph-bold ph-paper-plane-tilt text-lg"></i> ارسال اطلاعیه به کل مشتریان
         </button>
       </div>
-    </div>
+    </section>
 
-  </div>
+  </main>
 
   <script>
-    let activeTab = 'receipts';
+    let activeView = 'receipts';
+    let allTickets = [];
+    let currentChatId = null;
 
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-      event.currentTarget.classList.add('active');
-      activeTab = tabId;
-      refreshData();
+    function switchView(viewId, btnEl) {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      document.getElementById(`view-${viewId}`).classList.add('active');
+      
+      if (btnEl) {
+        document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      activeView = viewId;
+      refreshAll();
     }
 
-    // هسته اصلی ارتباط با سرور
     async function apiCall(action, params = {}) {
       const pass = document.getElementById('admin-pass').value;
-      if(!pass) {
-        alert("لطفاً رمز عبور مدیریت را در بالای صفحه وارد کنید.");
-        return null;
-      }
-      
       try {
         const res = await fetch('/api/adminManage', {
           method: 'POST',
@@ -151,41 +218,27 @@
           body: JSON.stringify({ action, admin_pass: pass, ...params })
         });
         const data = await res.json();
-        
-        if (!res.ok) {
-          if (res.status === 401) alert("خطا: رمز عبور وارد شده اشتباه است!");
-          else alert(data.error || 'خطای سرور');
-          return null;
-        }
+        if (!res.ok) throw new Error(data.error || 'خطای سرور');
         return data;
-      } catch (err) {
-        alert("خطای ارتباط با سرور. لاگ‌های ورسل را بررسی کنید.");
-        return null;
-      }
+      } catch (err) { alert(err.message); return null; }
     }
 
-    async function refreshData() {
-      if (activeTab === 'receipts') loadReceipts();
-      if (activeTab === 'inventory') loadInventory();
-      if (activeTab === 'users') loadUsers();
+    async function refreshAll() {
+      if (activeView === 'receipts') loadReceipts();
+      if (activeView === 'tickets') loadTickets();
+      if (activeView === 'users') loadUsers();
+      if (activeView === 'inventory') { loadInventory(); loadPlans(); }
     }
 
-    // --- توابع تب رسیدها ---
+    // --- 1. Receipts ---
     async function loadReceipts() {
-      const container = document.getElementById('receipts-list');
-      container.innerHTML = '<div class="text-center py-10 text-slate-500"><div class="loader mx-auto mb-3"></div>در حال دریافت...</div>';
-      
       const data = await apiCall('get_pending');
-      if (!data) {
-        container.innerHTML = '<div class="text-center py-10 text-red-500">خطا در دریافت اطلاعات.</div>';
-        return;
-      }
-
+      const container = document.getElementById('receipts-list');
+      if (!data) return;
       if (data.receipts.length === 0) {
         container.innerHTML = '<div class="glass p-10 text-center text-slate-500 rounded-3xl">هیچ تراکنش معلقی وجود ندارد.</div>';
         return;
       }
-
       container.innerHTML = data.receipts.map(r => `
         <div class="glass p-5 rounded-2xl border-r-4 border-blue-500 flex flex-col md:flex-row justify-between items-center gap-4">
           <div class="flex-1 w-full">
@@ -194,41 +247,172 @@
               <span class="bg-blue-900/30 text-blue-400 px-2 py-1 rounded text-xs font-bold">${r.target_plan}</span>
             </div>
             <div class="text-sm font-mono text-white break-all bg-black/30 p-2 rounded border border-white/5">${r.txid_or_receipt}</div>
-            <div class="mt-2 text-xs text-slate-400">مبلغ: <span class="text-white">${Number(r.amount_toman).toLocaleString()} T</span> | ارز: <span class="text-white">${r.crypto_amount || '?'} ${r.crypto_currency || ''}</span></div>
-            ${r.notes ? `<div class="mt-2 text-xs bg-yellow-500/10 text-yellow-200 p-2 rounded border border-yellow-500/20">📝 توضیحات: ${r.notes}</div>` : ''}
+            <div class="mt-2 text-xs text-slate-400">مبلغ: <span class="text-white">${Number(r.amount_toman).toLocaleString()} T</span> | ارز: <span class="text-white">${r.crypto_amount} ${r.crypto_currency}</span></div>
           </div>
           <div class="flex gap-2 w-full md:w-auto">
-            <button onclick="txAction('${r.id}', 'approve')" class="flex-1 md:flex-none bg-green-600 hover:bg-green-500 px-6 py-3 rounded-xl font-bold text-xs transition">تایید و تحویل</button>
-            <button onclick="txAction('${r.id}', 'reject')" class="flex-1 md:flex-none bg-red-600/50 hover:bg-red-500 px-6 py-3 rounded-xl font-bold text-xs transition">رد تراکنش</button>
+            <button onclick="txAction('${r.id}', 'approve')" class="flex-1 md:flex-none bg-green-600 px-6 py-3 rounded-xl font-bold text-xs">تایید و تحویل</button>
+            <button onclick="txAction('${r.id}', 'reject')" class="flex-1 md:flex-none bg-red-600/50 px-6 py-3 rounded-xl font-bold text-xs">رد کردن</button>
           </div>
         </div>
       `).join('');
     }
 
     async function txAction(id, type) {
-      if (!confirm(`آیا از ${type === 'approve' ? 'تایید' : 'رد'} این تراکنش اطمینان دارید؟`)) return;
-      const data = await apiCall(type, { tx_id: id });
-      if (data) {
-        alert("عملیات با موفقیت انجام شد.");
-        loadReceipts();
-      }
+      if (!confirm('آیا مطمئن هستید؟')) return;
+      const res = await apiCall(type, { tx_id: id });
+      if (res) loadReceipts();
     }
 
-    // --- توابع تب انبار ---
+    // --- 2. CRM Ticketing ---
+    async function loadTickets() {
+      const data = await apiCall('get_tickets');
+      if (!data) return;
+      allTickets = data.tickets;
+      
+      // گروه‌بندی پیام‌ها بر اساس کاربر
+      const chatGroups = {};
+      allTickets.forEach(t => {
+        if(!chatGroups[t.chat_id]) chatGroups[t.chat_id] = { messages: [], username: t.users?.username || 'Unknown' };
+        chatGroups[t.chat_id].messages.push(t);
+      });
+
+      const listContainer = document.getElementById('ticket-users-list');
+      if (Object.keys(chatGroups).length === 0) {
+        listContainer.innerHTML = '<div class="p-5 text-center text-xs text-slate-500">هیچ پیامی وجود ندارد</div>';
+        return;
+      }
+
+      // ساخت لیست سایدبار چت‌ها
+      listContainer.innerHTML = Object.keys(chatGroups).map(chatId => {
+        const msgs = chatGroups[chatId].messages;
+        const lastMsg = msgs[msgs.length - 1];
+        return `
+          <div onclick="openChat('${chatId}')" class="p-4 border-b border-white/5 hover:bg-white/5 cursor-pointer transition flex items-center gap-3 ${currentChatId == chatId ? 'bg-blue-900/20 border-r-2 border-r-blue-500' : ''}">
+            <div class="w-10 h-10 bg-slate-800 rounded-full flex justify-center items-center shrink-0">
+              <i class="ph-fill ph-user text-slate-400"></i>
+            </div>
+            <div class="flex-1 overflow-hidden">
+              <div class="font-bold text-sm text-slate-200 truncate">@${chatGroups[chatId].username}</div>
+              <div class="text-[10px] text-slate-400 truncate mt-1">${lastMsg.message_text}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // اگر چتی باز بود، پیام‌هایش را رفرش کن
+      if(currentChatId) openChat(currentChatId);
+    }
+
+    function openChat(chatId) {
+      currentChatId = chatId;
+      const chatHistory = document.getElementById('chat-history');
+      
+      // فعال کردن فیلدهای ارسال
+      document.getElementById('reply-input').disabled = false;
+      document.getElementById('reply-btn').disabled = false;
+      
+      const userMsgs = allTickets.filter(t => t.chat_id == chatId);
+      if(userMsgs.length > 0) {
+         document.getElementById('chat-header-name').innerText = `@${userMsgs[0].users?.username || 'کاربر'}`;
+         document.getElementById('chat-header-id').innerText = chatId;
+      }
+
+      chatHistory.innerHTML = userMsgs.map(t => {
+        const isUser = t.sender === 'user';
+        const date = new Date(t.created_at).toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'});
+        return `
+          <div class="flex ${isUser ? 'justify-end' : 'justify-start'} mb-2">
+            <div class="${isUser ? 'chat-bubble-user text-right text-slate-200' : 'chat-bubble-admin text-left text-blue-100'} p-3 max-w-[80%]">
+              <div class="text-sm break-words">${t.message_text.replace(/\n/g, '<br>')}</div>
+              <div class="text-[9px] opacity-50 mt-1">${date}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+      // آپدیت استایل لیست کناری
+      loadTickets(); // فقط برای رفرش ظاهر لیست
+    }
+
+    async function sendReply() {
+      const input = document.getElementById('reply-input');
+      const text = input.value.trim();
+      if (!text || !currentChatId) return;
+
+      const btn = document.getElementById('reply-btn');
+      btn.disabled = true;
+      
+      const res = await apiCall('reply_ticket', { target_chat_id: currentChatId, message_text: text });
+      if (res) {
+        input.value = '';
+        loadTickets(); // رفرش کل چت‌ها
+      }
+      btn.disabled = false;
+    }
+
+    // --- 3. Users ---
+    async function loadUsers() {
+      const data = await apiCall('get_users');
+      if (!data) return;
+      document.getElementById('users-table-body').innerHTML = data.users.map(u => `
+        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+          <td class="p-4 font-mono text-xs">${u.chat_id}<br><span class="text-[10px] text-slate-500">@${u.username || 'n/a'}</span></td>
+          <td class="p-4 font-mono text-blue-400">${Number(u.wallet_balance || 0).toLocaleString()}</td>
+          <td class="p-4 font-mono text-red-400">${u.wallet_trx || 0}</td>
+          <td class="p-4 text-center">${u.total_referrals || 0}</td>
+          <td class="p-4 flex gap-2 justify-center">
+            <button onclick="editBalance('${u.chat_id}')" class="bg-blue-600/20 text-blue-400 p-2 rounded-lg" title="شارژ"><i class="ph ph-coins"></i></button>
+            <button onclick="banUser('${u.chat_id}', '${u.role}')" class="bg-slate-800 p-2 rounded-lg text-red-400" title="مسدود"><i class="ph ph-prohibit"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function editBalance(chatId) {
+      const amount = prompt("مبلغ جدید کیف پول (تومان):");
+      if (amount === null) return;
+      const res = await apiCall('update_user_balance', { target_chat_id: chatId, amount: Number(amount) });
+      if (res) loadUsers();
+    }
+    
+    async function banUser(id, currentRole) {
+      const newRole = currentRole === 'banned' ? 'user' : 'banned';
+      if (!confirm(`آیا می‌خواهید این کاربر را ${newRole === 'banned' ? 'مسدود' : 'آزاد'} کنید؟`)) return;
+      const res = await apiCall('update_user_role', { target_chat_id: id, role: newRole });
+      if (res) loadUsers();
+    }
+
+    // --- 4. Inventory & Plans ---
     async function loadInventory() {
       const data = await apiCall('get_inventory');
       if (!data) return;
-      const container = document.getElementById('inventory-status');
-      
-      if (Object.keys(data.stats).length === 0) {
-        container.innerHTML = '<div class="text-slate-500 text-sm text-center">انبار شما کاملاً خالی است.</div>';
-        return;
-      }
-      
-      container.innerHTML = Object.entries(data.stats).map(([plan, count]) => `
-        <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-white/5">
-          <span class="text-sm font-bold text-slate-300">${plan}</span>
+      document.getElementById('inventory-status').innerHTML = Object.entries(data.stats).map(([name, count]) => `
+        <div class="flex justify-between p-3 bg-slate-900/50 rounded-xl border border-white/5">
+          <span class="text-sm font-bold">${name}</span>
           <span class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full text-xs font-mono font-bold">${count} موجود</span>
+        </div>
+      `).join('') || '<div class="text-center text-xs text-slate-500">انبار خالی است.</div>';
+    }
+
+    async function loadPlans() {
+      const data = await apiCall('get_plans_list');
+      if (!data) return;
+      
+      // آپدیت لیست کشویی
+      document.getElementById('inv-plan').innerHTML = data.plans.map(p => `<option value="${p.internal_name}">${p.title_fa}</option>`).join('');
+      
+      // آپدیت لیست پلن‌ها در پایین
+      document.getElementById('plans-list').innerHTML = data.plans.map(p => `
+        <div class="glass p-4 rounded-2xl flex justify-between items-center border border-white/5">
+          <div>
+            <div class="font-bold text-sm">${p.title_fa} <span class="text-[10px] text-slate-500">(${p.internal_name})</span></div>
+            <div class="text-xs text-slate-400">${Number(p.price_toman).toLocaleString()} تومان | $${p.price_usd}</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="togglePlan('${p.internal_name}', ${p.is_active})" class="px-3 py-1.5 rounded-lg text-[10px] font-bold ${p.is_active ? 'bg-green-600' : 'bg-red-600'}">${p.is_active ? 'فعال' : 'غیرفعال'}</button>
+            <button onclick="deletePlan('${p.internal_name}')" class="bg-slate-800 p-2 rounded-lg text-red-400"><i class="ph ph-trash"></i></button>
+          </div>
         </div>
       `).join('');
     }
@@ -237,90 +421,46 @@
       const plan = document.getElementById('inv-plan').value;
       const v2ray = document.getElementById('inv-v2ray').value;
       const panel = document.getElementById('inv-panel').value;
-      if (!v2ray || !panel) return alert('کد کانفیگ و لینک پنل الزامی است.');
-      
+      if (!v2ray || !panel) return alert('تمام فیلدها را پر کنید');
       const data = await apiCall('add_config', { plan, v2ray, panel });
-      if (data) {
-        alert('کانفیگ با موفقیت به انبار اضافه شد!');
-        document.getElementById('inv-v2ray').value = '';
-        document.getElementById('inv-panel').value = '';
-        loadInventory();
-      }
+      if (data) { alert('با موفقیت اضافه شد'); document.getElementById('inv-v2ray').value = ''; loadInventory(); }
     }
 
-    async function createNewPlan() {
-      const plan_id = prompt("شناسه سیستمی (انگلیسی، بدون فاصله، مثلا: gold_10gb):");
-      if(!plan_id) return;
-      const title_fa = prompt("نام نمایشی در ربات (مثلا: VIP طلایی ۱۰ گیگ):");
-      if(!title_fa) return;
-      const price_toman = prompt("قیمت به تومان (فقط عدد انگلیسی، مثلا: 50000):");
-      if(!price_toman) return;
-      // پراپمت جدید برای گرفتن قیمت دلاری
-      const price_usd = prompt("قیمت دلاری برای پرداخت با تتر/ترون (مثلا: 8.50):");
-      if(!price_usd) return;
-      const gb_amount = prompt("مقدار گیگابایت (جهت محاسبه پورسانت - فقط عدد):", "0");
-
-      const res = await apiCall('add_plan', { 
-        plan_id: plan_id, 
-        title_fa: title_fa, 
-        price_toman: Number(price_toman),
-        price_usd: Number(price_usd),
-        gb_amount: Number(gb_amount || 0)
-      });
-
-      if (res) {
-        alert("محصول جدید با موفقیت به دیتابیس اضافه شد! برای نمایش در لیستِ بالا، صفحه را رفرش کنید.");
-      }
+    async function addNewPlan() {
+      const params = {
+        plan_id: document.getElementById('p-id').value,
+        title_fa: document.getElementById('p-title').value,
+        price_toman: Number(document.getElementById('p-toman').value),
+        price_usd: Number(document.getElementById('p-usd').value)
+      };
+      if (!params.plan_id || !params.title_fa) return alert("فیلدها را پر کنید.");
+      const res = await apiCall('add_plan', params);
+      if (res) { alert("محصول ثبت شد."); loadPlans(); }
     }
 
-    // --- توابع تب کاربران ---
-    async function loadUsers() {
-      const data = await apiCall('get_users');
-      if (!data) return;
-      
-      document.getElementById('users-table-body').innerHTML = data.users.map(u => `
-        <tr class="border-b border-white/5 hover:bg-white/5 transition">
-          <td class="p-4 font-mono text-xs text-slate-300">${u.chat_id}<br><span class="text-[10px] text-slate-500">@${u.username || 'n/a'}</span></td>
-          <td class="p-4 font-mono text-blue-400">${Number(u.wallet_balance || 0).toLocaleString()}</td>
-          <td class="p-4 font-mono text-red-400">${u.wallet_trx || 0}</td>
-          <td class="p-4 text-center text-slate-300">${u.total_referrals || 0}</td>
-          <td class="p-4 flex gap-2 justify-center">
-            <button onclick="sendUserMsg('${u.chat_id}')" class="bg-blue-600/20 text-blue-400 p-2 rounded-lg hover:bg-blue-600/40 transition" title="ارسال پیام خصوصی"><i class="ph-fill ph-chat-text"></i></button>
-            <button onclick="deleteUser('${u.chat_id}')" class="bg-red-600/20 text-red-400 p-2 rounded-lg hover:bg-red-600/40 transition" title="حذف کاربر"><i class="ph-fill ph-trash"></i></button>
-          </td>
-        </tr>
-      `).join('');
+    async function togglePlan(id, current) {
+      const res = await apiCall('toggle_plan', { plan_id: id, status: !current });
+      if (res) loadPlans();
     }
 
-    async function sendUserMsg(chatId) {
-      const msg = prompt(`متن پیام خود را برای کاربر ${chatId} وارد کنید:`);
-      if (!msg) return;
-      const res = await apiCall('send_message', { target_chat_id: chatId, message_text: msg });
-      if (res) alert("پیام با موفقیت به تلگرام کاربر ارسال شد.");
+    async function deletePlan(id) {
+      if (!confirm('مطمئن هستید؟')) return;
+      const res = await apiCall('delete_plan', { plan_id: id });
+      if (res) loadPlans();
     }
 
-    async function deleteUser(chatId) {
-      if (!confirm(`⚠️ اخطار: آیا از حذف کامل کاربر ${chatId} اطمینان دارید؟`)) return;
-      const res = await apiCall('delete_user', { target_chat_id: chatId });
-      if (res) {
-        alert("کاربر با موفقیت حذف شد.");
-        loadUsers();
-      }
-    }
-
-    // --- توابع تب پیام همگانی ---
+    // --- 5. Broadcast ---
     async function sendBroadcast() {
       const text = document.getElementById('bc-text').value;
-      if (!text) return alert("متن پیام نمی‌تواند خالی باشد.");
-      if (!confirm('آیا مطمئن هستید که می‌خواهید این پیام را به تمام کاربران ربات ارسال کنید؟')) return;
-      
+      if (!text || !confirm('این پیام برای تمام کاربران ارسال خواهد شد. آیا مطمئن هستید؟')) return;
       const data = await apiCall('broadcast', { message_text: text });
       if (data) {
-        alert('درخواست ارسال همگانی با موفقیت ثبت شد.');
+        alert(`عملیات موفق. پیام در حال ارسال به ${data.count} کاربر است.`);
         document.getElementById('bc-text').value = '';
       }
     }
 
+    window.onload = refreshAll;
   </script>
 </body>
 </html>
