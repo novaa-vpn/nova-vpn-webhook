@@ -154,7 +154,7 @@
           <div class="space-y-3">
             <select id="inv-plan" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none"></select>
             <input type="text" id="inv-v2ray" placeholder="vless://... (کد کانفیگ)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
-            <input type="text" id="inv-panel" placeholder="https://... (لینک پنل وب)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
+            <input type="text" id="inv-panel" placeholder="https://... (لینک پنل وب - اختیاری)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
             <button onclick="addConfig()" class="w-full bg-green-600 py-3 rounded-xl font-bold active:scale-95 transition">افزودن به موجودی</button>
           </div>
         </div>
@@ -239,22 +239,31 @@
         container.innerHTML = '<div class="glass p-10 text-center text-slate-500 rounded-3xl">هیچ تراکنش معلقی وجود ندارد.</div>';
         return;
       }
-      container.innerHTML = data.receipts.map(r => `
-        <div class="glass p-5 rounded-2xl border-r-4 border-blue-500 flex flex-col md:flex-row justify-between items-center gap-4">
+      
+      container.innerHTML = data.receipts.map(r => {
+        // --- 🆕 تفاوت ظاهری رسید شارژ و خرید ---
+        const isTopup = r.target_plan === 'wallet_topup';
+        const badgeHtml = isTopup 
+          ? `<span class="bg-purple-900/30 text-purple-400 px-2 py-1 rounded text-xs font-bold flex items-center gap-1"><i class="ph-bold ph-wallet"></i> درخواست شارژ حساب</span>`
+          : `<span class="bg-blue-900/30 text-blue-400 px-2 py-1 rounded text-xs font-bold">${r.target_plan}</span>`;
+
+        return `
+        <div class="glass p-5 rounded-2xl border-r-4 ${isTopup ? 'border-purple-500' : 'border-blue-500'} flex flex-col md:flex-row justify-between items-center gap-4">
           <div class="flex-1 w-full">
             <div class="flex items-center gap-2 mb-2">
               <span class="bg-slate-800 px-2 py-1 rounded text-xs font-mono text-slate-300">ID: ${r.chat_id}</span>
-              <span class="bg-blue-900/30 text-blue-400 px-2 py-1 rounded text-xs font-bold">${r.target_plan}</span>
+              ${badgeHtml}
             </div>
             <div class="text-sm font-mono text-white break-all bg-black/30 p-2 rounded border border-white/5">${r.txid_or_receipt}</div>
             <div class="mt-2 text-xs text-slate-400">مبلغ: <span class="text-white">${Number(r.amount_toman).toLocaleString()} T</span> | ارز: <span class="text-white">${r.crypto_amount} ${r.crypto_currency}</span></div>
+            ${r.notes ? `<div class="mt-2 text-xs bg-yellow-500/10 text-yellow-200 p-2 rounded border border-yellow-500/20">📝 ${r.notes}</div>` : ''}
           </div>
           <div class="flex gap-2 w-full md:w-auto">
-            <button onclick="txAction('${r.id}', 'approve')" class="flex-1 md:flex-none bg-green-600 px-6 py-3 rounded-xl font-bold text-xs">تایید و تحویل</button>
+            <button onclick="txAction('${r.id}', 'approve')" class="flex-1 md:flex-none bg-green-600 px-6 py-3 rounded-xl font-bold text-xs">تایید و اعمال</button>
             <button onclick="txAction('${r.id}', 'reject')" class="flex-1 md:flex-none bg-red-600/50 px-6 py-3 rounded-xl font-bold text-xs">رد کردن</button>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     }
 
     async function txAction(id, type) {
@@ -269,7 +278,6 @@
       if (!data) return;
       allTickets = data.tickets;
       
-      // گروه‌بندی پیام‌ها بر اساس کاربر
       const chatGroups = {};
       allTickets.forEach(t => {
         if(!chatGroups[t.chat_id]) chatGroups[t.chat_id] = { messages: [], username: t.users?.username || 'Unknown' };
@@ -282,7 +290,6 @@
         return;
       }
 
-      // ساخت لیست سایدبار چت‌ها
       listContainer.innerHTML = Object.keys(chatGroups).map(chatId => {
         const msgs = chatGroups[chatId].messages;
         const lastMsg = msgs[msgs.length - 1];
@@ -299,7 +306,6 @@
         `;
       }).join('');
 
-      // اگر چتی باز بود، پیام‌هایش را رفرش کن
       if(currentChatId) openChat(currentChatId);
     }
 
@@ -307,7 +313,6 @@
       currentChatId = chatId;
       const chatHistory = document.getElementById('chat-history');
       
-      // فعال کردن فیلدهای ارسال
       document.getElementById('reply-input').disabled = false;
       document.getElementById('reply-btn').disabled = false;
       
@@ -331,8 +336,7 @@
       }).join('');
 
       chatHistory.scrollTop = chatHistory.scrollHeight;
-      // آپدیت استایل لیست کناری
-      loadTickets(); // فقط برای رفرش ظاهر لیست
+      loadTickets(); 
     }
 
     async function sendReply() {
@@ -346,7 +350,7 @@
       const res = await apiCall('reply_ticket', { target_chat_id: currentChatId, message_text: text });
       if (res) {
         input.value = '';
-        loadTickets(); // رفرش کل چت‌ها
+        loadTickets(); 
       }
       btn.disabled = false;
     }
@@ -399,10 +403,8 @@
       const data = await apiCall('get_plans_list');
       if (!data) return;
       
-      // آپدیت لیست کشویی
       document.getElementById('inv-plan').innerHTML = data.plans.map(p => `<option value="${p.internal_name}">${p.title_fa}</option>`).join('');
       
-      // آپدیت لیست پلن‌ها در پایین
       document.getElementById('plans-list').innerHTML = data.plans.map(p => `
         <div class="glass p-4 rounded-2xl flex justify-between items-center border border-white/5">
           <div>
@@ -421,9 +423,9 @@
       const plan = document.getElementById('inv-plan').value;
       const v2ray = document.getElementById('inv-v2ray').value;
       const panel = document.getElementById('inv-panel').value;
-      if (!v2ray || !panel) return alert('تمام فیلدها را پر کنید');
-      const data = await apiCall('add_config', { plan, v2ray, panel });
-      if (data) { alert('با موفقیت اضافه شد'); document.getElementById('inv-v2ray').value = ''; loadInventory(); }
+      if (!v2ray) return alert('کد کانفیگ الزامی است');
+      const data = await apiCall('add_config', { plan, v2ray, panel: panel || '' });
+      if (data) { alert('با موفقیت اضافه شد'); document.getElementById('inv-v2ray').value = ''; document.getElementById('inv-panel').value = ''; loadInventory(); }
     }
 
     async function addNewPlan() {
