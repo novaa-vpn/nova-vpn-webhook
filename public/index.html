@@ -237,12 +237,33 @@
         <h3 class="font-bold text-slate-200 text-sm mb-3 relative z-10 flex items-center gap-2">
           <i class="ph-fill ph-wallet text-purple-400 text-xl"></i> افزایش موجودی حساب
         </h3>
-        <p class="text-[10px] text-slate-400 mb-3 relative z-10">حساب خود را شارژ کنید تا بدون معطلی و قطعی، در هر ساعت از شبانه‌روز کانفیگ بخرید.</p>
+        <p class="text-[10px] text-slate-400 mb-3 relative z-10">مبلغ شارژ را به دلار وارد کنید تا معادل دقیق آن در رمزارزهای مختلف محاسبه شود.</p>
         
         <div class="flex items-center gap-2 mb-3 relative z-10">
-          <input type="number" id="topup-amount" placeholder="مبلغ شارژ به تومان..." class="bg-slate-900 border border-slate-700 text-white text-sm font-mono rounded-lg p-3 w-full focus:outline-none focus:border-purple-500">
-          <span class="text-xs text-purple-300 bg-purple-900/20 px-3 py-3 rounded-lg border border-purple-900/30">تومان</span>
+          <input type="number" id="topup-amount" oninput="updateTopupPreview()" placeholder="مبلغ شارژ به دلار (مثلا 5)..." class="bg-slate-900 border border-slate-700 text-white text-sm font-mono rounded-lg p-3 w-full focus:outline-none focus:border-purple-500" step="0.5" min="1">
+          <span class="text-xs text-purple-300 bg-purple-900/20 px-3 py-3 rounded-lg border border-purple-900/30 font-bold">دلار ($)</span>
         </div>
+        
+        <!-- پیش‌نمایش زنده ۴ رمزارز -->
+        <div id="crypto-previews" class="grid grid-cols-4 gap-2 mb-4 relative z-10 hidden">
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">USDT</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-usdt">0</div>
+          </div>
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">TRX</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-trx">0</div>
+          </div>
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">TON</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-ton">0</div>
+          </div>
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">XRP</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-xrp">0</div>
+          </div>
+        </div>
+        
         <button onclick="startTopup()" class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-xl text-white font-bold text-sm shadow-lg shadow-purple-900/30 active:scale-95 transition relative z-10 flex justify-center items-center gap-2">
           مرحله بعد: پرداخت رمزارز <i class="ph-bold ph-arrow-left"></i>
         </button>
@@ -418,17 +439,33 @@
     }
 
     // --- فعال‌سازی شارژ حساب از پروفایل ---
+    function updateTopupPreview() {
+      const usd = Number(document.getElementById('topup-amount').value) || 0;
+      if (usd > 0) {
+        document.getElementById('crypto-previews').classList.remove('hidden');
+        document.getElementById('prev-usdt').innerText = (usd / (cryptoData.USDT?.price || 1)).toFixed(2);
+        document.getElementById('prev-trx').innerText = (usd / (cryptoData.TRX?.price || 0.12)).toFixed(1);
+        document.getElementById('prev-ton').innerText = (usd / (cryptoData.TON?.price || 5)).toFixed(2);
+        document.getElementById('prev-xrp').innerText = (usd / (cryptoData.XRP?.price || 0.6)).toFixed(1);
+      } else {
+        document.getElementById('crypto-previews').classList.add('hidden');
+      }
+    }
+
     function startTopup() {
-      const amtInput = document.getElementById('topup-amount').value;
-      const amt = Number(amtInput);
-      if (!amt || amt < 10000) {
-        tg.showAlert("مبلغ شارژ باید حداقل ۱۰,۰۰۰ تومان باشد.");
+      const usdInput = document.getElementById('topup-amount').value;
+      const usd = Number(usdInput);
+      if (!usd || usd < 1) {
+        tg.showAlert("مبلغ شارژ باید حداقل ۱ دلار باشد.");
         return;
       }
+      
+      // تبدیل دلار به تومان با نرخ ثابت 60000
+      const tomanApprox = usd * 60000;
+      
       // سوئیچ به تب فروشگاه و ارسال اطلاعات کاستوم
-      const usdApprox = (amt / 60000).toFixed(2);
       switchTab('buy', document.querySelectorAll('.nav-item')[0]);
-      selectPlan('wallet_topup', null, usdApprox, amt);
+      selectPlan('wallet_topup', null, usd.toFixed(2), tomanApprox);
     }
 
     function showCryptoPayment() {
