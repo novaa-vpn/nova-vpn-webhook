@@ -7,7 +7,6 @@
   
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <style>
@@ -60,6 +59,7 @@
     .nav-item {
       display: flex; flex-direction: column; align-items: center;
       color: #64748b; font-size: 11px; gap: 4px; transition: all 0.2s;
+      width: 33%;
     }
     .nav-item.active { color: #22c55e; }
     .nav-item i { font-size: 24px; transition: transform 0.2s; }
@@ -89,16 +89,12 @@
         <i class="ph-fill ph-wallet text-slate-400"></i>
         <span id="header-balance-toman" class="text-[10px] font-mono font-bold text-slate-200">... T</span>
       </div>
-      <div class="glass px-2.5 py-1 rounded-full flex items-center gap-1 border border-red-500/20 bg-red-500/5">
-        <i class="ph-fill ph-coin text-red-400"></i>
-        <span id="header-balance-trx" class="text-[10px] font-mono font-bold text-red-400">... TRX</span>
-      </div>
     </div>
   </header>
 
   <main class="p-4">
     
-    <!-- TAB 1: BUY -->
+    <!-- TAB 1: BUY (فروشگاه) -->
     <section id="tab-buy" class="tab-content active">
       <div class="flex items-center justify-between bg-slate-800/50 rounded-xl p-3 mb-4 border border-white/5">
         <div class="flex items-center gap-2">
@@ -107,10 +103,6 @@
           </div>
           <span id="buy-user-name" class="text-sm font-bold text-slate-200">--</span>
         </div>
-        <button onclick="copyMyId()" class="text-[10px] bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1 hover:bg-slate-700 text-slate-300">
-          <span id="buy-user-id" class="font-mono">ID: --</span>
-          <i class="ph-bold ph-copy"></i>
-        </button>
       </div>
 
       <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-5">
@@ -135,7 +127,7 @@
             <i class="ph-bold ph-lightning text-xl"></i> دریافت آنی (کسر از کیف پول)
           </button>
           
-          <div class="flex items-center gap-3 my-4">
+          <div id="or-divider" class="flex items-center gap-3 my-4">
             <div class="flex-1 h-px bg-slate-700"></div>
             <span class="text-[10px] text-slate-400 font-bold">یــا</span>
             <div class="flex-1 h-px bg-slate-700"></div>
@@ -147,7 +139,7 @@
         </div>
       </div>
 
-      <!-- Payment Box (Hidden until requested) -->
+      <!-- Payment Box -->
       <div id="payment-section" class="hidden animation-fadeIn mb-10">
         <h3 class="font-bold text-slate-200 mb-3 text-sm mt-5">۲. انتخاب شبکه پرداخت</h3>
         <div class="grid grid-cols-4 gap-2 mb-4" id="crypto-selector">
@@ -199,10 +191,12 @@
       </div>
     </section>
 
-    <!-- TAB 2: DASHBOARD -->
+    <!-- TAB 2: DASHBOARD (پروفایل و سرویس‌ها) -->
     <section id="tab-dashboard" class="tab-content">
+      
+      <!-- User Profile Banner -->
       <div class="glass rounded-2xl p-5 mb-5 relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 blur-3xl rounded-full pointer-events-none"></div>
+        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full pointer-events-none"></div>
         <div class="flex items-center gap-4 relative z-10">
           <div class="w-14 h-14 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center">
             <i class="ph-fill ph-user text-3xl text-slate-400"></i>
@@ -219,58 +213,17 @@
         </div>
       </div>
 
+      <!-- Active Services -->
       <div class="flex items-center justify-between mb-4 mt-2">
-        <h3 class="font-bold text-slate-200 text-sm">سرویس‌های فعال من</h3>
-        <button class="text-xs text-green-400 flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded" onclick="loadUserData()">
+        <h3 class="font-bold text-slate-200 text-sm flex items-center gap-1"><i class="ph-fill ph-squares-four text-blue-400"></i> سرویس‌های فعال من</h3>
+        <button class="text-xs text-blue-400 flex items-center gap-1 bg-blue-500/10 px-2 py-1 rounded" onclick="loadUserData()">
           <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی
         </button>
       </div>
-      <div id="active-services" class="space-y-3"></div>
-    </section>
-
-    <!-- TAB 3: PROFILE -->
-    <section id="tab-profile" class="tab-content">
-      
-      <!-- 🆕 بخش جدید: شارژ کیف پول -->
-      <div class="glass rounded-2xl p-5 mb-5 border border-purple-500/30 relative overflow-hidden">
-        <div class="absolute -top-10 -left-10 w-32 h-32 bg-purple-500/10 blur-3xl rounded-full pointer-events-none"></div>
-        <h3 class="font-bold text-slate-200 text-sm mb-3 relative z-10 flex items-center gap-2">
-          <i class="ph-fill ph-wallet text-purple-400 text-xl"></i> افزایش موجودی حساب
-        </h3>
-        <p class="text-[10px] text-slate-400 mb-3 relative z-10">مبلغ شارژ را به دلار وارد کنید تا معادل دقیق آن در رمزارزهای مختلف محاسبه شود.</p>
-        
-        <div class="flex items-center gap-2 mb-3 relative z-10">
-          <input type="number" id="topup-amount" oninput="updateTopupPreview()" placeholder="مبلغ شارژ به دلار (مثلا 5)..." class="bg-slate-900 border border-slate-700 text-white text-sm font-mono rounded-lg p-3 w-full focus:outline-none focus:border-purple-500" step="0.5" min="1">
-          <span class="text-xs text-purple-300 bg-purple-900/20 px-3 py-3 rounded-lg border border-purple-900/30 font-bold">دلار ($)</span>
-        </div>
-        
-        <!-- پیش‌نمایش زنده ۴ رمزارز -->
-        <div id="crypto-previews" class="grid grid-cols-4 gap-2 mb-4 relative z-10 hidden">
-          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
-            <div class="text-[9px] text-slate-400 mb-0.5">USDT</div>
-            <div class="text-[11px] font-bold text-white font-mono" id="prev-usdt">0</div>
-          </div>
-          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
-            <div class="text-[9px] text-slate-400 mb-0.5">TRX</div>
-            <div class="text-[11px] font-bold text-white font-mono" id="prev-trx">0</div>
-          </div>
-          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
-            <div class="text-[9px] text-slate-400 mb-0.5">TON</div>
-            <div class="text-[11px] font-bold text-white font-mono" id="prev-ton">0</div>
-          </div>
-          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
-            <div class="text-[9px] text-slate-400 mb-0.5">XRP</div>
-            <div class="text-[11px] font-bold text-white font-mono" id="prev-xrp">0</div>
-          </div>
-        </div>
-        
-        <button onclick="startTopup()" class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-xl text-white font-bold text-sm shadow-lg shadow-purple-900/30 active:scale-95 transition relative z-10 flex justify-center items-center gap-2">
-          مرحله بعد: پرداخت رمزارز <i class="ph-bold ph-arrow-left"></i>
-        </button>
-      </div>
+      <div id="active-services" class="space-y-3 mb-6"></div>
 
       <!-- سیستم همکاری در فروش -->
-      <div class="glass rounded-2xl p-5 mb-5 border border-red-500/20">
+      <div class="glass rounded-2xl p-5 mb-6 border border-red-500/20">
         <div class="flex items-center gap-2 mb-3">
           <i class="ph-fill ph-gift text-3xl text-red-400"></i>
           <div>
@@ -300,7 +253,51 @@
       <h3 class="font-bold text-slate-200 text-sm mb-3 flex items-center gap-1">
         <i class="ph-fill ph-receipt text-slate-400"></i> تاریخچه سفارشات
       </h3>
-      <div id="tx-history" class="space-y-2"></div>
+      <div id="tx-history" class="space-y-2 mb-5"></div>
+
+    </section>
+
+    <!-- TAB 3: WALLET (فقط کیف پول) -->
+    <section id="tab-wallet" class="tab-content">
+      
+      <!-- بخش شارژ کیف پول -->
+      <div class="glass rounded-2xl p-5 mb-5 border border-purple-500/30 relative overflow-hidden mt-2">
+        <div class="absolute -top-10 -left-10 w-32 h-32 bg-purple-500/10 blur-3xl rounded-full pointer-events-none"></div>
+        <h3 class="font-bold text-slate-200 text-sm mb-3 relative z-10 flex items-center gap-2">
+          <i class="ph-fill ph-wallet text-purple-400 text-xl"></i> افزایش موجودی حساب
+        </h3>
+        <p class="text-[11px] text-slate-400 mb-4 relative z-10 leading-relaxed">مبلغ شارژ را به دلار وارد کنید تا معادل دقیق آن در رمزارزهای مختلف به صورت زنده محاسبه شود.</p>
+        
+        <div class="flex items-center gap-2 mb-3 relative z-10">
+          <input type="number" id="topup-amount" oninput="updateTopupPreview()" placeholder="مبلغ به دلار (مثلا 5)..." class="bg-slate-900 border border-slate-700 text-white text-sm font-mono rounded-lg p-3 w-full focus:outline-none focus:border-purple-500" step="0.5" min="1">
+          <span class="text-xs text-purple-300 bg-purple-900/20 px-3 py-3 rounded-lg border border-purple-900/30 font-bold">دلار ($)</span>
+        </div>
+        
+        <!-- پیش‌نمایش زنده ۴ رمزارز -->
+        <div id="crypto-previews" class="grid grid-cols-4 gap-2 mb-5 relative z-10 hidden">
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">USDT</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-usdt">0</div>
+          </div>
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">TRX</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-trx">0</div>
+          </div>
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">TON</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-ton">0</div>
+          </div>
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">XRP</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-xrp">0</div>
+          </div>
+        </div>
+        
+        <button onclick="startTopup()" class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-xl text-white font-bold text-sm shadow-lg shadow-purple-900/30 active:scale-95 transition relative z-10 flex justify-center items-center gap-2">
+          مرحله بعد: انتخاب شبکه <i class="ph-bold ph-arrow-left"></i>
+        </button>
+      </div>
+
     </section>
 
   </main>
@@ -312,12 +309,12 @@
       <span>فروشگاه</span>
     </button>
     <button class="nav-item" onclick="switchTab('dashboard', this)">
-      <i class="ph-fill ph-squares-four"></i>
-      <span>سرویس‌های من</span>
-    </button>
-    <button class="nav-item" onclick="switchTab('profile', this)">
       <i class="ph-fill ph-user-circle"></i>
-      <span>کیف پول و پروفایل</span>
+      <span>پروفایل و سرویس‌ها</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('wallet', this)">
+      <i class="ph-fill ph-wallet"></i>
+      <span>کیف پول</span>
     </button>
   </nav>
 
@@ -334,6 +331,7 @@
     let selectedCrypto = 'USDT';
     let plans = []; 
     
+    // مقادیر پیش‌فرض دقیق برای جلوگیری از بروز خطای ریاضی
     const cryptoData = {
       USDT: { symbol: 'USDT', network: 'TRC20', wallet: 'TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3', price: 1.00 },
       TRX:  { symbol: 'TRX',  network: 'TRC20', wallet: 'TSgfCoCsrEXJs6RKkaCJF64wXpYVTRejZ3', price: 0.12 },
@@ -380,8 +378,6 @@
 
     function renderPlans() {
       const container = document.getElementById('plans-container');
-      
-      // فیلتر کردن پلن سیستمی شارژ از لیست فروشگاه
       const visiblePlans = plans.filter(p => p.internal_name !== 'wallet_topup');
       
       if (visiblePlans.length === 0) {
@@ -406,7 +402,6 @@
       }).join('');
     }
 
-    // --- منطق انتخاب هوشمندانه (خرید یا شارژ) ---
     function selectPlan(planId, element, usdPrice, tomanPrice) {
       if(element) {
         document.querySelectorAll('.plan-card').forEach(el => el.classList.remove('selected'));
@@ -420,15 +415,17 @@
       document.getElementById('payment-section').classList.add('hidden'); 
       document.getElementById('selected-plan-title').innerText = pName;
       
-      // منطق روشن/خاموش شدن دکمه خرید با کیف پول
       const walletBtn = document.getElementById('btn-wallet-buy');
+      const orDivider = document.getElementById('or-divider');
+
       if (planId === 'wallet_topup') {
-        walletBtn.classList.add('hidden'); // برای شارژ حساب، دکمه کیف پول منطقی نیست
-        showCryptoPayment(); // یک‌راست برود به بخش ارز دیجیتال
+        walletBtn.classList.add('hidden'); 
+        orDivider.classList.add('hidden');
+        showCryptoPayment(); 
       } else {
         walletBtn.classList.remove('hidden');
+        orDivider.classList.remove('hidden');
         
-        // 🛠 حل باگ مقایسه متنی مقادیر و تبدیل ایمن به عدد (Number)
         const userBalance = Number(currentUser?.wallet_balance || 0);
         const planPrice = Number(tomanPrice || 0);
 
@@ -447,15 +444,15 @@
       setTimeout(() => document.getElementById('action-section').scrollIntoView({ behavior: 'smooth' }), 100);
     }
 
-    // --- فعال‌سازی شارژ حساب از پروفایل ---
+    // پیش‌نمایش زنده در بخش کیف پول
     function updateTopupPreview() {
       const usd = Number(document.getElementById('topup-amount').value) || 0;
       if (usd > 0) {
         document.getElementById('crypto-previews').classList.remove('hidden');
-        document.getElementById('prev-usdt').innerText = (usd / (cryptoData.USDT?.price || 1)).toFixed(2);
-        document.getElementById('prev-trx').innerText = (usd / (cryptoData.TRX?.price || 0.12)).toFixed(1);
-        document.getElementById('prev-ton').innerText = (usd / (cryptoData.TON?.price || 5)).toFixed(2);
-        document.getElementById('prev-xrp').innerText = (usd / (cryptoData.XRP?.price || 0.6)).toFixed(1);
+        document.getElementById('prev-usdt').innerText = (usd / (cryptoData.USDT?.price || 1.00)).toFixed(2);
+        document.getElementById('prev-trx').innerText = (usd / (cryptoData.TRX?.price || 0.12)).toFixed(2);
+        document.getElementById('prev-ton').innerText = (usd / (cryptoData.TON?.price || 5.00)).toFixed(2);
+        document.getElementById('prev-xrp').innerText = (usd / (cryptoData.XRP?.price || 0.60)).toFixed(2);
       } else {
         document.getElementById('crypto-previews').classList.add('hidden');
       }
@@ -469,9 +466,7 @@
         return;
       }
       
-      // تبدیل دلار به تومان با نرخ ثابت 60000
       const tomanApprox = usd * 60000;
-      
       switchTab('buy', document.querySelectorAll('.nav-item')[0]);
       selectPlan('wallet_topup', null, usd.toFixed(2), tomanApprox);
     }
@@ -481,7 +476,6 @@
       setTimeout(() => document.getElementById('payment-section').scrollIntoView({ behavior: 'smooth' }), 100);
     }
 
-    // --- متد خرید آنی با کیف پول (Wallet Buy) ---
     async function buyWithWallet() {
       const btn = document.getElementById('btn-wallet-buy');
       btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-xl"></i> در حال صدور...`;
@@ -527,17 +521,17 @@
 
     function calculateExactAmount() {
       if(!currentPlan) return;
-      const cryptoPrice = cryptoData[selectedCrypto].price;
+      const cryptoPrice = cryptoData[selectedCrypto].price || 1;
       let exactAmount = 0;
       
       if (selectedCrypto === 'USDT') {
-        exactAmount = currentPlan.priceUsd;
+        exactAmount = Number(currentPlan.priceUsd);
       } else {
-        exactAmount = (currentPlan.priceUsd / cryptoPrice).toFixed(2); 
+        exactAmount = Number(currentPlan.priceUsd) / cryptoPrice;
       }
       
-      document.getElementById('plan-usd-value').innerText = currentPlan.priceUsd;
-      document.getElementById('exact-crypto-amount').innerText = exactAmount;
+      document.getElementById('plan-usd-value').innerText = Number(currentPlan.priceUsd).toFixed(2);
+      document.getElementById('exact-crypto-amount').innerText = exactAmount.toFixed(2);
     }
 
     function copyToClipboard(elementId) {
@@ -550,7 +544,6 @@
 
     async function fetchCryptoPrices() {
       try {
-        // 🛠 رفع مشکل کش‌شدن اطلاعات: اضافه کردن timestamp به انتهای لینک
         const res = await fetch(`/api/cryptoPrice?t=${Date.now()}`);
         const data = await res.json();
         if(data.USDT) cryptoData.USDT.price = data.USDT;
@@ -563,7 +556,6 @@
 
     async function loadUserData() {
       try {
-        // 🛠 رفع مشکل کش‌شدن اطلاعات در تلگرام (جلوگیری از عدم آپدیت موجودی پس از شارژ)
         const res = await fetch(`/api/profile?chat_id=${tgUser.id}&t=${Date.now()}`);
         const data = await res.json();
         currentUser = data.user;
@@ -572,7 +564,6 @@
         renderPlans(); 
 
         document.getElementById('header-balance-toman').innerText = Number(currentUser.wallet_balance || 0).toLocaleString() + " T";
-        document.getElementById('header-balance-trx').innerText = Number(currentUser.wallet_trx || 0).toLocaleString() + " TRX";
         document.getElementById('ref-count').innerText = currentUser.total_referrals || 0;
         document.getElementById('ref-earnings').innerHTML = `${Number(currentUser.wallet_trx || 0).toLocaleString()} <span class="text-[10px]">TRX</span>`;
 
@@ -662,9 +653,9 @@
           document.getElementById('txid-input').value = "";
           document.getElementById('tx-notes').value = "";
           
-          await loadUserData(); // رفرش تاریخچه برای نمایش آنی
-          const profileBtn = document.querySelectorAll('.nav-item')[2];
-          switchTab('profile', profileBtn);
+          await loadUserData(); 
+          const profileBtn = document.querySelectorAll('.nav-item')[1];
+          switchTab('dashboard', profileBtn);
           
         } else {
           const errData = await res.json();
