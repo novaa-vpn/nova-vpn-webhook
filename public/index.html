@@ -40,7 +40,7 @@
       background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 75%);
       background-size: 200% 100%;
       animation: loading 1.5s infinite ease-in-out;
-      border-radius: 6px;
+      border-radius: 8px;
     }
     @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
@@ -81,20 +81,21 @@
 </head>
 <body class="antialiased">
 
+  <!-- هدر (بدون ریال/تومان) -->
   <header class="p-4 flex items-center justify-between sticky top-0 z-40 glass border-b-0">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-900/40 flex items-center justify-center border border-green-500/20">
-        <i class="ph-fill ph-shield-check text-2xl text-green-500 shadow-green-500"></i>
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-900/40 flex items-center justify-center border border-green-500/20 shadow-lg shadow-green-500/20">
+        <i class="ph-fill ph-shield-check text-2xl text-green-500"></i>
       </div>
       <div>
-        <h1 class="brand-font text-white tracking-widest text-xl leading-none shadow-green-500/50 drop-shadow-md">NOVA</h1>
+        <h1 class="brand-font text-white tracking-widest text-xl leading-none drop-shadow-md">NOVA</h1>
         <p class="text-[10px] text-green-400 font-bold tracking-widest mt-1">STARLINK VIP</p>
       </div>
     </div>
     <div class="flex gap-2">
-      <div class="glass px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10" onclick="switchTab('wallet', document.querySelectorAll('.nav-item')[2])">
-        <i class="ph-fill ph-wallet text-slate-400"></i>
-        <span id="header-balance-toman" class="text-[10px] font-mono font-bold text-slate-200">...</span>
+      <div class="glass px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-white/10 cursor-pointer active:scale-95 transition" onclick="switchTab('wallet', document.querySelectorAll('.nav-item')[2])">
+        <i class="ph-fill ph-wallet text-slate-400 text-sm"></i>
+        <span id="header-balance-usd" class="text-xs font-mono font-bold text-slate-200">... $</span>
       </div>
     </div>
   </header>
@@ -105,10 +106,10 @@
     <section id="tab-buy" class="tab-content active">
       <div class="flex items-center justify-between bg-slate-800/50 rounded-xl p-3 mb-4 border border-white/5">
         <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+          <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden user-avatar-container">
             <i class="ph-fill ph-user text-slate-300"></i>
           </div>
-          <span id="buy-user-name" class="text-sm font-bold text-slate-200">--</span>
+          <span class="text-sm font-bold text-slate-200 user-name-display">--</span>
         </div>
       </div>
 
@@ -122,10 +123,24 @@
       </div>
 
       <h3 class="font-bold text-slate-200 mb-3 text-sm">۱. انتخاب سرویس (تضمینی)</h3>
-      <!-- کانتینر محصولات که ابتدا اسکلت لودینگ در آن نمایش داده می‌شود -->
-      <div class="grid grid-cols-1 gap-3 mb-5" id="plans-container"></div>
+      
+      <!-- کانتینر محصولات با اسکلت لودینگ پیش‌فرض (سرعت آنی) -->
+      <div class="grid grid-cols-1 gap-3 mb-5" id="plans-container">
+        <div class="glass p-4 rounded-xl flex justify-between items-center border border-white/5">
+          <div class="space-y-3 w-2/3"><div class="h-4 skeleton w-full"></div><div class="h-3 skeleton w-1/2"></div></div>
+          <div class="space-y-3 w-1/4 flex flex-col items-end"><div class="h-4 skeleton w-full"></div><div class="h-3 skeleton w-2/3"></div></div>
+        </div>
+        <div class="glass p-4 rounded-xl flex justify-between items-center border border-white/5">
+          <div class="space-y-3 w-2/3"><div class="h-4 skeleton w-full"></div><div class="h-3 skeleton w-1/2"></div></div>
+          <div class="space-y-3 w-1/4 flex flex-col items-end"><div class="h-4 skeleton w-full"></div><div class="h-3 skeleton w-2/3"></div></div>
+        </div>
+        <div class="glass p-4 rounded-xl flex justify-between items-center border border-white/5">
+          <div class="space-y-3 w-2/3"><div class="h-4 skeleton w-full"></div><div class="h-3 skeleton w-1/2"></div></div>
+          <div class="space-y-3 w-1/4 flex flex-col items-end"><div class="h-4 skeleton w-full"></div><div class="h-3 skeleton w-2/3"></div></div>
+        </div>
+      </div>
 
-      <!-- روش پرداخت هوشمند (آنی با کیف پول یا رمزارز) -->
+      <!-- روش پرداخت هوشمند -->
       <div id="action-section" class="hidden animation-fadeIn mb-5">
         <div class="glass rounded-xl p-4 border border-blue-500/30">
           <h3 class="font-bold text-white mb-1 text-center" id="selected-plan-title">نام پلن</h3>
@@ -147,7 +162,7 @@
         </div>
       </div>
 
-      <!-- Payment Box (Hidden until requested) -->
+      <!-- Payment Box -->
       <div id="payment-section" class="hidden animation-fadeIn mb-10">
         <h3 class="font-bold text-slate-200 mb-3 text-sm mt-5">۲. انتخاب شبکه پرداخت</h3>
         <div class="grid grid-cols-4 gap-2 mb-4" id="crypto-selector">
@@ -202,18 +217,18 @@
     <!-- TAB 2: DASHBOARD (پروفایل و سرویس‌ها) -->
     <section id="tab-dashboard" class="tab-content">
       
-      <!-- User Profile Banner -->
+      <!-- User Profile Banner (کامل شده با اطلاعات زنده) -->
       <div class="glass rounded-2xl p-5 mb-5 relative overflow-hidden">
         <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full pointer-events-none"></div>
         <div class="flex items-center gap-4 relative z-10">
-          <div class="w-14 h-14 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center">
+          <div class="w-16 h-16 rounded-full bg-slate-800 border-2 border-blue-500 flex items-center justify-center overflow-hidden user-avatar-container shadow-lg shadow-blue-500/20">
             <i class="ph-fill ph-user text-3xl text-slate-400"></i>
           </div>
           <div>
-            <h2 id="user-name" class="text-base font-bold text-white mb-1">در حال بارگذاری...</h2>
-            <div class="flex items-center gap-2">
-              <button onclick="copyMyId()" class="text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-700 font-mono flex items-center gap-1">
-                <span id="user-id">ID: ---</span>
+            <h2 class="text-lg font-bold text-white mb-1 user-name-display">در حال بارگذاری...</h2>
+            <div class="flex flex-col gap-1 mt-1">
+              <button onclick="copyMyId()" class="text-xs text-blue-300 bg-blue-900/30 px-2.5 py-1 rounded-md border border-blue-500/30 font-mono flex items-center gap-1 w-max active:bg-blue-800/50 transition">
+                <span class="user-id-display">ID: ---</span>
                 <i class="ph-bold ph-copy"></i>
               </button>
             </div>
@@ -228,37 +243,42 @@
           <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی
         </button>
       </div>
-      <div id="active-services" class="space-y-3 mb-6"></div>
+      <div id="active-services" class="space-y-3 mb-6">
+        <!-- اسکلت پیش‌فرض سرویس‌ها -->
+        <div class="glass p-4 rounded-xl border-r-2 border-slate-700 mb-3"><div class="h-4 skeleton w-1/2 mb-3"></div><div class="h-3 skeleton w-1/4"></div></div>
+      </div>
 
       <!-- سیستم همکاری در فروش -->
       <div class="glass rounded-2xl p-5 mb-6 border border-red-500/20">
         <div class="flex items-center gap-2 mb-3">
-          <i class="ph-fill ph-gift text-3xl text-red-400"></i>
+          <i class="ph-fill ph-users-three text-3xl text-red-400"></i>
           <div>
-            <h3 class="font-bold text-slate-200 text-sm">کسب درآمد (بدون سرمایه)</h3>
-            <p class="text-[10px] text-slate-400">دعوت کن، ترون بگیر!</p>
+            <h3 class="font-bold text-slate-200 text-sm">دعوت از دوستان</h3>
+            <p class="text-[10px] text-slate-400">لینک اختصاصی خود را به اشتراک بگذارید</p>
           </div>
         </div>
         
         <div class="grid grid-cols-2 gap-2 mb-4">
           <div class="bg-slate-900 rounded-lg p-3 border border-slate-700 text-center">
-            <div class="text-[10px] text-slate-400 mb-1">دعوت‌های موفق</div>
-            <div class="text-lg font-bold text-white font-mono" id="ref-count">0</div>
+            <div class="text-[10px] text-slate-400 mb-1">تعداد افراد دعوت شده</div>
+            <div class="text-lg font-bold text-white font-mono flex justify-center items-center gap-1">
+               <i class="ph-fill ph-users text-slate-500"></i> <span id="ref-count">0</span>
+            </div>
           </div>
           <div class="bg-slate-900 rounded-lg p-3 border border-red-900/30 text-center">
-            <div class="text-[10px] text-red-300/70 mb-1">درآمد شما</div>
+            <div class="text-[10px] text-red-300/70 mb-1">درآمد کل شما</div>
             <div class="text-lg font-bold text-red-400 font-mono" id="ref-earnings">0 <span class="text-[10px]">TRX</span></div>
           </div>
         </div>
 
         <div class="flex items-center gap-2">
           <input type="text" id="ref-link" readonly class="bg-slate-900 border border-slate-700 text-slate-300 text-[10px] rounded-lg p-3 w-full font-mono focus:outline-none" dir="ltr">
-          <button onclick="copyToClipboard('ref-link')" class="bg-red-600 p-3 rounded-lg text-white hover:bg-red-500 min-w-max transition">کپی لینک <i class="ph-bold ph-copy"></i></button>
+          <button onclick="copyToClipboard('ref-link')" class="bg-red-600 p-3 rounded-lg text-white hover:bg-red-500 min-w-max transition">کپی <i class="ph-bold ph-copy"></i></button>
         </div>
       </div>
     </section>
 
-    <!-- TAB 3: WALLET (طراحی حرفه‌ای شبیه صرافی) -->
+    <!-- TAB 3: WALLET (طراحی حرفه‌ای شبیه صرافی - بدون ریال/تومان) -->
     <section id="tab-wallet" class="tab-content">
       
       <!-- 1. کارت موجودی کل (Hero Balance Card) -->
@@ -268,14 +288,14 @@
         
         <div class="relative z-10 flex justify-between items-start mb-2">
           <p class="text-indigo-100 text-xs flex items-center gap-1"><i class="ph-fill ph-wallet"></i> موجودی کل کیف پول</p>
-          <div class="bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-white">USD / Crypto</div>
+          <div class="bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-white">USD Equivalent</div>
         </div>
         
         <div class="relative z-10 flex items-baseline gap-2 mb-1">
           <span class="text-3xl font-bold font-mono text-white tracking-tight" id="exchange-balance-usd">0.00</span>
           <span class="text-sm text-indigo-200">دلار ($)</span>
         </div>
-        <div class="relative z-10 flex gap-4 mt-2 border-t border-indigo-400/20 pt-2">
+        <div class="relative z-10 flex gap-4 mt-3 border-t border-indigo-400/20 pt-3">
           <p class="text-[11px] text-indigo-200 font-mono flex items-center gap-1">≈ <span id="exchange-balance-trx" class="font-bold text-white">0</span> TRX</p>
           <p class="text-[11px] text-indigo-200 font-mono flex items-center gap-1">≈ <span id="exchange-balance-ton" class="font-bold text-white">0</span> TON</p>
         </div>
@@ -322,7 +342,7 @@
         <p class="text-[10px] text-slate-400 mb-4 leading-relaxed">مبلغ واریزی را به دلار (USD) مشخص کنید تا سیستم معادل رمزارزهای قابل پرداخت را برای شما محاسبه کند.</p>
         
         <div class="flex items-center gap-2 mb-4">
-          <input type="number" id="topup-amount" oninput="updateTopupPreview()" placeholder="مبلغ دلخواه (حداقل 1)..." class="bg-slate-900 border border-slate-700 text-white text-sm font-mono rounded-lg p-3 w-full focus:outline-none focus:border-blue-500 transition-colors" step="0.5" min="1">
+          <input type="number" id="topup-amount" oninput="updateTopupPreview()" placeholder="مبلغ دلخواه به دلار..." class="bg-slate-900 border border-slate-700 text-white text-sm font-mono rounded-lg p-3 w-full focus:outline-none focus:border-blue-500 transition-colors" step="0.5" min="1">
           <span class="text-xs text-blue-300 bg-blue-900/20 px-4 py-3 rounded-lg border border-blue-900/30 font-bold">USD</span>
         </div>
         
@@ -347,18 +367,20 @@
         </div>
         
         <button onclick="startTopup()" class="w-full bg-white text-slate-900 hover:bg-slate-200 py-3 rounded-xl font-bold text-sm active:scale-95 transition flex justify-center items-center gap-2">
-          ادامه مراحل واریز <i class="ph-bold ph-arrow-left"></i>
+          ادامه مراحل پرداخت <i class="ph-bold ph-arrow-left"></i>
         </button>
       </div>
 
-      <!-- 5. تاریخچه مالی -->
+      <!-- 5. تاریخچه مالی (بدون تومان) -->
       <div class="flex items-center justify-between mb-3 mt-2">
         <h3 class="font-bold text-slate-200 text-sm flex items-center gap-1"><i class="ph-fill ph-clock-counter-clockwise text-slate-400"></i> تاریخچه مالی شما</h3>
         <button class="text-xs text-slate-400 flex items-center gap-1 bg-slate-800 px-2 py-1 rounded hover:bg-slate-700 transition" onclick="loadUserData()">
           <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی
         </button>
       </div>
-      <div id="tx-history" class="space-y-2 mb-5"></div>
+      <div id="tx-history" class="space-y-2 mb-5">
+        <div class="glass p-3 rounded-lg border border-slate-800 mb-2 opacity-50"><div class="h-3 skeleton w-1/4 mb-3"></div><div class="h-4 skeleton w-full"></div></div>
+      </div>
 
     </section>
 
@@ -385,6 +407,7 @@
     tg.expand();
     tg.ready();
     
+    // شناسایی کاربر تلگرام و ساخت آیدی موقت در صورت تست خارج از تلگرام
     const tgUser = tg.initDataUnsafe?.user || { id: 111222333, first_name: "کاربر مهمان" };
     const botUsername = "NoovaVpn_Bot";
     
@@ -400,85 +423,24 @@
       XRP:  { symbol: 'XRP',  network: 'Ripple',wallet: 'rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F', price: null }
     };
 
-    // --- موتور اتصال خودکار (Auto-Retry Engine) ---
-    // این تابع باعث می‌شود اگر سرور ورسل خواب بود، برنامه تا 3 بار به صورت پنهان تلاش کند و نیازی به کلیک کاربر نباشد
-    async function fetchWithRetry(url, retries = 3, delay = 1500) {
-      for (let i = 0; i < retries; i++) {
-        try {
-          const response = await fetch(url);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          return response; 
-        } catch (error) {
-          if (i === retries - 1) throw error;
-          console.warn(`Connection timeout. Retrying in ${delay}ms... (Attempt ${i + 1})`);
-          await new Promise(res => setTimeout(res, delay));
-        }
+    // 🚀 راه‌اندازی و نمایش آنی اطلاعات کاربری بدون معطلی سرور
+    window.onload = () => {
+      // پر کردن نام‌ها و آیدی‌ها در تمام بخش‌های برنامه
+      document.querySelectorAll('.user-name-display').forEach(el => el.innerText = tgUser.first_name);
+      document.querySelectorAll('.user-id-display').forEach(el => el.innerText = `ID: ${tgUser.id}`);
+      
+      // نمایش عکس پروفایل واقعی تلگرام کاربر در صورت دسترسی
+      if (tgUser.photo_url) {
+        document.querySelectorAll('.user-avatar-container').forEach(el => {
+          el.innerHTML = `<img src="${tgUser.photo_url}" class="w-full h-full object-cover">`;
+        });
       }
-    }
-
-    // --- انیمیشن‌های لودینگ حرفه‌ای (Skeleton + Status) ---
-    function showLoadingSkeletons() {
-      // بنر وضعیت اتصال زیبا
-      const loadingBanner = `
-        <div class="bg-blue-900/20 border border-blue-500/30 rounded-xl p-3 mb-4 flex items-center justify-center gap-2 animate-pulse shadow-inner shadow-blue-500/10">
-            <i class="ph-bold ph-spinner animate-spin text-blue-400 text-xl"></i>
-            <span class="text-xs text-blue-300 font-bold tracking-wide">در حال همگام‌سازی با سرور امن...</span>
-        </div>
-      `;
-
-      const planSkel = `
-        <div class="glass p-4 rounded-xl mb-3 flex justify-between items-center border border-white/5 opacity-50">
-          <div class="space-y-3 w-2/3">
-            <div class="h-4 skeleton w-full"></div>
-            <div class="h-3 skeleton w-1/2"></div>
-          </div>
-          <div class="space-y-3 w-1/4 flex flex-col items-end">
-            <div class="h-4 skeleton w-full"></div>
-            <div class="h-3 skeleton w-2/3"></div>
-          </div>
-        </div>`;
-      document.getElementById('plans-container').innerHTML = loadingBanner + planSkel.repeat(3);
       
-      const srvSkel = `
-        <div class="glass p-4 rounded-xl border-r-2 border-slate-700 mb-3 opacity-50">
-           <div class="h-4 skeleton w-1/2 mb-3"></div>
-           <div class="h-3 skeleton w-1/4"></div>
-        </div>`;
-      document.getElementById('active-services').innerHTML = loadingBanner + srvSkel.repeat(2);
-      
-      const txSkel = `
-        <div class="glass p-3 rounded-lg border border-slate-800 mb-2 opacity-50">
-           <div class="flex justify-between mb-3"><div class="h-3 skeleton w-1/4"></div><div class="h-3 skeleton w-1/4"></div></div>
-           <div class="h-4 skeleton w-1/3 mb-2"></div>
-           <div class="h-2 skeleton w-full"></div>
-        </div>`;
-      document.getElementById('tx-history').innerHTML = loadingBanner + txSkel.repeat(3);
-    }
-
-    // پیام خطای شیک در صورت قطع کامل اینترنت
-    function showConnectionError(containerId) {
-      const errorHtml = `
-        <div class="glass rounded-xl p-6 text-center border border-red-500/30">
-          <i class="ph-fill ph-wifi-x text-4xl text-red-400 mb-3"></i>
-          <p class="text-xs font-bold text-white mb-2">ارتباط با سرور برقرار نشد</p>
-          <p class="text-[10px] text-slate-400 mb-4">ممکن است اینترنت شما ضعیف باشد یا سرور در حال بروزرسانی باشد.</p>
-          <button onclick="window.location.reload()" class="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-xl text-xs font-bold transition active:scale-95 shadow-lg shadow-red-900/30">تلاش مجدد</button>
-        </div>
-      `;
-      document.getElementById(containerId).innerHTML = errorHtml;
-    }
-
-    window.onload = async () => {
-      document.getElementById('buy-user-name').innerText = tgUser.first_name;
-      document.getElementById('buy-user-id').innerText = `ID: ${tgUser.id}`;
-      document.getElementById('user-name').innerText = tgUser.first_name;
-      document.getElementById('user-id').innerText = `ID: ${tgUser.id}`;
       document.getElementById('ref-link').value = `https://t.me/${botUsername}?start=${tgUser.id}`;
       
-      showLoadingSkeletons();
       updateCryptoUI();
       
-      // اجرای موازی و هوشمند
+      // اجرای موازی درخواست‌ها از سرور با سرعت بالا
       fetchCryptoPrices(); 
       loadUserData(); 
     };
@@ -489,16 +451,6 @@
       document.getElementById(`tab-${tabId}`).classList.add('active');
       btnElement.classList.add('active');
       window.scrollTo(0, 0);
-    }
-
-    function copyMyId() {
-      const tempInput = document.createElement("input");
-      tempInput.value = tgUser.id;
-      document.body.appendChild(tempInput);
-      tempInput.select();
-      document.execCommand("copy");
-      document.body.removeChild(tempInput);
-      tg.showAlert("آیدی شما کپی شد! ✅");
     }
 
     function renderPlans() {
@@ -551,17 +503,18 @@
         walletBtn.classList.remove('hidden');
         orDivider.classList.remove('hidden');
         
-        const userBalance = Number(currentUser?.wallet_balance || 0);
-        const planPrice = Number(tomanPrice || 0);
+        // بررسی موجودی کاربر با دلار
+        const userBalanceToman = Number(currentUser?.wallet_balance || 0);
+        const planPriceToman = Number(tomanPrice || 0);
 
-        if (currentUser && userBalance >= planPrice) {
+        if (currentUser && userBalanceToman >= planPriceToman) {
           walletBtn.disabled = false;
           walletBtn.className = "w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl text-white font-bold mb-3 flex justify-center items-center gap-2 shadow-lg shadow-blue-900/50 active:scale-[0.98] transition";
           walletBtn.innerHTML = `<i class="ph-bold ph-lightning text-xl"></i> خرید آنی (موجودی کافی)`;
         } else {
           walletBtn.disabled = true;
           walletBtn.className = "w-full bg-slate-800 py-3 rounded-xl text-slate-400 font-bold mb-3 flex justify-center items-center gap-2 opacity-50 cursor-not-allowed";
-          walletBtn.innerHTML = `<i class="ph-bold ph-warning-circle text-xl"></i> موجودی کافی نیست`;
+          walletBtn.innerHTML = `<i class="ph-bold ph-warning-circle text-xl"></i> موجودی کیف پول کافی نیست`;
         }
       }
       
@@ -569,12 +522,13 @@
       setTimeout(() => document.getElementById('action-section').scrollIntoView({ behavior: 'smooth' }), 100);
     }
 
+    // 🚀 پیش‌نمایش صحیح و دلاری مقادیر کیف پول صرافی
     function updateTopupPreview() {
       const usd = Number(document.getElementById('topup-amount').value) || 0;
-      if (usd > 0 && cryptoData.TRX.price) {
+      if (usd > 0) {
         document.getElementById('crypto-previews').classList.remove('hidden');
         document.getElementById('prev-usdt').innerText = (usd / (cryptoData.USDT?.price || 1.00)).toFixed(2);
-        document.getElementById('prev-trx').innerText = (usd / cryptoData.TRX.price).toFixed(1);
+        document.getElementById('prev-trx').innerText = (usd / (cryptoData.TRX.price || 0.12)).toFixed(1);
         document.getElementById('prev-ton').innerText = (usd / (cryptoData.TON?.price || 5.00)).toFixed(2);
         document.getElementById('prev-xrp').innerText = (usd / (cryptoData.XRP?.price || 0.60)).toFixed(1);
       } else {
@@ -587,10 +541,6 @@
       const usd = Number(usdInput);
       if (!usd || usd < 1) {
         tg.showAlert("مبلغ واریز باید حداقل ۱ دلار باشد.");
-        return;
-      }
-      if (!cryptoData.TRX.price) {
-        tg.showAlert("در حال حاضر ارتباط با سرور قیمت‌گذاری قطع است. لطفا چند ثانیه صبر کنید.");
         return;
       }
       
@@ -619,7 +569,6 @@
 
         if (res.ok) {
           tg.showAlert("✅ خرید شما موفقیت آمیز بود! کانفیگ در تلگرام ارسال شد.");
-          showLoadingSkeletons(); // رفرش زیبای رابط کاربری
           await loadUserData(); 
           switchTab('dashboard', document.querySelectorAll('.nav-item')[1]);
         } else {
@@ -679,8 +628,8 @@
 
     async function fetchCryptoPrices() {
       try {
-        // موتور Retry برای قیمت‌ها
-        const res = await fetchWithRetry(`/api/cryptoPrice`, 3, 1000);
+        const res = await fetch(`/api/cryptoPrice`);
+        if (!res.ok) throw new Error("Price API Error");
         const data = await res.json();
         
         if(data.USDT) cryptoData.USDT.price = data.USDT;
@@ -699,18 +648,14 @@
         
         if(currentPlan) calculateExactAmount();
       } catch (e) { 
-        console.error("Price fetch failed");
-        cryptoData.TRX.price = null;
-        cryptoData.TON.price = null;
-        cryptoData.XRP.price = null;
-        // بدون نمایش آلرت مزاحم، فقط در صورت تلاش برای خرید محاسبه مسدود می‌شود
+        console.error("Price fetch failed", e);
       }
     }
 
     async function loadUserData() {
       try {
-        // موتور Retry برای پروفایل (جلوگیری از نمایش صفحه خالی در استارت سرد)
-        const res = await fetchWithRetry(`/api/profile?chat_id=${tgUser.id}&t=${Date.now()}`, 3, 1500);
+        const res = await fetch(`/api/profile?chat_id=${tgUser.id}`);
+        if (!res.ok) throw new Error("Profile API Error");
         const data = await res.json();
         
         currentUser = data.user;
@@ -720,9 +665,9 @@
 
         const balToman = Number(currentUser.wallet_balance || 0);
         const balUsd = balToman / 60000;
-        document.getElementById('header-balance-toman').innerText = balToman.toLocaleString() + " T";
+        document.getElementById('header-balance-usd').innerText = balUsd.toFixed(2) + " $";
         
-        // آپدیت UI کیف پول (صرافی)
+        // 🚀 آپدیت UI کیف پول دلاری به صورت بسیار دقیق
         document.getElementById('exchange-balance-usd').innerText = balUsd.toFixed(2);
         document.getElementById('exchange-balance-trx').innerText = (balUsd / (cryptoData.TRX.price || 0.12)).toFixed(1);
         document.getElementById('exchange-balance-ton').innerText = (balUsd / (cryptoData.TON.price || 5.00)).toFixed(2);
@@ -751,11 +696,8 @@
         renderTransactionHistory(data.transactions);
 
       } catch (e) { 
-        console.error("Profile fetch completely failed", e);
-        // نمایش دکمه تلاش مجدد در صورت قطع کامل اینترنت
-        showConnectionError('plans-container');
-        showConnectionError('active-services');
-        showConnectionError('tx-history');
+        console.error("Profile fetch failed", e);
+        document.getElementById('plans-container').innerHTML = `<div class="glass rounded-xl p-6 text-center text-slate-500 text-xs">خطا در دریافت اطلاعات. بررسی اینترنت...</div>`;
       }
     }
 
@@ -771,6 +713,9 @@
           
           const isTopup = tx.target_plan === 'wallet_topup';
           const title = isTopup ? 'واریز به کیف پول' : (plans.find(pl => pl.internal_name === tx.target_plan)?.title_fa || tx.target_plan);
+          
+          // 🚀 حذف تومان از تاریخچه تراکنش و تبدیل آن به دلار
+          const usdEq = (Number(tx.amount_toman) / 60000).toFixed(2);
 
           return `
           <div class="glass p-3 rounded-lg border ${isTopup ? 'border-purple-500/30' : 'border-slate-800'} relative mb-2">
@@ -783,7 +728,7 @@
             </div>
             <div class="flex items-center gap-1 mb-1">
               <span class="text-xs font-bold text-white">${tx.crypto_amount || 0} ${tx.crypto_currency || ''}</span>
-              <span class="text-[10px] text-slate-500">(${Number(tx.amount_toman).toLocaleString()} T)</span>
+              <span class="text-[10px] text-slate-500">(${usdEq} USD)</span>
             </div>
             <div class="text-[10px] text-slate-500 font-mono break-all line-clamp-1 mb-1">TXID: ${tx.txid_or_receipt}</div>
           </div>
@@ -832,7 +777,6 @@
           document.getElementById('txid-input').value = "";
           document.getElementById('tx-notes').value = "";
           
-          showLoadingSkeletons();
           await loadUserData(); 
           const walletBtn = document.querySelectorAll('.nav-item')[2];
           switchTab('wallet', walletBtn);
