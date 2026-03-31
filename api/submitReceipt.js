@@ -3,7 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  // اضافه شدن amount_toman برای دریافت مبلغ دلخواه شارژ
   const { chat_id, plan, txid, crypto_currency, notes, amount_toman } = req.body;
 
   if (!chat_id || !txid || !plan) {
@@ -12,7 +11,6 @@ export default async function handler(req, res) {
 
   const cleanTxid = txid.trim();
 
-  // فیلتر هوشمند درگاه ورودی
   const txidRegex = /^[a-zA-Z0-9\+\/\-\_=]{40,90}$/;
   if (!txidRegex.test(cleanTxid)) {
     return res.status(400).json({ error: "❌ هش تراکنش نامعتبر است! هش (TXID) یک کد طولانی شامل اعداد و حروف انگلیسی است." });
@@ -34,11 +32,10 @@ export default async function handler(req, res) {
     let finalTomanPrice = 0;
     let finalUsdPrice = 0;
 
-    // --- 🆕 اضافه شدن منطق قیمت‌گذاری داینامیک برای شارژ کیف پول ---
     if (plan === 'wallet_topup') {
-      if (!amount_toman || amount_toman < 10000) return res.status(400).json({ error: "مبلغ شارژ باید حداقل ۱۰,۰۰۰ تومان باشد." });
+      if (!amount_toman || amount_toman < 60000) return res.status(400).json({ error: "مبلغ شارژ باید حداقل ۱ دلار باشد." });
       finalTomanPrice = amount_toman;
-      finalUsdPrice = amount_toman / 60000; // نرخ تقریبی محاسبه ارز پایه برای شارژ
+      finalUsdPrice = amount_toman / 60000; 
     } else {
       // استخراج قیمت واقعی از دیتابیس برای خرید پلن
       const { data: planData } = await supabase.from("plans").select("*").eq("internal_name", plan).maybeSingle();
@@ -47,20 +44,14 @@ export default async function handler(req, res) {
       finalUsdPrice = planData.price_usd;
     }
 
-    // محاسبه قیمت زنده ارزها
-    let cryptoPrice = 1; 
-    try {
-      if (crypto_currency === 'TRX') {
-        const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tron&vs_currencies=usd");
-        const d = await r.json();
-        if (d.tron && d.tron.usd) cryptoPrice = d.tron.usd;
-      } else if (crypto_currency === 'TON') {
-        cryptoPrice = 5.00; 
-      } else if (crypto_currency === 'XRP') {
-        cryptoPrice = 0.60; 
-      }
-    } catch(e) { console.log("خطا در دریافت قیمت لحظه‌ای سرور"); }
-
+    // 🛠 خواندن قیمت زنده ارزها به صورت آنی از دیتابیس (بدون وابستگی به API خارجی)
+    const { data: savedPrice } = await supabase.from("crypto_prices").select("price").eq("symbol", crypto_currency).maybeSingle();
+    
+    if (!savedPrice || !savedPrice.price) {
+      return res.status(500).json({ error: "❌ قیمت ارز مورد نظر در سرور یافت نشد. لطفاً دقایقی دیگر تلاش کنید." });
+    }
+    
+    const cryptoPrice = savedPrice.price;
     const secureCryptoAmount = parseFloat((finalUsdPrice / cryptoPrice).toFixed(2));
 
     // ثبت در دیتابیس
@@ -68,7 +59,7 @@ export default async function handler(req, res) {
       chat_id: chat_id,
       txid_or_receipt: cleanTxid,
       target_plan: plan,
-      amount_toman: finalTomanPrice, // مبلغ ثبت شده ایمن
+      amount_toman: finalTomanPrice,
       crypto_currency: crypto_currency,
       crypto_amount: secureCryptoAmount, 
       notes: notes || null,
