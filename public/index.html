@@ -677,16 +677,46 @@
 
         const srvContainer = document.getElementById('active-services');
         if (data.services && data.services.length > 0) {
-          srvContainer.innerHTML = data.services.map(s => {
+          srvContainer.innerHTML = data.services.map((s, index) => {
             const pInfo = plans.find(pl => pl.internal_name === s.plan_name) || {title_fa: s.plan_name};
-            const panelBtn = s.web_panel_url ? `<a href="${s.web_panel_url}" target="_blank" class="bg-slate-800 border border-slate-700 text-green-400 text-[11px] px-3 py-1.5 rounded-lg transition hover:bg-slate-700">مشاهده پنل</a>` : `<span class="bg-slate-800/50 border border-slate-700/50 text-slate-500 text-[10px] px-3 py-1.5 rounded-lg">بدون پنل</span>`;
+            // 🆕 نمایش یادداشت شما و تنظیم دیزاین باکس‌های کپی
+            const defaultNote = "برای لود پنل نیاز است vpn خاموش کنید یا لینک sub را از زیر کپی و در کروم بزنید";
+            const noteText = s.panel_note || defaultNote;
+            
+            const panelBtn = s.web_panel_url ? `<a href="${s.web_panel_url}" target="_blank" class="bg-blue-600 hover:bg-blue-500 text-white text-[11px] px-4 py-2 rounded-lg transition text-center font-bold flex-1">ورود به پنل</a>` : ``;
+
             return `
-            <div class="glass p-4 rounded-xl flex justify-between items-center border-r-2 border-blue-500 mb-3">
-              <div>
-                <div class="text-sm font-bold text-white">${pInfo.title_fa}</div>
-                <div class="text-[10px] text-slate-400 mt-1 font-mono">${s.created_at.split('T')[0]}</div>
+            <div class="glass p-4 rounded-xl border-t-4 border-blue-500 mb-4 shadow-lg">
+              <div class="flex justify-between items-center mb-3">
+                <div class="text-sm font-bold text-white flex items-center gap-2"><i class="ph-fill ph-shield-check text-blue-400"></i> ${pInfo.title_fa}</div>
+                <div class="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 font-mono">${s.created_at.split('T')[0]}</div>
               </div>
-              ${panelBtn}
+              
+              <div class="bg-blue-900/20 border border-blue-500/20 rounded-lg p-2.5 mb-3">
+                <p class="text-[10px] text-blue-200 leading-relaxed text-justify flex gap-1.5">
+                  <i class="ph-fill ph-info text-blue-400 shrink-0 mt-0.5"></i>
+                  <span>${noteText}</span>
+                </p>
+              </div>
+
+              <div class="space-y-2 mb-3">
+                <!-- Config Copy -->
+                <div class="flex items-center gap-2">
+                  <input type="text" id="conf-${index}" value="${s.v2ray_uri}" readonly class="bg-slate-900 border border-slate-700 text-slate-400 text-[10px] rounded-lg p-2.5 w-full font-mono outline-none">
+                  <button onclick="copyToClipboard('conf-${index}')" class="bg-slate-800 p-2.5 rounded-lg text-white hover:bg-slate-700 shrink-0 border border-slate-600" title="کپی کانفیگ"><i class="ph-bold ph-copy"></i></button>
+                </div>
+                <!-- Sub Link Copy (If exists) -->
+                ${s.web_panel_url ? `
+                <div class="flex items-center gap-2">
+                  <input type="text" id="sub-${index}" value="${s.web_panel_url}" readonly class="bg-slate-900 border border-slate-700 text-slate-400 text-[10px] rounded-lg p-2.5 w-full font-mono outline-none">
+                  <button onclick="copyToClipboard('sub-${index}')" class="bg-slate-800 p-2.5 rounded-lg text-white hover:bg-slate-700 shrink-0 border border-slate-600" title="کپی لینک ساب/پنل"><i class="ph-bold ph-link"></i></button>
+                </div>
+                ` : ''}
+              </div>
+
+              <div class="flex gap-2">
+                ${panelBtn}
+              </div>
             </div>
           `}).join('');
         } else {
@@ -714,7 +744,7 @@
           const isTopup = tx.target_plan === 'wallet_topup';
           const title = isTopup ? 'واریز به کیف پول' : (plans.find(pl => pl.internal_name === tx.target_plan)?.title_fa || tx.target_plan);
           
-          // 🚀 حذف تومان از تاریخچه تراکنش و تبدیل آن به دلار
+          // 🚀 تبدیل تومان به دلار برای نمایش در تاریخچه
           const usdEq = (Number(tx.amount_toman) / 60000).toFixed(2);
 
           return `
