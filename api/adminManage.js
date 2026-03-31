@@ -155,11 +155,15 @@ export default async function handler(req, res) {
       const stats = data.reduce((acc, curr) => { acc[curr.plan_name] = (acc[curr.plan_name] || 0) + 1; return acc; }, {});
       return res.status(200).json({ stats });
     }
-
+// در فایل api/adminManage.js این بخش را پیدا کرده و جایگزین کنید
     if (action === 'add_config') {
-      await supabase.from('configs').insert({ plan_name: plan, v2ray_uri: v2ray, web_panel_url: panel || '' });
+      await supabase.from('configs').insert({ 
+        plan_name: plan, 
+        v2ray_uri: v2ray, 
+        web_panel_url: panel || '',
+        panel_note: req.body.note || '' // 🆕 اضافه شدن متن راهنما
+      });
       return res.status(200).json({ ok: true });
-    }
 
     return res.status(400).json({ error: "Action not found" });
   } catch (err) { return res.status(500).json({ error: err.message }); }
