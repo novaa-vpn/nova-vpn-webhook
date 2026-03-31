@@ -155,6 +155,10 @@
             <select id="inv-plan" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none"></select>
             <input type="text" id="inv-v2ray" placeholder="vless://... (کد کانفیگ)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
             <input type="text" id="inv-panel" placeholder="https://... (لینک پنل وب - اختیاری)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
+            
+            <!-- 🆕 کادر جدید برای پیام راهنما به مشتری با متن پیش‌فرض -->
+            <textarea id="inv-note" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs outline-none text-blue-300 resize-none">برای لود پنل نیاز است vpn خاموش کنید یا لینک sub را از زیر کپی و در کروم بزنید</textarea>
+            
             <button onclick="addConfig()" class="w-full bg-green-600 py-3 rounded-xl font-bold active:scale-95 transition">افزودن به موجودی</button>
           </div>
         </div>
@@ -241,7 +245,7 @@
       }
       
       container.innerHTML = data.receipts.map(r => {
-        // --- 🆕 تفاوت ظاهری رسید شارژ و خرید ---
+        // نمایش متمایز شارژ کیف پول نسبت به سایر خریدها
         const isTopup = r.target_plan === 'wallet_topup';
         const badgeHtml = isTopup 
           ? `<span class="bg-purple-900/30 text-purple-400 px-2 py-1 rounded text-xs font-bold flex items-center gap-1"><i class="ph-bold ph-wallet"></i> درخواست شارژ حساب</span>`
@@ -419,13 +423,25 @@
       `).join('');
     }
 
+    // 🆕 تابع آپدیت شده برای ارسال پارامتر جدید به سرور (note)
     async function addConfig() {
       const plan = document.getElementById('inv-plan').value;
       const v2ray = document.getElementById('inv-v2ray').value;
       const panel = document.getElementById('inv-panel').value;
+      const note = document.getElementById('inv-note').value; // دریافت متن باکس راهنما
+
       if (!v2ray) return alert('کد کانفیگ الزامی است');
-      const data = await apiCall('add_config', { plan, v2ray, panel: panel || '' });
-      if (data) { alert('با موفقیت اضافه شد'); document.getElementById('inv-v2ray').value = ''; document.getElementById('inv-panel').value = ''; loadInventory(); }
+      
+      // ارسال پارامتر note به همراه بقیه داده‌ها
+      const data = await apiCall('add_config', { plan, v2ray, panel: panel || '', note });
+      
+      if (data) { 
+        alert('کانفیگ با موفقیت به انبار اضافه شد.'); 
+        document.getElementById('inv-v2ray').value = ''; 
+        document.getElementById('inv-panel').value = ''; 
+        // 💡 ما عمداً کادر inv-note را خالی نمی‌کنیم تا برای کانفیگ‌های بعدی ثابت بماند
+        loadInventory(); 
+      }
     }
 
     async function addNewPlan() {
