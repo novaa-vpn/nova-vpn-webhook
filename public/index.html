@@ -36,17 +36,13 @@
     .tab-content.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Skeleton Loading Animations */
     .skeleton {
       background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
       background-size: 200% 100%;
       animation: loading 1.5s infinite;
       border-radius: 8px;
     }
-    @keyframes loading {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
+    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
     .plan-card { transition: all 0.2s; border: 1px solid rgba(255,255,255,0.05); }
     .plan-card.selected { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); transform: scale(1.02); }
@@ -78,7 +74,6 @@
 </head>
 <body class="antialiased">
 
-  <!-- Header -->
   <header class="p-4 flex items-center justify-between sticky top-0 z-40 glass border-b-0">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-900/40 flex items-center justify-center border border-green-500/20">
@@ -90,12 +85,10 @@
       </div>
     </div>
     <div class="flex gap-2">
-      <!-- Toman Balance -->
       <div class="glass px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10">
         <i class="ph-fill ph-wallet text-slate-400"></i>
         <span id="header-balance-toman" class="text-[10px] font-mono font-bold text-slate-200">... T</span>
       </div>
-      <!-- TRX Balance -->
       <div class="glass px-2.5 py-1 rounded-full flex items-center gap-1 border border-red-500/20 bg-red-500/5">
         <i class="ph-fill ph-coin text-red-400"></i>
         <span id="header-balance-trx" class="text-[10px] font-mono font-bold text-red-400">... TRX</span>
@@ -105,10 +98,8 @@
 
   <main class="p-4">
     
-    <!-- TAB 1: BUY (Default Tab) -->
+    <!-- TAB 1: BUY -->
     <section id="tab-buy" class="tab-content active">
-      
-      <!-- User Info Quick View -->
       <div class="flex items-center justify-between bg-slate-800/50 rounded-xl p-3 mb-4 border border-white/5">
         <div class="flex items-center gap-2">
           <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
@@ -122,27 +113,43 @@
         </button>
       </div>
 
-      <!-- Warnings -->
       <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-5">
-        <h4 class="text-red-400 font-bold text-xs mb-2 flex items-center gap-1"><i class="ph-fill ph-warning-circle text-base"></i> نکات مهم واریزی (حتماً بخوانید)</h4>
+        <h4 class="text-red-400 font-bold text-xs mb-2 flex items-center gap-1"><i class="ph-fill ph-warning-circle text-base"></i> نکات مهم واریزی</h4>
         <ul class="text-[11px] text-red-200/80 space-y-1.5 list-disc list-inside">
           <li>کارمزد شبکه به عهده کاربر است.</li>
-          <li>مبلغ باید <strong class="text-white">دقیقاً</strong> معادل مقدار محاسبه شده واریز شود.</li>
-          <li>ارسال هش تراکنش <strong class="text-white">(TX HASH)</strong> الزامی است.</li>
+          <li>مبلغ باید <strong class="text-white">دقیقاً</strong> معادل مقدار محاسبه شده باشد.</li>
           <li>در صورت اختلاف مبلغ، سفارش تایید نخواهد شد!</li>
         </ul>
       </div>
 
-      <h3 class="font-bold text-slate-200 mb-3 text-sm">۱. انتخاب سرویس (تضمینی بدون قطعی)</h3>
-      <div class="grid grid-cols-1 gap-3 mb-5" id="plans-container">
-        <!-- Skeleton loaders will be injected here by JS initially -->
+      <h3 class="font-bold text-slate-200 mb-3 text-sm">۱. انتخاب سرویس</h3>
+      <div class="grid grid-cols-1 gap-3 mb-5" id="plans-container"></div>
+
+      <!-- روش پرداخت هوشمند (آنی با کیف پول یا رمزارز) -->
+      <div id="action-section" class="hidden animation-fadeIn mb-5">
+        <div class="glass rounded-xl p-4 border border-blue-500/30">
+          <h3 class="font-bold text-white mb-1 text-center" id="selected-plan-title">نام پلن</h3>
+          <p class="text-xs text-blue-300 text-center mb-4">جهت دریافت سرویس، یکی از روش‌های زیر را انتخاب کنید:</p>
+          
+          <button id="btn-wallet-buy" onclick="buyWithWallet()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl text-white font-bold mb-3 flex justify-center items-center gap-2 shadow-lg shadow-blue-900/50 active:scale-[0.98] transition">
+            <i class="ph-bold ph-lightning text-xl"></i> دریافت آنی (کسر از کیف پول)
+          </button>
+          
+          <div class="flex items-center gap-3 my-4">
+            <div class="flex-1 h-px bg-slate-700"></div>
+            <span class="text-[10px] text-slate-400 font-bold">یــا</span>
+            <div class="flex-1 h-px bg-slate-700"></div>
+          </div>
+
+          <button onclick="showCryptoPayment()" class="w-full bg-slate-800 border border-slate-600 hover:bg-slate-700 py-3 rounded-xl text-white font-bold text-sm flex justify-center items-center gap-2 active:scale-[0.98] transition">
+            <i class="ph-bold ph-currency-btc text-lg text-yellow-500"></i> پرداخت مستقیم با ارز دیجیتال
+          </button>
+        </div>
       </div>
 
-      <!-- Payment Box -->
+      <!-- Payment Box (Hidden until requested) -->
       <div id="payment-section" class="hidden animation-fadeIn mb-10">
-        <h3 class="font-bold text-slate-200 mb-3 text-sm">۲. انتخاب شبکه پرداخت</h3>
-        
-        <!-- Crypto Selector -->
+        <h3 class="font-bold text-slate-200 mb-3 text-sm mt-5">۲. انتخاب شبکه پرداخت</h3>
         <div class="grid grid-cols-4 gap-2 mb-4" id="crypto-selector">
           <button class="crypto-btn rounded-xl py-3 flex flex-col items-center gap-1 selected" onclick="selectCrypto('USDT', this)">
             <img src="https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/usdt.png" class="w-6 h-6 object-contain" alt="USDT">
@@ -162,49 +169,37 @@
           </button>
         </div>
 
-        <div class="glass rounded-2xl p-5 border border-blue-500/30 relative overflow-hidden">
-          <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-400"></div>
-          
-          <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-4 text-center mt-2">
-            <p class="text-[10px] text-blue-200 mb-1">مبلغ دقیق قابل پرداخت:</p>
+        <div class="glass rounded-2xl p-5 border border-slate-700 relative overflow-hidden">
+          <div class="bg-slate-900/50 rounded-xl p-4 mb-4 text-center mt-2 border border-white/5">
+            <p class="text-[10px] text-slate-400 mb-1">مبلغ دقیق قابل پرداخت:</p>
             <div class="flex items-end justify-center gap-1">
               <span id="exact-crypto-amount" class="text-3xl font-bold font-mono text-white">0.00</span>
-              <span id="selected-crypto-symbol" class="text-sm font-bold text-blue-400 mb-1">USDT</span>
+              <span id="selected-crypto-symbol" class="text-sm font-bold text-slate-400 mb-1">USDT</span>
             </div>
-            <p class="text-[10px] text-slate-400 mt-1 font-mono">≈ $<span id="plan-usd-value">0.00</span></p>
+            <p class="text-[10px] text-slate-500 mt-1 font-mono">≈ $<span id="plan-usd-value">0.00</span></p>
           </div>
 
           <div class="mb-4">
-            <div class="flex justify-between items-end mb-2">
-              <p class="text-[11px] text-slate-300">آدرس کیف پول <span id="wallet-network-label" class="font-bold text-white">TRC20</span>:</p>
-            </div>
+            <p class="text-[11px] text-slate-300 mb-2">آدرس کیف پول <span id="wallet-network-label" class="font-bold text-white">TRC20</span>:</p>
             <div class="flex items-center gap-2">
-              <input type="text" id="wallet-address" readonly 
-                     class="bg-slate-900 border border-slate-700 text-slate-300 text-[11px] rounded-lg p-3 w-full font-mono focus:outline-none">
-              <button onclick="copyToClipboard('wallet-address')" class="bg-blue-600 p-3 rounded-lg text-white hover:bg-blue-500 active:bg-blue-700">
-                <i class="ph-bold ph-copy text-lg"></i>
-              </button>
+              <input type="text" id="wallet-address" readonly class="bg-slate-900 border border-slate-700 text-slate-300 text-[11px] rounded-lg p-3 w-full font-mono focus:outline-none">
+              <button onclick="copyToClipboard('wallet-address')" class="bg-blue-600 p-3 rounded-lg text-white hover:bg-blue-500"><i class="ph-bold ph-copy text-lg"></i></button>
             </div>
           </div>
 
-          <div class="bg-slate-900/50 rounded-xl p-4 mb-2">
+          <div class="bg-slate-900/50 rounded-xl p-4 border border-white/5">
             <h3 class="text-xs font-bold text-slate-200 mb-2">۳. ثبت رسید پرداختی</h3>
-            
-            <input type="text" id="txid-input" placeholder="هش تراکنش (TX HASH)..." 
-                   class="bg-slate-950 border border-slate-700 text-white text-xs rounded-lg p-3 w-full focus:outline-none focus:border-blue-500 font-mono mb-2">
-            
-            <textarea id="tx-notes" placeholder="توضیحات (اختیاری)..." rows="2"
-                      class="bg-slate-950 border border-slate-700 text-white text-xs rounded-lg p-3 w-full focus:outline-none focus:border-blue-500 font-mono mb-4 resize-none"></textarea>
-            
-            <button id="submit-btn" onclick="submitPayment()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-900/50 active:scale-[0.98] transition-all text-sm flex justify-center items-center gap-2">
-              <i class="ph-bold ph-check-circle text-lg"></i> ثبت و درخواست کانفیگ
+            <input type="text" id="txid-input" placeholder="هش تراکنش (TX HASH)..." class="bg-slate-950 border border-slate-700 text-white text-xs rounded-lg p-3 w-full focus:outline-none focus:border-blue-500 font-mono mb-2">
+            <textarea id="tx-notes" placeholder="توضیحات (اختیاری)..." rows="2" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-lg p-3 w-full focus:outline-none focus:border-blue-500 font-mono mb-4 resize-none"></textarea>
+            <button id="submit-btn" onclick="submitPayment()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl text-sm flex justify-center items-center gap-2 transition">
+              <i class="ph-bold ph-check-circle text-lg"></i> بررسی خودکار و تحویل
             </button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- TAB 2: DASHBOARD (Services) -->
+    <!-- TAB 2: DASHBOARD -->
     <section id="tab-dashboard" class="tab-content">
       <div class="glass rounded-2xl p-5 mb-5 relative overflow-hidden">
         <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 blur-3xl rounded-full pointer-events-none"></div>
@@ -215,7 +210,7 @@
           <div>
             <h2 id="user-name" class="text-base font-bold text-white mb-1">در حال بارگذاری...</h2>
             <div class="flex items-center gap-2">
-              <button onclick="copyMyId()" class="text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-700 font-mono flex items-center gap-1 active:bg-slate-800">
+              <button onclick="copyMyId()" class="text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-700 font-mono flex items-center gap-1">
                 <span id="user-id">ID: ---</span>
                 <i class="ph-bold ph-copy"></i>
               </button>
@@ -230,32 +225,37 @@
           <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی
         </button>
       </div>
-
-      <div id="active-services" class="space-y-3">
-        <!-- Skeletons go here -->
-      </div>
+      <div id="active-services" class="space-y-3"></div>
     </section>
 
-    <!-- TAB 3: PROFILE (Referral & Transactions) -->
+    <!-- TAB 3: PROFILE -->
     <section id="tab-profile" class="tab-content">
       
-      <!-- Affiliate / Referral -->
-      <div class="glass rounded-2xl p-5 mb-5 border border-red-500/20 relative overflow-hidden">
-        <div class="absolute -top-10 -right-10 w-32 h-32 bg-red-500/10 blur-3xl rounded-full pointer-events-none"></div>
+      <!-- 🆕 بخش جدید: شارژ کیف پول -->
+      <div class="glass rounded-2xl p-5 mb-5 border border-purple-500/30 relative overflow-hidden">
+        <div class="absolute -top-10 -left-10 w-32 h-32 bg-purple-500/10 blur-3xl rounded-full pointer-events-none"></div>
+        <h3 class="font-bold text-slate-200 text-sm mb-3 relative z-10 flex items-center gap-2">
+          <i class="ph-fill ph-wallet text-purple-400 text-xl"></i> افزایش موجودی حساب
+        </h3>
+        <p class="text-[10px] text-slate-400 mb-3 relative z-10">حساب خود را شارژ کنید تا بدون معطلی و قطعی، در هر ساعت از شبانه‌روز کانفیگ بخرید.</p>
         
-        <div class="flex justify-between items-start mb-3 relative z-10">
-          <div class="flex items-center gap-2">
-            <i class="ph-fill ph-gift text-3xl text-red-400"></i>
-            <div>
-              <h3 class="font-bold text-slate-200 text-sm">کسب درآمد بدون سرمایه</h3>
-              <p class="text-[10px] text-slate-400">سیستم هوشمند دعوت دوستان</p>
-            </div>
-          </div>
+        <div class="flex items-center gap-2 mb-3 relative z-10">
+          <input type="number" id="topup-amount" placeholder="مبلغ شارژ به تومان..." class="bg-slate-900 border border-slate-700 text-white text-sm font-mono rounded-lg p-3 w-full focus:outline-none focus:border-purple-500">
+          <span class="text-xs text-purple-300 bg-purple-900/20 px-3 py-3 rounded-lg border border-purple-900/30">تومان</span>
         </div>
-        
-        <div class="bg-slate-900/80 border border-slate-700 rounded-xl p-3 mb-4 text-[11px] text-slate-300 leading-relaxed">
-          لینک زیر را برای دوستان خود بفرستید. 
-          به ازای هر **۱ گیگابایت** خرید آن‌ها، <strong class="text-red-400">۰.۵ ترون (TRX)</strong> پاداش بگیرید.
+        <button onclick="startTopup()" class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-xl text-white font-bold text-sm shadow-lg shadow-purple-900/30 active:scale-95 transition relative z-10 flex justify-center items-center gap-2">
+          مرحله بعد: پرداخت رمزارز <i class="ph-bold ph-arrow-left"></i>
+        </button>
+      </div>
+
+      <!-- سیستم همکاری در فروش -->
+      <div class="glass rounded-2xl p-5 mb-5 border border-red-500/20">
+        <div class="flex items-center gap-2 mb-3">
+          <i class="ph-fill ph-gift text-3xl text-red-400"></i>
+          <div>
+            <h3 class="font-bold text-slate-200 text-sm">کسب درآمد (بدون سرمایه)</h3>
+            <p class="text-[10px] text-slate-400">دعوت کن، ترون بگیر!</p>
+          </div>
         </div>
         
         <div class="grid grid-cols-2 gap-2 mb-4">
@@ -264,31 +264,22 @@
             <div class="text-lg font-bold text-white font-mono" id="ref-count">0</div>
           </div>
           <div class="bg-slate-900 rounded-lg p-3 border border-red-900/30 text-center">
-            <div class="text-[10px] text-red-300/70 mb-1">درآمد کل شما</div>
+            <div class="text-[10px] text-red-300/70 mb-1">درآمد شما</div>
             <div class="text-lg font-bold text-red-400 font-mono" id="ref-earnings">0 <span class="text-[10px]">TRX</span></div>
           </div>
         </div>
 
         <div class="flex items-center gap-2">
-          <input type="text" id="ref-link" readonly 
-                 class="bg-slate-900 border border-slate-700 text-slate-300 text-[10px] rounded-lg p-3 w-full font-mono focus:outline-none" dir="ltr">
-          <button onclick="copyToClipboard('ref-link')" class="bg-red-600 p-3 rounded-lg text-white hover:bg-red-500 min-w-max">
-            کپی لینک <i class="ph-bold ph-copy ml-1"></i>
-          </button>
+          <input type="text" id="ref-link" readonly class="bg-slate-900 border border-slate-700 text-slate-300 text-[10px] rounded-lg p-3 w-full font-mono focus:outline-none" dir="ltr">
+          <button onclick="copyToClipboard('ref-link')" class="bg-red-600 p-3 rounded-lg text-white hover:bg-red-500 min-w-max">کپی لینک <i class="ph-bold ph-copy"></i></button>
         </div>
       </div>
 
-      <!-- Transaction History -->
-      <div class="mb-3">
-        <h3 class="font-bold text-slate-200 text-sm flex items-center gap-1">
-          <i class="ph-fill ph-receipt text-slate-400"></i> تاریخچه سفارشات و پرداخت‌ها
-        </h3>
-      </div>
-      
-      <div id="tx-history" class="space-y-2">
-        <!-- Skeletons go here -->
-      </div>
-
+      <!-- تاریخچه -->
+      <h3 class="font-bold text-slate-200 text-sm mb-3 flex items-center gap-1">
+        <i class="ph-fill ph-receipt text-slate-400"></i> تاریخچه سفارشات
+      </h3>
+      <div id="tx-history" class="space-y-2"></div>
     </section>
 
   </main>
@@ -297,7 +288,7 @@
   <nav class="bottom-nav">
     <button class="nav-item active" onclick="switchTab('buy', this)">
       <i class="ph-fill ph-shopping-cart"></i>
-      <span>خرید سرویس</span>
+      <span>فروشگاه</span>
     </button>
     <button class="nav-item" onclick="switchTab('dashboard', this)">
       <i class="ph-fill ph-squares-four"></i>
@@ -305,7 +296,7 @@
     </button>
     <button class="nav-item" onclick="switchTab('profile', this)">
       <i class="ph-fill ph-user-circle"></i>
-      <span>پروفایل و درآمد</span>
+      <span>کیف پول و پروفایل</span>
     </button>
   </nav>
 
@@ -329,35 +320,11 @@
       XRP:  { symbol: 'XRP',  network: 'Ripple',wallet: 'rJ8A6gUZzwXm9XJv2fLaTGd6GkpBMdmm8F', price: 0.60 }
     };
 
-    // تابع نمایش اسکلت لودینگ قبل از دریافت داده
     function showLoadingSkeletons() {
-      const planSkel = `
-        <div class="glass p-4 rounded-xl flex justify-between items-center mb-3">
-          <div class="space-y-2 w-1/2">
-            <div class="h-4 skeleton w-3/4"></div>
-            <div class="h-3 skeleton w-1/2"></div>
-          </div>
-          <div class="space-y-2 w-1/4 flex flex-col items-end">
-            <div class="h-4 skeleton w-full"></div>
-            <div class="h-3 skeleton w-3/4"></div>
-          </div>
-        </div>`;
-      document.getElementById('plans-container').innerHTML = planSkel + planSkel + planSkel;
-
-      const serviceSkel = `
-        <div class="glass p-4 rounded-xl border-r-2 border-slate-700 mb-3">
-           <div class="h-4 skeleton w-1/2 mb-2"></div>
-           <div class="h-3 skeleton w-1/4"></div>
-        </div>`;
-      document.getElementById('active-services').innerHTML = serviceSkel + serviceSkel;
-
-      const txSkel = `
-        <div class="glass p-3 rounded-lg border border-slate-800 mb-2">
-           <div class="flex justify-between mb-2"><div class="h-3 skeleton w-1/4"></div><div class="h-3 skeleton w-1/4"></div></div>
-           <div class="h-4 skeleton w-1/3 mb-2"></div>
-           <div class="h-2 skeleton w-full"></div>
-        </div>`;
-      document.getElementById('tx-history').innerHTML = txSkel + txSkel;
+      const planSkel = `<div class="glass p-4 rounded-xl mb-3 flex justify-between"><div class="h-4 skeleton w-1/2"></div><div class="h-4 skeleton w-1/4"></div></div>`;
+      document.getElementById('plans-container').innerHTML = planSkel.repeat(3);
+      document.getElementById('active-services').innerHTML = planSkel.repeat(2);
+      document.getElementById('tx-history').innerHTML = planSkel.repeat(2);
     }
 
     window.onload = async () => {
@@ -367,15 +334,9 @@
       document.getElementById('user-id').innerText = `ID: ${tgUser.id}`;
       document.getElementById('ref-link').value = `https://t.me/${botUsername}?start=${tgUser.id}`;
       
-      // نمایش انیمیشن لودینگ در کسری از ثانیه
       showLoadingSkeletons();
-      
       updateCryptoUI();
-      // دریافت همزمان قیمت‌ها و اطلاعات کاربر برای افزایش سرعت
-      await Promise.all([
-        fetchCryptoPrices(),
-        loadUserData()
-      ]); 
+      await Promise.all([ fetchCryptoPrices(), loadUserData() ]); 
     };
 
     function switchTab(tabId, btnElement) {
@@ -399,43 +360,110 @@
     function renderPlans() {
       const container = document.getElementById('plans-container');
       if (plans.length === 0) {
-        container.innerHTML = `<div class="glass p-4 rounded-xl text-center text-slate-400 text-sm">در حال حاضر محصولی برای فروش وجود ندارد.</div>`;
+        container.innerHTML = `<div class="glass p-4 rounded-xl text-center text-slate-400 text-sm">محصولی برای فروش وجود ندارد.</div>`;
         return;
       }
 
       container.innerHTML = plans.map(p => {
         const isDisabled = !p.is_active;
         const exactUsd = p.price_usd ? p.price_usd : (p.price_toman / 60000).toFixed(2);
-        
         return `
         <div class="glass plan-card p-4 rounded-xl flex justify-between items-center ${isDisabled ? 'disabled' : 'cursor-pointer'}" onclick="${isDisabled ? '' : `selectPlan('${p.internal_name}', this, ${exactUsd}, ${p.price_toman})`}">
           <div>
-            <div class="text-sm font-bold text-white mb-1 flex items-center gap-1">
-              ${isDisabled ? '<i class="ph-fill ph-prohibit text-red-400"></i>' : '<i class="ph-fill ph-rocket text-blue-400"></i>'}
-              ${p.title_fa}
-            </div>
-            <div class="text-[10px] text-slate-400">${isDisabled ? 'فعلا غیرفعال' : (p.gb_amount > 0 ? `${p.gb_amount} گیگابایت` : 'تضمینی و پرسرعت')}</div>
+            <div class="text-sm font-bold text-white mb-1 flex items-center gap-1">${p.title_fa}</div>
+            <div class="text-[10px] text-slate-400">${isDisabled ? 'فعلا غیرفعال' : (p.gb_amount > 0 ? `${p.gb_amount} گیگابایت` : 'تضمینی بدون قطعی')}</div>
           </div>
           <div class="text-left">
             <div class="text-green-400 font-mono text-sm font-bold">$${exactUsd}</div>
             <div class="text-[10px] text-slate-400 mt-0.5">${Number(p.price_toman).toLocaleString()} تومان</div>
           </div>
-        </div>
-      `}).join('');
+        </div>`
+      }).join('');
     }
 
+    // --- منطق انتخاب هوشمندانه (خرید یا شارژ) ---
     function selectPlan(planId, element, usdPrice, tomanPrice) {
-      document.querySelectorAll('.plan-card').forEach(el => el.classList.remove('selected'));
-      element.classList.add('selected');
+      if(element) {
+        document.querySelectorAll('.plan-card').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+      }
       
-      const p = plans.find(x => x.internal_name === planId);
-      currentPlan = { id: planId, name: p.title_fa, priceUsd: usdPrice, priceToman: tomanPrice };
+      const pName = planId === 'wallet_topup' ? 'شارژ کیف پول کاربری' : plans.find(x => x.internal_name === planId)?.title_fa;
+      currentPlan = { id: planId, name: pName, priceUsd: usdPrice, priceToman: tomanPrice };
       
-      const paymentSec = document.getElementById('payment-section');
-      paymentSec.classList.remove('hidden');
+      document.getElementById('action-section').classList.remove('hidden');
+      document.getElementById('payment-section').classList.add('hidden'); // بستن تب قبلی کریپتو در صورت باز بودن
+      document.getElementById('selected-plan-title').innerText = pName;
+      
+      // منطق روشن/خاموش شدن دکمه خرید با کیف پول
+      const walletBtn = document.getElementById('btn-wallet-buy');
+      if (planId === 'wallet_topup') {
+        walletBtn.classList.add('hidden'); // برای شارژ حساب، دکمه کیف پول منطقی نیست
+        showCryptoPayment(); // یک‌راست برود به بخش ارز دیجیتال
+      } else {
+        walletBtn.classList.remove('hidden');
+        if (currentUser && currentUser.wallet_balance >= tomanPrice) {
+          walletBtn.disabled = false;
+          walletBtn.className = "w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl text-white font-bold mb-3 flex justify-center items-center gap-2 shadow-lg shadow-blue-900/50 active:scale-[0.98] transition";
+          walletBtn.innerHTML = `<i class="ph-bold ph-lightning text-xl"></i> دریافت آنی (موجودی کافی)`;
+        } else {
+          walletBtn.disabled = true;
+          walletBtn.className = "w-full bg-slate-800 py-3 rounded-xl text-slate-400 font-bold mb-3 flex justify-center items-center gap-2 opacity-50 cursor-not-allowed";
+          walletBtn.innerHTML = `<i class="ph-bold ph-warning-circle text-xl"></i> موجودی کافی نیست`;
+        }
+      }
       
       calculateExactAmount();
-      setTimeout(() => paymentSec.scrollIntoView({ behavior: 'smooth' }), 100);
+      setTimeout(() => document.getElementById('action-section').scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+
+    // --- فعال‌سازی شارژ حساب از پروفایل ---
+    function startTopup() {
+      const amtInput = document.getElementById('topup-amount').value;
+      const amt = Number(amtInput);
+      if (!amt || amt < 10000) {
+        tg.showAlert("مبلغ شارژ باید حداقل ۱۰,۰۰۰ تومان باشد.");
+        return;
+      }
+      // سوئیچ به تب فروشگاه و ارسال اطلاعات کاستوم
+      const usdApprox = (amt / 60000).toFixed(2);
+      switchTab('buy', document.querySelectorAll('.nav-item')[0]);
+      selectPlan('wallet_topup', null, usdApprox, amt);
+    }
+
+    function showCryptoPayment() {
+      document.getElementById('payment-section').classList.remove('hidden');
+      setTimeout(() => document.getElementById('payment-section').scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+
+    // --- 🆕 متد خرید آنی با کیف پول (Wallet Buy) ---
+    async function buyWithWallet() {
+      const btn = document.getElementById('btn-wallet-buy');
+      btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-xl"></i> در حال صدور...`;
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/walletBuy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: tgUser.id, plan_id: currentPlan.id })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          tg.showAlert("✅ خرید شما با موفقیت انجام شد! کانفیگ در ربات تلگرام ارسال گردید.");
+          // رفرش اطلاعات برای به‌روزرسانی موجودی و لیست سرویس‌ها
+          await loadUserData(); 
+          switchTab('dashboard', document.querySelectorAll('.nav-item')[1]);
+        } else {
+          tg.showAlert("❌ " + data.error);
+        }
+      } catch (e) {
+        tg.showAlert("خطا در ارتباط با سرور");
+      } finally {
+        btn.innerHTML = `<i class="ph-bold ph-lightning text-xl"></i> دریافت آنی`;
+        btn.disabled = false;
+      }
     }
 
     function selectCrypto(symbol, element) {
@@ -473,7 +501,7 @@
       copyText.select();
       copyText.setSelectionRange(0, 99999); 
       document.execCommand("copy");
-      tg.showAlert("با موفقیت کپی شد ✅");
+      tg.showAlert("کپی شد ✅");
     }
 
     async function fetchCryptoPrices() {
@@ -506,13 +534,14 @@
         if (data.services && data.services.length > 0) {
           srvContainer.innerHTML = data.services.map(s => {
             const pInfo = plans.find(pl => pl.internal_name === s.plan_name) || {title_fa: s.plan_name};
+            const panelBtn = s.web_panel_url ? `<a href="${s.web_panel_url}" target="_blank" class="bg-slate-800 border border-slate-700 text-green-400 text-[11px] px-3 py-1.5 rounded-lg">مشاهده پنل</a>` : `<span class="bg-slate-800/50 border border-slate-700/50 text-slate-500 text-[10px] px-3 py-1.5 rounded-lg">بدون پنل</span>`;
             return `
             <div class="glass p-4 rounded-xl flex justify-between items-center border-r-2 border-green-500 mb-3">
               <div>
                 <div class="text-sm font-bold text-white">${pInfo.title_fa}</div>
                 <div class="text-[10px] text-slate-400 mt-1 font-mono">${s.created_at.split('T')[0]}</div>
               </div>
-              <a href="${s.web_panel_url}" target="_blank" class="bg-slate-800 border border-slate-700 text-green-400 text-[11px] px-3 py-1.5 rounded-lg">مشاهده پنل</a>
+              ${panelBtn}
             </div>
           `}).join('');
         } else {
@@ -521,7 +550,7 @@
 
         renderTransactionHistory(data.transactions);
 
-      } catch (e) { console.error("Profile fetch failed", e); }
+      } catch (e) { console.error("Profile fetch failed"); }
     }
 
     function renderTransactionHistory(transactions) {
@@ -534,10 +563,12 @@
           else if(tx.status === 'approved') { statusHtml = 'status-approved'; statusText = 'تایید شده'; }
           else { statusHtml = 'status-rejected'; statusText = 'رد شده'; }
           
+          const title = tx.target_plan === 'wallet_topup' ? 'شارژ کیف پول' : (plans.find(pl => pl.internal_name === tx.target_plan)?.title_fa || tx.target_plan);
+
           return `
-          <div class="glass p-3 rounded-lg border border-slate-800 relative mb-2">
+          <div class="glass p-3 rounded-lg border ${tx.target_plan === 'wallet_topup' ? 'border-purple-500/30' : 'border-slate-800'} relative mb-2">
             <div class="flex justify-between items-center mb-2">
-              <span class="text-[10px] text-slate-400 font-mono">${tx.created_at.split('T')[0]}</span>
+              <span class="text-[10px] text-slate-400 font-mono">${tx.created_at.split('T')[0]} - ${title}</span>
               <span class="status-badge ${statusHtml}">${statusText}</span>
             </div>
             <div class="flex items-center gap-1 mb-1">
@@ -545,7 +576,6 @@
               <span class="text-[10px] text-slate-500">(${Number(tx.amount_toman).toLocaleString()} T)</span>
             </div>
             <div class="text-[10px] text-slate-400 font-mono break-all line-clamp-1 mb-1">هش: ${tx.txid_or_receipt}</div>
-            ${tx.notes ? `<div class="text-[10px] text-blue-300/70 bg-blue-900/20 px-2 py-1 rounded mt-1">📝 ${tx.notes}</div>` : ''}
           </div>
         `}).join('');
       } else {
@@ -582,43 +612,22 @@
         });
 
         if (res.ok) {
-          tg.showAlert("✅ تراکنش ثبت شد! در بخش پروفایل وضعیت آن را پیگیری کنید.");
-          
+          tg.showAlert("✅ تراکنش ثبت شد! در صورت واریز صحیح، تا ۵ دقیقه دیگر تایید می‌شود.");
           document.getElementById('txid-input').value = "";
           document.getElementById('tx-notes').value = "";
           
-          const txContainer = document.getElementById('tx-history');
-          const newTxHTML = `
-            <div class="glass p-3 rounded-lg border border-blue-500/30 bg-blue-500/5 mb-2">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-[10px] text-slate-400 font-mono">همین الان</span>
-                <span class="status-badge status-pending_verification">در حال اعتبارسنجی شبکه</span>
-              </div>
-              <div class="flex items-center gap-1 mb-1">
-                <span class="text-xs font-bold text-white">${payload.crypto_amount} ${payload.crypto_currency}</span>
-                <span class="text-[10px] text-slate-500">(${Number(payload.amount_toman).toLocaleString()} T)</span>
-              </div>
-              <div class="text-[10px] text-slate-400 font-mono break-all line-clamp-1 mb-1">هش: ${payload.txid}</div>
-              ${payload.notes ? `<div class="text-[10px] text-blue-300/70 bg-blue-900/20 px-2 py-1 rounded mt-1">📝 ${payload.notes}</div>` : ''}
-            </div>
-          `;
-          
-          if(txContainer.innerHTML.includes("تاکنون تراکنشی نداشته‌اید")) {
-            txContainer.innerHTML = newTxHTML;
-          } else {
-            txContainer.insertAdjacentHTML('afterbegin', newTxHTML);
-          }
-
+          await loadUserData(); // رفرش تاریخچه برای نمایش آنی
           const profileBtn = document.querySelectorAll('.nav-item')[2];
           switchTab('profile', profileBtn);
           
         } else {
-          tg.showAlert("❌ خطا در ثبت. لطفاً مجدداً تلاش کنید.");
+          const errData = await res.json();
+          tg.showAlert(errData.error || "❌ خطا در ثبت. لطفاً مجدداً تلاش کنید.");
         }
       } catch (e) {
         tg.showAlert("خطای ارتباط با سرور.");
       } finally {
-        btn.innerHTML = `<i class="ph-bold ph-check-circle text-lg"></i> ثبت و درخواست کانفیگ`;
+        btn.innerHTML = `<i class="ph-bold ph-check-circle text-lg"></i> بررسی خودکار و تحویل`;
         btn.disabled = false;
       }
     }
