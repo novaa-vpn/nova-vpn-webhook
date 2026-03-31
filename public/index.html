@@ -381,7 +381,7 @@
     function renderPlans() {
       const container = document.getElementById('plans-container');
       
-      // 🆕 فیلتر کردن پلن سیستمی شارژ از لیست فروشگاه
+      // فیلتر کردن پلن سیستمی شارژ از لیست فروشگاه
       const visiblePlans = plans.filter(p => p.internal_name !== 'wallet_topup');
       
       if (visiblePlans.length === 0) {
@@ -417,7 +417,7 @@
       currentPlan = { id: planId, name: pName, priceUsd: usdPrice, priceToman: tomanPrice };
       
       document.getElementById('action-section').classList.remove('hidden');
-      document.getElementById('payment-section').classList.add('hidden'); // بستن تب قبلی کریپتو در صورت باز بودن
+      document.getElementById('payment-section').classList.add('hidden'); 
       document.getElementById('selected-plan-title').innerText = pName;
       
       // منطق روشن/خاموش شدن دکمه خرید با کیف پول
@@ -427,7 +427,12 @@
         showCryptoPayment(); // یک‌راست برود به بخش ارز دیجیتال
       } else {
         walletBtn.classList.remove('hidden');
-        if (currentUser && currentUser.wallet_balance >= tomanPrice) {
+        
+        // 🛠 حل باگ مقایسه متنی مقادیر و تبدیل ایمن به عدد (Number)
+        const userBalance = Number(currentUser?.wallet_balance || 0);
+        const planPrice = Number(tomanPrice || 0);
+
+        if (currentUser && userBalance >= planPrice) {
           walletBtn.disabled = false;
           walletBtn.className = "w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl text-white font-bold mb-3 flex justify-center items-center gap-2 shadow-lg shadow-blue-900/50 active:scale-[0.98] transition";
           walletBtn.innerHTML = `<i class="ph-bold ph-lightning text-xl"></i> دریافت آنی (موجودی کافی)`;
@@ -467,7 +472,6 @@
       // تبدیل دلار به تومان با نرخ ثابت 60000
       const tomanApprox = usd * 60000;
       
-      // سوئیچ به تب فروشگاه و ارسال اطلاعات کاستوم
       switchTab('buy', document.querySelectorAll('.nav-item')[0]);
       selectPlan('wallet_topup', null, usd.toFixed(2), tomanApprox);
     }
@@ -477,7 +481,7 @@
       setTimeout(() => document.getElementById('payment-section').scrollIntoView({ behavior: 'smooth' }), 100);
     }
 
-    // --- 🆕 متد خرید آنی با کیف پول (Wallet Buy) ---
+    // --- متد خرید آنی با کیف پول (Wallet Buy) ---
     async function buyWithWallet() {
       const btn = document.getElementById('btn-wallet-buy');
       btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-xl"></i> در حال صدور...`;
@@ -493,7 +497,6 @@
 
         if (res.ok) {
           tg.showAlert("✅ خرید شما با موفقیت انجام شد! کانفیگ در ربات تلگرام ارسال گردید.");
-          // رفرش اطلاعات برای به‌روزرسانی موجودی و لیست سرویس‌ها
           await loadUserData(); 
           switchTab('dashboard', document.querySelectorAll('.nav-item')[1]);
         } else {
@@ -547,7 +550,8 @@
 
     async function fetchCryptoPrices() {
       try {
-        const res = await fetch('/api/cryptoPrice');
+        // 🛠 رفع مشکل کش‌شدن اطلاعات: اضافه کردن timestamp به انتهای لینک
+        const res = await fetch(`/api/cryptoPrice?t=${Date.now()}`);
         const data = await res.json();
         if(data.USDT) cryptoData.USDT.price = data.USDT;
         if(data.TRX) cryptoData.TRX.price = data.TRX;
@@ -559,7 +563,8 @@
 
     async function loadUserData() {
       try {
-        const res = await fetch(`/api/profile?chat_id=${tgUser.id}`);
+        // 🛠 رفع مشکل کش‌شدن اطلاعات در تلگرام (جلوگیری از عدم آپدیت موجودی پس از شارژ)
+        const res = await fetch(`/api/profile?chat_id=${tgUser.id}&t=${Date.now()}`);
         const data = await res.json();
         currentUser = data.user;
         plans = data.plans || []; 
