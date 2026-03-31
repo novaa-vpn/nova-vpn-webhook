@@ -3,8 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  // دریافت اطلاعات از فرانت‌اند
-  const { chat_id, plan, txid, crypto_currency, notes } = req.body;
+  // اضافه شدن amount_toman برای دریافت مبلغ دلخواه شارژ
+  const { chat_id, plan, txid, crypto_currency, notes, amount_toman } = req.body;
 
   if (!chat_id || !txid || !plan) {
     return res.status(400).json({ error: "اطلاعات ناقص است." });
@@ -12,13 +12,10 @@ export default async function handler(req, res) {
 
   const cleanTxid = txid.trim();
 
-  // ==========================================
-  // 🛡️ لایه امنیتی ۰: فیلتر هوشمند در درگاه ورودی
-  // ==========================================
-  // این الگو چک می‌کند که متن وارد شده حتماً بین 40 تا 90 کاراکتر و فقط شامل حروف مجاز بلاک‌چین باشد
+  // فیلتر هوشمند درگاه ورودی
   const txidRegex = /^[a-zA-Z0-9\+\/\-\_=]{40,90}$/;
   if (!txidRegex.test(cleanTxid)) {
-    return res.status(400).json({ error: "❌ هش تراکنش نامعتبر است! هش (TXID) یک کد طولانی (حداقل ۴۴ کاراکتر) شامل اعداد و حروف انگلیسی است." });
+    return res.status(400).json({ error: "❌ هش تراکنش نامعتبر است! هش (TXID) یک کد طولانی شامل اعداد و حروف انگلیسی است." });
   }
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -29,17 +26,28 @@ export default async function handler(req, res) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   try {
-    // 🛡️ لایه امنیتی ۱: جلوگیری از ثبت هش تکراری در لحظه
     const { data: existingTx } = await supabase.from("transactions").select("id").eq("txid_or_receipt", cleanTxid).maybeSingle();
     if (existingTx) {
       return res.status(400).json({ error: "❌ این رسید قبلاً در سیستم ثبت شده است!" });
     }
 
-    // 🛡️ لایه امنیتی ۲: استخراج قیمت واقعی از دیتابیس (جلوگیری از دستکاری فرانت‌اند)
-    const { data: planData } = await supabase.from("plans").select("*").eq("internal_name", plan).maybeSingle();
-    if (!planData) throw new Error("پلن انتخابی در سیستم وجود ندارد.");
+    let finalTomanPrice = 0;
+    let finalUsdPrice = 0;
 
-    // محاسبه قیمت زنده ارزها در سمت سرور
+    // --- 🆕 اضافه شدن منطق قیمت‌گذاری داینامیک برای شارژ کیف پول ---
+    if (plan === 'wallet_topup') {
+      if (!amount_toman || amount_toman < 10000) return res.status(400).json({ error: "مبلغ شارژ باید حداقل ۱۰,۰۰۰ تومان باشد." });
+      finalTomanPrice = amount_toman;
+      finalUsdPrice = amount_toman / 60000; // نرخ تقریبی محاسبه ارز پایه برای شارژ
+    } else {
+      // استخراج قیمت واقعی از دیتابیس برای خرید پلن
+      const { data: planData } = await supabase.from("plans").select("*").eq("internal_name", plan).maybeSingle();
+      if (!planData) throw new Error("پلن انتخابی در سیستم وجود ندارد.");
+      finalTomanPrice = planData.price_toman;
+      finalUsdPrice = planData.price_usd;
+    }
+
+    // محاسبه قیمت زنده ارزها
     let cryptoPrice = 1; 
     try {
       if (crypto_currency === 'TRX') {
@@ -53,14 +61,14 @@ export default async function handler(req, res) {
       }
     } catch(e) { console.log("خطا در دریافت قیمت لحظه‌ای سرور"); }
 
-    const secureCryptoAmount = parseFloat((planData.price_usd / cryptoPrice).toFixed(2));
+    const secureCryptoAmount = parseFloat((finalUsdPrice / cryptoPrice).toFixed(2));
 
-    // ثبت نهایی در دیتابیس (صف انتظار)
+    // ثبت در دیتابیس
     const { error } = await supabase.from("transactions").insert({
       chat_id: chat_id,
       txid_or_receipt: cleanTxid,
       target_plan: plan,
-      amount_toman: planData.price_toman,
+      amount_toman: finalTomanPrice, // مبلغ ثبت شده ایمن
       crypto_currency: crypto_currency,
       crypto_amount: secureCryptoAmount, 
       notes: notes || null,
@@ -69,9 +77,9 @@ export default async function handler(req, res) {
 
     if (error) throw error;
 
-    // ارسال پیام هشدار به تلگرام ادمین
     if (TOKEN && ADMIN_ID) {
-      const msg = `💰 **درخواست بررسی خودکار فعال شد!**\n\n👤 کاربر: \`${chat_id}\`\n🛍 پلن: ${plan}\n💵 مبلغ مورد انتظار: ${secureCryptoAmount} ${crypto_currency}\n🔍 هش تراکنش:\n\`${cleanTxid}\`\n\n(سیستم تا ۵ دقیقه آینده این تراکنش را از بلاک‌چین استعلام خواهد کرد)`;
+      const planNameStr = plan === 'wallet_topup' ? 'شارژ کیف پول' : plan;
+      const msg = `💰 **درخواست بررسی خودکار فعال شد!**\n\n👤 کاربر: \`${chat_id}\`\n🛍 نوع عملیات: ${planNameStr}\n💵 مبلغ مورد انتظار: ${secureCryptoAmount} ${crypto_currency}\n🔍 هش تراکنش:\n\`${cleanTxid}\``;
       await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: ADMIN_ID, text: msg, parse_mode: 'Markdown' })
