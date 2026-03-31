@@ -21,28 +21,25 @@ export default async function handler(req, res) {
     // ==========================================
     
     if (action === 'get_tickets') {
-      // دریافت تمام پیام‌های پشتیبانی به همراه نام کاربری تلگرام (join)
       const { data, error } = await supabase
         .from('support_tickets')
-        .select(`*, users!inner(username)`)
-        .order('created_at', { ascending: true }); // از قدیمی به جدید برای نمایش درست در چت
+        .select(`*, users(username)`)
+        .order('created_at', { ascending: true });
         
-      if (error) throw error;
+      if (error) {
+        console.error("Get Tickets Error:", error.message);
+        return res.status(200).json({ tickets: [] });
+      }
       return res.status(200).json({ tickets: data || [] });
     }
 
     if (action === 'reply_ticket') {
       if (!target_chat_id || !message_text) throw new Error("اطلاعات ناقص است");
       
-      // ۱. ذخیره جواب شما در دیتابیس CRM
       await supabase.from('support_tickets').insert({
-        chat_id: target_chat_id,
-        sender: 'admin',
-        message_text: message_text,
-        is_read: true
+        chat_id: target_chat_id, sender: 'admin', message_text: message_text, is_read: true
       });
 
-      // ۲. ارسال پیام متنی سریع به کاربر در تلگرام
       const replyMsg = `👨‍💻 **پاسخ پشتیبانی:**\n\n${message_text}\n\n*(برای ارسال پیام جدید مجدداً از دکمه پشتیبانی استفاده کنید)*`;
       await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -57,20 +54,19 @@ export default async function handler(req, res) {
       
       const { data: users } = await supabase.from('users').select('chat_id');
       if (users && users.length > 0) {
-        // ارسال غیرهمزمان برای جلوگیری از Timeout سرورلس (فقط متن برای سرعت بالا)
         const broadcastMsg = `📢 **اطلاعیه نُوا وی‌پی‌ان:**\n\n${message_text}`;
         users.forEach(u => {
           fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: u.chat_id, text: broadcastMsg, parse_mode: 'Markdown' })
-          }).catch(() => {}); // بی‌صدا رد شدن از کاربرانی که ربات را بلاک کرده‌اند
+          }).catch(() => {});
         });
       }
       return res.status(200).json({ ok: true, count: users ? users.length : 0 });
     }
 
     // ==========================================
-    // 🛒 بخش مالی و فروشگاهی (کدهای قبلی)
+    // 🛒 بخش مالی و فروشگاهی 
     // ==========================================
 
     if (action === 'get_pending') {
@@ -80,13 +76,33 @@ export default async function handler(req, res) {
 
     if (action === 'approve') {
       const { data: tx } = await supabase.from('transactions').select('*').eq('id', tx_id).single();
+
+      // --- 🆕 اضافه شدن منطق شارژ کیف پول ---
+      if (tx.target_plan === 'wallet_topup') {
+        const { data: user } = await supabase.from('users').select('wallet_balance').eq('chat_id', tx.chat_id).single();
+        const newBalance = (Number(user?.wallet_balance) || 0) + Number(tx.amount_toman);
+
+        await supabase.from('users').update({ wallet_balance: newBalance }).eq('chat_id', tx.chat_id);
+        await supabase.from('transactions').update({ status: 'approved', handled_at: new Date() }).eq('id', tx_id);
+
+        const msg = `💳 **کیف پول شما با موفقیت شارژ شد!**\n\n💰 مبلغ شارژ: ${Number(tx.amount_toman).toLocaleString()} تومان\n💵 موجودی فعلی: ${newBalance.toLocaleString()} تومان\n\nاکنون می‌توانید از موجودی خود برای خرید سریع استفاده کنید.`;
+        await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: tx.chat_id, text: msg, parse_mode: 'Markdown' })
+        });
+        return res.status(200).json({ ok: true });
+      }
+      // --------------------------------------
+
+      // منطق قبلی برای تحویل کانفیگ
       const { data: conf } = await supabase.from('configs').select('*').eq('plan_name', tx.target_plan).eq('status', 'available').limit(1).maybeSingle();
       if (!conf) throw new Error("انبار برای این پلن خالی است!");
 
       await supabase.from('configs').update({ status: 'sold', owner_id: tx.chat_id, sold_at: new Date() }).eq('id', conf.id);
       await supabase.from('transactions').update({ status: 'approved', handled_at: new Date() }).eq('id', tx_id);
 
-      const msg = `🎉 **سرویس شما فعال شد!**\n\n🚀 **کد اتصال:**\n\`${conf.v2ray_uri}\`\n\n📊 [پنل مصرف](${conf.web_panel_url})`;
+      const panelMsg = conf.web_panel_url ? `\n\n📊 [پنل مصرف](${conf.web_panel_url})` : '';
+      const msg = `🎉 **سرویس شما فعال شد!**\n\n🚀 **کد اتصال:**\n\`${conf.v2ray_uri}\`${panelMsg}`;
       await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: tx.chat_id, text: msg, parse_mode: 'Markdown' })
@@ -141,7 +157,7 @@ export default async function handler(req, res) {
     }
 
     if (action === 'add_config') {
-      await supabase.from('configs').insert({ plan_name: plan, v2ray_uri: v2ray, web_panel_url: panel });
+      await supabase.from('configs').insert({ plan_name: plan, v2ray_uri: v2ray, web_panel_url: panel || '' });
       return res.status(200).json({ ok: true });
     }
 
