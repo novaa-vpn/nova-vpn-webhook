@@ -380,12 +380,16 @@
 
     function renderPlans() {
       const container = document.getElementById('plans-container');
-      if (plans.length === 0) {
+      
+      // 🆕 فیلتر کردن پلن سیستمی شارژ از لیست فروشگاه
+      const visiblePlans = plans.filter(p => p.internal_name !== 'wallet_topup');
+      
+      if (visiblePlans.length === 0) {
         container.innerHTML = `<div class="glass p-4 rounded-xl text-center text-slate-400 text-sm">محصولی برای فروش وجود ندارد.</div>`;
         return;
       }
 
-      container.innerHTML = plans.map(p => {
+      container.innerHTML = visiblePlans.map(p => {
         const isDisabled = !p.is_active;
         const exactUsd = p.price_usd ? p.price_usd : (p.price_toman / 60000).toFixed(2);
         return `
