@@ -63,6 +63,14 @@
       <button onclick="switchView('broadcast', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
         <i class="ph-fill ph-megaphone text-lg text-red-400"></i> پیام همگانی کانال
       </button>
+      <!-- 🆕 اضافه شدن تب کیف پول‌ها -->
+      <button onclick="switchView('wallets', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+        <i class="ph-fill ph-wallet text-lg text-emerald-400"></i> کیف‌پول‌های پرداخت
+      </button>
+      <!-- 🆕 اضافه شدن تب تنظیمات -->
+      <button onclick="switchView('settings', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+        <i class="ph-fill ph-gear text-lg text-slate-400"></i> تنظیمات سیستم
+      </button>
     </nav>
     
     <div class="p-4 border-t border-white/5">
@@ -72,15 +80,17 @@
     </div>
   </aside>
 
-  <!-- Mobile Header (Visible only on small screens) -->
+  <!-- Mobile Header -->
   <div class="md:hidden fixed top-0 left-0 w-full glass p-4 flex justify-between items-center z-30 border-b border-white/10">
     <h1 class="font-bold">NOVA CRM</h1>
-    <select onchange="switchView(this.value, null)" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+    <select onchange="switchView(this.value, null)" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
       <option value="receipts">تراکنش‌ها</option>
       <option value="tickets">پشتیبانی</option>
       <option value="users">مشتریان</option>
       <option value="inventory">انبار</option>
       <option value="broadcast">پیام همگانی</option>
+      <option value="wallets">کیف‌پول‌ها</option>
+      <option value="settings">تنظیمات</option>
     </select>
   </div>
 
@@ -98,25 +108,20 @@
     <!-- 2. Tickets (CRM Chat) -->
     <section id="view-tickets" class="view-section p-0 md:p-6">
       <div class="h-full max-w-6xl mx-auto glass md:rounded-3xl border-0 md:border border-white/5 flex flex-col md:flex-row overflow-hidden">
-        <!-- Users List -->
         <div class="w-full md:w-80 border-l border-white/5 bg-slate-900/30 flex flex-col h-1/3 md:h-full">
           <div class="p-4 border-b border-white/5 bg-slate-900/80 font-bold text-sm">لیست گفتگوها</div>
           <div class="flex-1 overflow-y-auto" id="ticket-users-list">
-            <!-- Chat List items -->
             <div class="p-5 text-center text-xs text-slate-500">درحال لود...</div>
           </div>
         </div>
-        <!-- Chat Area -->
         <div class="flex-1 flex flex-col bg-slate-950/50 h-2/3 md:h-full relative">
           <div class="p-4 border-b border-white/5 bg-slate-900/80 flex justify-between items-center h-14 shrink-0">
             <span class="font-bold text-sm" id="chat-header-name">یک چت را انتخاب کنید</span>
             <span class="text-xs font-mono text-slate-500" id="chat-header-id"></span>
           </div>
-          
           <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-history">
             <div class="h-full flex items-center justify-center text-slate-500 text-sm">پیامی برای نمایش وجود ندارد.</div>
           </div>
-          
           <div class="p-4 bg-slate-900/80 border-t border-white/5 shrink-0 flex gap-2">
             <input type="text" id="reply-input" placeholder="پاسخ متنی به مشتری..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 text-sm outline-none focus:border-blue-500" disabled>
             <button id="reply-btn" onclick="sendReply()" class="bg-blue-600 px-6 rounded-xl font-bold active:scale-95 transition disabled:opacity-50" disabled><i class="ph-bold ph-paper-plane-right"></i></button>
@@ -155,10 +160,7 @@
             <select id="inv-plan" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none"></select>
             <input type="text" id="inv-v2ray" placeholder="vless://... (کد کانفیگ)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
             <input type="text" id="inv-panel" placeholder="https://... (لینک پنل وب - اختیاری)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
-            
-            <!-- 🆕 کادر جدید برای پیام راهنما به مشتری با متن پیش‌فرض -->
             <textarea id="inv-note" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs outline-none text-blue-300 resize-none">برای لود پنل نیاز است vpn خاموش کنید یا لینک sub را از زیر کپی و در کروم بزنید</textarea>
-            
             <button onclick="addConfig()" class="w-full bg-green-600 py-3 rounded-xl font-bold active:scale-95 transition">افزودن به موجودی</button>
           </div>
         </div>
@@ -194,6 +196,62 @@
       </div>
     </section>
 
+    <!-- 🆕 6. Wallets Management (طراحی شده به سبک CRM شما) -->
+    <section id="view-wallets" class="view-section">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-wallet text-emerald-400"></i> مدیریت کیف‌پول‌های پرداخت</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- فرم افزودن کیف پول -->
+        <div class="glass p-6 rounded-3xl md:col-span-1">
+          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-plus-circle text-emerald-400"></i> افزودن کیف پول جدید</h3>
+          <div class="space-y-3">
+            <select id="w-network" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none text-white">
+              <option value="USDT">USDT (Tether)</option>
+              <option value="TRX">TRX (Tron)</option>
+              <option value="TON">TON (Toncoin)</option>
+              <option value="XRP">XRP (Ripple)</option>
+            </select>
+            <input type="text" id="w-address" placeholder="آدرس کیف پول..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono" dir="ltr">
+            <input type="text" id="w-label" placeholder="لیبل (مثل: ولت شماره ۱)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
+            <input type="number" id="w-priority" value="0" placeholder="اولویت (عدد بزرگتر = نمایش اول)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none" dir="ltr">
+            <button onclick="saveWallet()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-xl font-bold active:scale-95 transition">ذخیره کیف پول</button>
+          </div>
+        </div>
+        
+        <!-- لیست کیف پول‌ها -->
+        <div class="glass p-6 rounded-3xl md:col-span-2 overflow-hidden flex flex-col">
+          <h3 class="font-bold mb-4">لیست کیف‌پول‌های موجود در سیستم</h3>
+          <div class="flex-1 overflow-auto pr-2">
+            <div id="wallets-list" class="space-y-3">
+              <div class="text-center text-xs text-slate-500 py-10">در حال دریافت...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 🆕 7. Settings (طراحی شده به سبک CRM شما) -->
+    <section id="view-settings" class="view-section">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-gear text-slate-400"></i> تنظیمات هسته سیستم</h2>
+      
+      <div class="glass p-8 rounded-3xl max-w-md mx-auto mt-10">
+        <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-currency-circle-dollar text-green-400"></i> نرخ تبدیل ارز (دلار به تومان)</h3>
+        <p class="text-xs text-slate-400 mb-6 leading-relaxed text-justify">تمامی محاسبات فروشگاه تلگرامی بر اساس این نرخ انجام می‌شود. با تغییر این عدد، قیمت نمایش داده شده برای محصولات در فرانت‌اند به صورت زنده آپدیت می‌شود.</p>
+        
+        <div class="mb-6">
+          <label class="block text-xs text-slate-300 mb-2">نرخ هر دلار (تومان):</label>
+          <div class="flex items-center gap-2">
+            <input type="number" id="sys-usd-rate" placeholder="مثال: 60000" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-4 text-lg font-mono outline-none focus:border-blue-500" dir="ltr">
+            <span class="bg-slate-800 text-slate-400 px-4 py-4 rounded-xl font-bold">T</span>
+          </div>
+        </div>
+        
+        <button onclick="saveSettings()" id="btn-save-settings" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-bold shadow-lg shadow-blue-900/30 active:scale-95 transition">
+          ذخیره تغییرات
+        </button>
+      </div>
+    </section>
+
   </main>
 
   <script>
@@ -213,6 +271,7 @@
       refreshAll();
     }
 
+    // API اصلی مدیریت (ادمین قدیمی)
     async function apiCall(action, params = {}) {
       const pass = document.getElementById('admin-pass').value;
       try {
@@ -227,11 +286,27 @@
       } catch (err) { alert(err.message); return null; }
     }
 
+    // 🆕 API جدید برای تنظیمات و کیف پول‌ها (با استفاده از پسورد به عنوان Token)
+    async function apiCallNew(endpoint, method = 'GET', body = null) {
+      const pass = document.getElementById('admin-pass').value;
+      const headers = { 'Authorization': `Bearer ${pass}` }; // ارسال رمز در هدر
+      if (body) headers['Content-Type'] = 'application/json';
+      
+      try {
+        const res = await fetch(endpoint, { method, headers, body: body ? JSON.stringify(body) : null });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'احراز هویت انجام نشد');
+        return data;
+      } catch (err) { alert(err.message); return null; }
+    }
+
     async function refreshAll() {
       if (activeView === 'receipts') loadReceipts();
       if (activeView === 'tickets') loadTickets();
       if (activeView === 'users') loadUsers();
       if (activeView === 'inventory') { loadInventory(); loadPlans(); }
+      if (activeView === 'wallets') loadWallets();    // 🆕
+      if (activeView === 'settings') loadSettings();  // 🆕
     }
 
     // --- 1. Receipts ---
@@ -245,7 +320,6 @@
       }
       
       container.innerHTML = data.receipts.map(r => {
-        // نمایش متمایز شارژ کیف پول نسبت به سایر خریدها
         const isTopup = r.target_plan === 'wallet_topup';
         const badgeHtml = isTopup 
           ? `<span class="bg-purple-900/30 text-purple-400 px-2 py-1 rounded text-xs font-bold flex items-center gap-1"><i class="ph-bold ph-wallet"></i> درخواست شارژ حساب</span>`
@@ -340,7 +414,6 @@
       }).join('');
 
       chatHistory.scrollTop = chatHistory.scrollHeight;
-      loadTickets(); 
     }
 
     async function sendReply() {
@@ -423,23 +496,19 @@
       `).join('');
     }
 
-    // 🆕 تابع آپدیت شده برای ارسال پارامتر جدید به سرور (note)
     async function addConfig() {
       const plan = document.getElementById('inv-plan').value;
       const v2ray = document.getElementById('inv-v2ray').value;
       const panel = document.getElementById('inv-panel').value;
-      const note = document.getElementById('inv-note').value; // دریافت متن باکس راهنما
+      const note = document.getElementById('inv-note').value;
 
       if (!v2ray) return alert('کد کانفیگ الزامی است');
-      
-      // ارسال پارامتر note به همراه بقیه داده‌ها
       const data = await apiCall('add_config', { plan, v2ray, panel: panel || '', note });
       
       if (data) { 
         alert('کانفیگ با موفقیت به انبار اضافه شد.'); 
         document.getElementById('inv-v2ray').value = ''; 
         document.getElementById('inv-panel').value = ''; 
-        // 💡 ما عمداً کادر inv-note را خالی نمی‌کنیم تا برای کانفیگ‌های بعدی ثابت بماند
         loadInventory(); 
       }
     }
@@ -478,7 +547,39 @@
       }
     }
 
-    window.onload = refreshAll;
-  </script>
-</body>
-</html>
+    // 🆕 --- 6. Wallets Management ---
+    async function loadWallets() {
+      const container = document.getElementById('wallets-list');
+      container.innerHTML = '<div class="text-center text-xs text-slate-500 py-10">در حال لود...</div>';
+      const data = await apiCallNew('/api/wallets');
+      if (!data) return;
+
+      if (data.length === 0) {
+        container.innerHTML = '<div class="text-center text-xs text-slate-500 py-10">هیچ کیف پولی ثبت نشده است.</div>';
+        return;
+      }
+
+      container.innerHTML = data.map(w => `
+        <div class="glass p-4 rounded-2xl border border-white/5 relative overflow-hidden">
+          <div class="flex justify-between items-start mb-2">
+            <div class="flex items-center gap-2">
+              <span class="bg-slate-800 text-white font-bold px-2 py-1 rounded text-xs">${w.network}</span>
+              <span class="text-[10px] text-slate-400">${w.label || 'بدون نام'}</span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="toggleWallet('${w.id}', ${!w.is_active})" class="px-3 py-1 rounded-lg text-[10px] font-bold ${w.is_active ? 'bg-emerald-900/50 text-emerald-400' : 'bg-red-900/50 text-red-400'} border ${w.is_active ? 'border-emerald-500/20' : 'border-red-500/20'}">
+                ${w.is_active ? 'فعال در ربات' : 'غیرفعال'}
+              </button>
+              <button onclick="deleteWallet('${w.id}')" class="bg-slate-800 p-1.5 rounded-lg text-red-400 border border-white/5"><i class="ph ph-trash"></i></button>
+            </div>
+          </div>
+          <div class="text-xs font-mono text-slate-300 break-all bg-black/30 p-2 rounded border border-white/5 mt-2">${w.address}</div>
+          <div class="flex justify-between mt-3 text-[10px] text-slate-500 border-t border-white/5 pt-2">
+            <span>تعداد استفاده (رسید): <strong class="text-white">${w.usage_count}</strong></span>
+            <span>اولویت نمایش: <strong class="text-white">${w.priority}</strong></span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveWallet
