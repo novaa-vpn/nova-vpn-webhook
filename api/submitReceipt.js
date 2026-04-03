@@ -1,84 +1,65 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  const { chat_id, plan, txid, crypto_currency, notes, amount_toman } = req.body;
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (!chat_id || !txid || !plan) {
-    return res.status(400).json({ error: "اطلاعات ناقص است." });
-  }
-
-  const cleanTxid = txid.trim();
-
-  const txidRegex = /^[a-zA-Z0-9\+\/\-\_=]{40,90}$/;
-  if (!txidRegex.test(cleanTxid)) {
-    return res.status(400).json({ error: "❌ هش تراکنش نامعتبر است! هش (TXID) یک کد طولانی شامل اعداد و حروف انگلیسی است." });
-  }
-
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
-  const TOKEN = process.env.TELEGRAM_TOKEN;
-  const ADMIN_ID = process.env.ADMIN_CHAT_ID;
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { data: existingTx } = await supabase.from("transactions").select("id").eq("txid_or_receipt", cleanTxid).maybeSingle();
-    if (existingTx) {
-      return res.status(400).json({ error: "❌ این رسید قبلاً در سیستم ثبت شده است!" });
+    // مقادیر دریافتی از فرانت‌اند ارتقا یافته
+    const { 
+      chat_id, 
+      plan_gb, 
+      price_irr, 
+      tx_hash, 
+      crypto_amount, 
+      crypto_network, 
+      wallet_id 
+    } = req.body;
+
+    if (!chat_id || !tx_hash || !wallet_id) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    let finalTomanPrice = 0;
-    let finalUsdPrice = 0;
+    // 1. ثبت رسید در دیتابیس
+    const { data: receiptData, error: receiptError } = await supabase
+      .from('receipts')
+      .insert([{
+        chat_id,
+        plan_gb,
+        price_irr,
+        tx_hash,
+        crypto_amount,
+        crypto_network,
+        wallet_id,
+        status: 'pending' // نیازمند تایید ادمین
+      }])
+      .select()
+      .single();
 
-    if (plan === 'wallet_topup') {
-      if (!amount_toman || amount_toman < 60000) return res.status(400).json({ error: "مبلغ شارژ باید حداقل ۱ دلار باشد." });
-      finalTomanPrice = amount_toman;
-      finalUsdPrice = amount_toman / 60000; 
-    } else {
-      // استخراج قیمت واقعی از دیتابیس برای خرید پلن
-      const { data: planData } = await supabase.from("plans").select("*").eq("internal_name", plan).maybeSingle();
-      if (!planData) throw new Error("پلن انتخابی در سیستم وجود ندارد.");
-      finalTomanPrice = planData.price_toman;
-      finalUsdPrice = planData.price_usd;
+    if (receiptError) throw receiptError;
+
+    // 2. افزایش تعداد دفعات استفاده از کیف پول (برای سیستم تقسیم بار)
+    const { error: walletError } = await supabase.rpc('increment_wallet_usage', { row_id: wallet_id });
+    // اگر RPC تعریف نشده است، به صورت دستی آپدیت می‌کنیم:
+    if (walletError) {
+      const { data: wallet } = await supabase.from('wallets').select('usage_count').eq('id', wallet_id).single();
+      if (wallet) {
+        await supabase.from('wallets').update({ usage_count: wallet.usage_count + 1 }).eq('id', wallet_id);
+      }
     }
 
-    // 🛠 خواندن قیمت زنده ارزها به صورت آنی از دیتابیس (بدون وابستگی به API خارجی)
-    const { data: savedPrice } = await supabase.from("crypto_prices").select("price").eq("symbol", crypto_currency).maybeSingle();
+    // (اختیاری) در اینجا می‌توانید به ربات تلگرام پیام ادمین ارسال کنید که رسید جدید ثبت شده است
     
-    if (!savedPrice || !savedPrice.price) {
-      return res.status(500).json({ error: "❌ قیمت ارز مورد نظر در سرور یافت نشد. لطفاً دقایقی دیگر تلاش کنید." });
-    }
-    
-    const cryptoPrice = savedPrice.price;
-    const secureCryptoAmount = parseFloat((finalUsdPrice / cryptoPrice).toFixed(2));
+    return res.status(200).json({ success: true, data: receiptData });
 
-    // ثبت در دیتابیس
-    const { error } = await supabase.from("transactions").insert({
-      chat_id: chat_id,
-      txid_or_receipt: cleanTxid,
-      target_plan: plan,
-      amount_toman: finalTomanPrice,
-      crypto_currency: crypto_currency,
-      crypto_amount: secureCryptoAmount, 
-      notes: notes || null,
-      status: "pending_verification" 
-    });
-
-    if (error) throw error;
-
-    if (TOKEN && ADMIN_ID) {
-      const planNameStr = plan === 'wallet_topup' ? 'شارژ کیف پول' : plan;
-      const msg = `💰 **درخواست بررسی خودکار فعال شد!**\n\n👤 کاربر: \`${chat_id}\`\n🛍 نوع عملیات: ${planNameStr}\n💵 مبلغ مورد انتظار: ${secureCryptoAmount} ${crypto_currency}\n🔍 هش تراکنش:\n\`${cleanTxid}\``;
-      await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: ADMIN_ID, text: msg, parse_mode: 'Markdown' })
-      });
-    }
-
-    res.status(200).json({ ok: true, message: "رسید با موفقیت ثبت شد" });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 }
