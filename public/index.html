@@ -107,7 +107,6 @@
           </div>
           <span class="text-sm font-bold text-slate-200 user-name-display">--</span>
         </div>
-        <!-- نشانگر نرخ لحظه‌ای دلار برای کاربر -->
         <div class="text-[10px] bg-blue-900/30 text-blue-300 px-2 py-1 rounded border border-blue-500/20">
           دلار: <span id="display-usd-rate">...</span> تومان
         </div>
@@ -125,7 +124,6 @@
       <h3 class="font-bold text-slate-200 mb-3 text-sm">۱. انتخاب سرویس (تضمینی)</h3>
       
       <div class="grid grid-cols-1 gap-3 mb-5" id="plans-container">
-        <!-- اسکلت‌ها -->
         <div class="glass p-4 rounded-xl flex justify-between items-center border border-white/5"><div class="space-y-3 w-2/3"><div class="h-4 skeleton w-full"></div></div></div>
       </div>
 
@@ -389,10 +387,8 @@
     let selectedCrypto = 'USDT';
     let plans = []; 
     
-    // متغیرهای داینامیک اضافه شده
-    let dynamicUsdRate = 60000; // پیش‌فرض تا زمانی که از سرور خوانده شود
+    let dynamicUsdRate = 60000; 
     
-    // آدرس کیف پول‌ها ابتدا خالی هستند تا به صورت داینامیک از سرور پر شوند
     const cryptoData = {
       USDT: { symbol: 'USDT', network: 'TRC20', wallet: 'درحال دریافت...', walletId: null, price: 1.00 },
       TRX:  { symbol: 'TRX',  network: 'TRC20', wallet: 'درحال دریافت...', walletId: null, price: null },
@@ -414,14 +410,12 @@
       
       updateCryptoUI();
       
-      // اجرای موازی درخواست‌های داینامیک جدید و قبلی
-      fetchSettings(); // جدید: گرفتن قیمت روز دلار
-      fetchWallets();  // جدید: گرفتن کیف پول‌های ادمین
+      fetchSettings();
+      fetchWallets(); 
       fetchCryptoPrices(); 
       loadUserData(); 
     };
 
-    // --- توابع جدید برای دریافت اطلاعات داینامیک ---
     async function fetchSettings() {
       try {
         const res = await fetch('/api/settings');
@@ -444,14 +438,13 @@
             const wallet = await res.json();
             if (wallet && wallet.address) {
               cryptoData[net].wallet = wallet.address;
-              cryptoData[net].walletId = wallet.id; // آیدی کیف پول برای اتصال به رسید
+              cryptoData[net].walletId = wallet.id; 
             }
           }
         } catch(e) { console.error("Wallet fetch error for", net); }
       }
       updateCryptoUI();
     }
-    // ----------------------------------------------
 
     function switchTab(tabId, btnElement) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -472,7 +465,6 @@
 
       container.innerHTML = visiblePlans.map(p => {
         const isDisabled = !p.is_active;
-        // محاسبه بر اساس دلار داینامیک تنظیم شده در پنل ادمین
         const exactUsd = p.price_usd ? p.price_usd : (p.price_toman / dynamicUsdRate).toFixed(2);
         return `
         <div class="glass plan-card p-4 rounded-xl flex justify-between items-center ${isDisabled ? 'disabled' : 'cursor-pointer'}" onclick="${isDisabled ? '' : `selectPlan('${p.internal_name}', this, ${exactUsd}, ${p.price_toman})`}">
@@ -550,7 +542,6 @@
         tg.showAlert("مبلغ واریز باید حداقل ۱ دلار باشد.");
         return;
       }
-      // آپدیت شده با نرخ دلار داینامیک
       const tomanApprox = usd * dynamicUsdRate;
       switchTab('buy', document.querySelectorAll('.nav-item')[0]);
       selectPlan('wallet_topup', null, usd.toFixed(2), tomanApprox);
@@ -671,7 +662,6 @@
         renderPlans(); 
 
         const balToman = Number(currentUser.wallet_balance || 0);
-        // استفاده از دلار داینامیک
         const balUsd = balToman / dynamicUsdRate;
         document.getElementById('header-balance-usd').innerText = balUsd.toFixed(2) + " $";
         
@@ -689,6 +679,13 @@
             const defaultNote = "برای لود پنل نیاز است vpn خاموش کنید یا لینک sub را از زیر کپی و در کروم بزنید";
             const noteText = s.panel_note || defaultNote;
             
+            // 🆕 دکمه استعلام حجم
+            const usageBtn = s.web_panel_url ? `
+              <button onclick="checkUsage('${s.web_panel_url}', 'usage-${index}', this)" class="bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 text-[11px] px-4 py-2 rounded-lg transition text-center font-bold flex-1 flex justify-center items-center gap-1 border border-indigo-500/30">
+                <i class="ph-bold ph-chart-pie-slice"></i> استعلام حجم
+              </button>
+            ` : '';
+
             const panelBtn = s.web_panel_url ? `<a href="${s.web_panel_url}" target="_blank" class="bg-blue-600 hover:bg-blue-500 text-white text-[11px] px-4 py-2 rounded-lg transition text-center font-bold flex-1">ورود به پنل</a>` : ``;
 
             return `
@@ -717,7 +714,14 @@
                 </div>
                 ` : ''}
               </div>
-              <div class="flex gap-2">${panelBtn}</div>
+              
+              <!-- 🆕 باکس نمایش حجم (پیش‌فرض مخفی) -->
+              <div id="usage-${index}" class="hidden bg-slate-900/80 rounded-xl p-3 mb-3 border border-slate-700"></div>
+
+              <div class="flex gap-2 mt-2">
+                ${usageBtn}
+                ${panelBtn}
+              </div>
             </div>
           `}).join('');
         } else {
@@ -729,6 +733,51 @@
       } catch (e) { 
         console.error("Profile fetch failed", e);
         document.getElementById('plans-container').innerHTML = `<div class="glass rounded-xl p-6 text-center text-slate-500 text-xs">خطا در دریافت اطلاعات. بررسی اینترنت...</div>`;
+      }
+    }
+
+    // 🆕 تابع استعلام زنده حجم از سرور شما
+    async function checkUsage(subLink, containerId, btnElement) {
+      const container = document.getElementById(containerId);
+      const originalBtnText = btnElement.innerHTML;
+      
+      // حالت لودینگ
+      btnElement.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> کمی صبر کنید...`;
+      btnElement.disabled = true;
+      container.classList.remove('hidden');
+      container.innerHTML = `<div class="text-center text-[10px] text-slate-400 py-2">در حال دریافت اطلاعات از سرور...</div>`;
+
+      try {
+        const res = await fetch(`/api/usage?sub_link=${encodeURIComponent(subLink)}`);
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'خطا در دریافت حجم');
+
+        // محاسبه درصد مصرف برای نوار پیشرفت
+        const percentUsed = data.total_gb > 0 ? Math.min(100, (data.used_gb / data.total_gb) * 100).toFixed(0) : 0;
+        
+        let daysColor = data.remain_days <= 3 && data.remain_days !== 'نامحدود' ? 'text-red-400' : 'text-green-400';
+        let barColor = percentUsed > 90 ? 'bg-red-500' : (percentUsed > 70 ? 'bg-yellow-500' : 'bg-blue-500');
+
+        container.innerHTML = `
+          <div class="flex justify-between items-center text-[10px] text-slate-300 mb-1">
+            <span>حجم باقی‌مانده: <strong class="text-white">${data.remain_gb} گیگابایت</strong></span>
+            <span class="${daysColor} font-bold">${data.remain_days} ${data.remain_days !== 'نامحدود' && data.remain_days !== 'منقضی شده' ? 'روز اعتبار' : ''}</span>
+          </div>
+          <!-- نوار پیشرفت (Progress Bar) -->
+          <div class="w-full bg-slate-800 rounded-full h-2 mb-2 overflow-hidden border border-slate-700">
+            <div class="${barColor} h-2 rounded-full transition-all duration-1000" style="width: ${percentUsed}%"></div>
+          </div>
+          <div class="flex justify-between text-[9px] text-slate-500 font-mono">
+            <span>مصرف: ${data.used_gb}GB</span>
+            <span>کل: ${data.total_gb}GB</span>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = `<div class="text-center text-[10px] text-red-400 py-1"><i class="ph-fill ph-warning-circle"></i> ${err.message}</div>`;
+      } finally {
+        btnElement.innerHTML = originalBtnText;
+        btnElement.disabled = false;
       }
     }
 
@@ -745,7 +794,6 @@
           const isTopup = tx.target_plan === 'wallet_topup';
           const title = isTopup ? 'واریز به کیف پول' : (plans.find(pl => pl.internal_name === tx.target_plan)?.title_fa || tx.target_plan);
           
-          // آپدیت شده با دلار داینامیک
           const usdEq = (Number(tx.amount_toman) / dynamicUsdRate).toFixed(2);
 
           return `
@@ -795,7 +843,7 @@
           crypto_currency: selectedCrypto,
           crypto_amount: exactCryptoAmount,
           notes: notes,
-          wallet_id: cryptoData[selectedCrypto].walletId // پارامتر جدید ارسال آیدی کیف پول
+          wallet_id: cryptoData[selectedCrypto].walletId
         };
 
         const res = await fetch('/api/submitReceipt', {
