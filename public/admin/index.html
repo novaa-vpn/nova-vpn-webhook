@@ -63,11 +63,9 @@
       <button onclick="switchView('broadcast', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
         <i class="ph-fill ph-megaphone text-lg text-red-400"></i> پیام همگانی کانال
       </button>
-      <!-- 🆕 اضافه شدن تب کیف پول‌ها -->
       <button onclick="switchView('wallets', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
         <i class="ph-fill ph-wallet text-lg text-emerald-400"></i> کیف‌پول‌های پرداخت
       </button>
-      <!-- 🆕 اضافه شدن تب تنظیمات -->
       <button onclick="switchView('settings', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
         <i class="ph-fill ph-gear text-lg text-slate-400"></i> تنظیمات سیستم
       </button>
@@ -83,7 +81,7 @@
   <!-- Mobile Header -->
   <div class="md:hidden fixed top-0 left-0 w-full glass p-4 flex justify-between items-center z-30 border-b border-white/10">
     <h1 class="font-bold">NOVA CRM</h1>
-    <select onchange="switchView(this.value, null)" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+    <select onchange="switchView(this.value, null)" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white outline-none">
       <option value="receipts">تراکنش‌ها</option>
       <option value="tickets">پشتیبانی</option>
       <option value="users">مشتریان</option>
@@ -196,12 +194,11 @@
       </div>
     </section>
 
-    <!-- 🆕 6. Wallets Management (طراحی شده به سبک CRM شما) -->
+    <!-- 6. Wallets Management -->
     <section id="view-wallets" class="view-section">
       <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-wallet text-emerald-400"></i> مدیریت کیف‌پول‌های پرداخت</h2>
       
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <!-- فرم افزودن کیف پول -->
         <div class="glass p-6 rounded-3xl md:col-span-1">
           <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-plus-circle text-emerald-400"></i> افزودن کیف پول جدید</h3>
           <div class="space-y-3">
@@ -218,7 +215,6 @@
           </div>
         </div>
         
-        <!-- لیست کیف پول‌ها -->
         <div class="glass p-6 rounded-3xl md:col-span-2 overflow-hidden flex flex-col">
           <h3 class="font-bold mb-4">لیست کیف‌پول‌های موجود در سیستم</h3>
           <div class="flex-1 overflow-auto pr-2">
@@ -230,7 +226,7 @@
       </div>
     </section>
 
-    <!-- 🆕 7. Settings (طراحی شده به سبک CRM شما) -->
+    <!-- 7. Settings -->
     <section id="view-settings" class="view-section">
       <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-gear text-slate-400"></i> تنظیمات هسته سیستم</h2>
       
@@ -271,7 +267,6 @@
       refreshAll();
     }
 
-    // API اصلی مدیریت (ادمین قدیمی)
     async function apiCall(action, params = {}) {
       const pass = document.getElementById('admin-pass').value;
       try {
@@ -286,10 +281,9 @@
       } catch (err) { alert(err.message); return null; }
     }
 
-    // 🆕 API جدید برای تنظیمات و کیف پول‌ها (با استفاده از پسورد به عنوان Token)
     async function apiCallNew(endpoint, method = 'GET', body = null) {
       const pass = document.getElementById('admin-pass').value;
-      const headers = { 'Authorization': `Bearer ${pass}` }; // ارسال رمز در هدر
+      const headers = { 'Authorization': `Bearer ${pass}` };
       if (body) headers['Content-Type'] = 'application/json';
       
       try {
@@ -305,11 +299,10 @@
       if (activeView === 'tickets') loadTickets();
       if (activeView === 'users') loadUsers();
       if (activeView === 'inventory') { loadInventory(); loadPlans(); }
-      if (activeView === 'wallets') loadWallets();    // 🆕
-      if (activeView === 'settings') loadSettings();  // 🆕
+      if (activeView === 'wallets') loadWallets();
+      if (activeView === 'settings') loadSettings();
     }
 
-    // --- 1. Receipts ---
     async function loadReceipts() {
       const data = await apiCall('get_pending');
       const container = document.getElementById('receipts-list');
@@ -350,7 +343,6 @@
       if (res) loadReceipts();
     }
 
-    // --- 2. CRM Ticketing ---
     async function loadTickets() {
       const data = await apiCall('get_tickets');
       if (!data) return;
@@ -432,7 +424,6 @@
       btn.disabled = false;
     }
 
-    // --- 3. Users ---
     async function loadUsers() {
       const data = await apiCall('get_users');
       if (!data) return;
@@ -464,7 +455,6 @@
       if (res) loadUsers();
     }
 
-    // --- 4. Inventory & Plans ---
     async function loadInventory() {
       const data = await apiCall('get_inventory');
       if (!data) return;
@@ -536,7 +526,6 @@
       if (res) loadPlans();
     }
 
-    // --- 5. Broadcast ---
     async function sendBroadcast() {
       const text = document.getElementById('bc-text').value;
       if (!text || !confirm('این پیام برای تمام کاربران ارسال خواهد شد. آیا مطمئن هستید؟')) return;
@@ -547,7 +536,6 @@
       }
     }
 
-    // 🆕 --- 6. Wallets Management ---
     async function loadWallets() {
       const container = document.getElementById('wallets-list');
       container.innerHTML = '<div class="text-center text-xs text-slate-500 py-10">در حال لود...</div>';
@@ -582,4 +570,54 @@
       `).join('');
     }
 
-    async function saveWallet
+    async function saveWallet() {
+      const payload = {
+        network: document.getElementById('w-network').value,
+        address: document.getElementById('w-address').value,
+        label: document.getElementById('w-label').value,
+        priority: parseInt(document.getElementById('w-priority').value) || 0
+      };
+      if(!payload.address) return alert('وارد کردن آدرس کیف پول الزامی است');
+      
+      const res = await apiCallNew('/api/wallets', 'POST', payload);
+      if(res) {
+        alert('کیف پول با موفقیت ثبت شد.');
+        document.getElementById('w-address').value = '';
+        document.getElementById('w-label').value = '';
+        loadWallets();
+      }
+    }
+
+    async function toggleWallet(id, is_active) {
+      const res = await apiCallNew('/api/wallets', 'PUT', { id, is_active });
+      if (res) loadWallets();
+    }
+
+    async function deleteWallet(id) {
+      if(!confirm('آیا از حذف این کیف پول اطمینان دارید؟')) return;
+      const res = await apiCallNew(`/api/wallets?id=${id}`, 'DELETE');
+      if (res) loadWallets();
+    }
+
+    async function loadSettings() {
+      const data = await apiCallNew('/api/settings');
+      if (data) {
+        document.getElementById('sys-usd-rate').value = data.usd_rate;
+      }
+    }
+
+    async function saveSettings() {
+      const btn = document.getElementById('btn-save-settings');
+      const rate = document.getElementById('sys-usd-rate').value;
+      if(!rate) return alert("مبلغ را وارد کنید");
+      
+      btn.innerText = 'در حال ذخیره...';
+      const res = await apiCallNew('/api/settings', 'POST', { usd_rate: rate });
+      if (res) alert('✅ قیمت جدید دلار در سیستم اعمال شد.');
+      btn.innerText = 'ذخیره تغییرات';
+    }
+
+    window.onload = refreshAll;
+  </script>
+</body>
+</html>
