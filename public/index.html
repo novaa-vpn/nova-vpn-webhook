@@ -99,6 +99,7 @@
 
   <main class="p-4">
     
+    <!-- TAB 1: BUY (فروشگاه) -->
     <section id="tab-buy" class="tab-content active">
       <div class="flex items-center justify-between bg-slate-800/50 rounded-xl p-3 mb-4 border border-white/5">
         <div class="flex items-center gap-2">
@@ -199,6 +200,7 @@
       </div>
     </section>
 
+    <!-- TAB 2: DASHBOARD (پروفایل و سرویس‌ها) -->
     <section id="tab-dashboard" class="tab-content">
       
       <div class="glass rounded-2xl p-5 mb-5 relative overflow-hidden">
@@ -225,6 +227,8 @@
           <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی
         </button>
       </div>
+      
+      <!-- Container for Active Services -->
       <div id="active-services" class="space-y-3 mb-6">
         <div class="glass p-4 rounded-xl border-r-2 border-slate-700 mb-3"><div class="h-4 skeleton w-1/2 mb-3"></div><div class="h-3 skeleton w-1/4"></div></div>
       </div>
@@ -258,8 +262,8 @@
       </div>
     </section>
 
+    <!-- TAB 3: WALLET (کیف پول مالی) -->
     <section id="tab-wallet" class="tab-content">
-      
       <div class="wallet-card rounded-2xl p-5 mb-6 relative overflow-hidden border border-white/10 mt-1">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 blur-3xl rounded-full"></div>
         <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-indigo-900/50 blur-2xl rounded-full"></div>
@@ -354,9 +358,7 @@
       <div id="tx-history" class="space-y-2 mb-5">
         <div class="glass p-3 rounded-lg border border-slate-800 mb-2 opacity-50"><div class="h-3 skeleton w-1/4 mb-3"></div><div class="h-4 skeleton w-full"></div></div>
       </div>
-
     </section>
-
   </main>
 
   <nav class="bottom-nav">
@@ -676,15 +678,20 @@
         if (data.services && data.services.length > 0) {
           srvContainer.innerHTML = data.services.map((s, index) => {
             const pInfo = plans.find(pl => pl.internal_name === s.plan_name) || {title_fa: s.plan_name};
-            const defaultNote = "برای لود پنل نیاز است vpn خاموش کنید یا لینک sub را از زیر کپی و در کروم بزنید";
+            const defaultNote = "برای اتصال، لینک ساب زیر را در برنامه (V2ray/Streisand) کپی و آپدیت کنید.";
             const noteText = s.panel_note || defaultNote;
             
-            // 🆕 دکمه استعلام حجم
-            const usageBtn = s.web_panel_url ? `
-              <button onclick="checkUsage('${s.web_panel_url}', 'usage-${index}', this)" class="bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 text-[11px] px-4 py-2 rounded-lg transition text-center font-bold flex-1 flex justify-center items-center gap-1 border border-indigo-500/30">
-                <i class="ph-bold ph-chart-pie-slice"></i> استعلام حجم
+            // 🚀 تشخیص هوشمندانه لینک ساب:
+            // اگر ادمین در فیلد پنل چیزی نوشته باشد از آن استفاده می‌کند،
+            // در غیر این صورت اگر خود کد کانفیگ با http شروع شود (یعنی ساب باشد)، از آن برای استعلام استفاده می‌کند.
+            const subLinkToUse = s.web_panel_url || (s.v2ray_uri && s.v2ray_uri.startsWith('http') ? s.v2ray_uri : null);
+
+            // 🆕 دکمه استعلام حجم: اگر لینک سابی وجود داشته باشد دکمه نشان داده می‌شود، وگرنه یک پیام راهنما.
+            const usageBtn = subLinkToUse ? `
+              <button onclick="checkUsage('${subLinkToUse}', 'usage-${index}', this)" class="bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 text-[11px] px-4 py-2 rounded-lg transition text-center font-bold flex-1 flex justify-center items-center gap-1 border border-indigo-500/30">
+                <i class="ph-bold ph-chart-pie-slice"></i> استعلام زنده حجم
               </button>
-            ` : '';
+            ` : `<div class="bg-slate-800/50 text-slate-500 text-[10px] px-4 py-2 rounded-lg text-center flex-1 border border-slate-700/50">استعلام نامشخص (ساب ثبت نشده)</div>`;
 
             const panelBtn = s.web_panel_url ? `<a href="${s.web_panel_url}" target="_blank" class="bg-blue-600 hover:bg-blue-500 text-white text-[11px] px-4 py-2 rounded-lg transition text-center font-bold flex-1">ورود به پنل</a>` : ``;
 
@@ -705,7 +712,7 @@
               <div class="space-y-2 mb-3">
                 <div class="flex items-center gap-2">
                   <input type="text" id="conf-${index}" value="${s.v2ray_uri}" readonly class="bg-slate-900 border border-slate-700 text-slate-400 text-[10px] rounded-lg p-2.5 w-full font-mono outline-none">
-                  <button onclick="copyToClipboard('conf-${index}')" class="bg-slate-800 p-2.5 rounded-lg text-white hover:bg-slate-700 shrink-0 border border-slate-600" title="کپی کانفیگ"><i class="ph-bold ph-copy"></i></button>
+                  <button onclick="copyToClipboard('conf-${index}')" class="bg-slate-800 p-2.5 rounded-lg text-white hover:bg-slate-700 shrink-0 border border-slate-600" title="کپی کانفیگ/ساب"><i class="ph-bold ph-copy"></i></button>
                 </div>
                 ${s.web_panel_url ? `
                 <div class="flex items-center gap-2">
@@ -715,7 +722,7 @@
                 ` : ''}
               </div>
               
-              <!-- 🆕 باکس نمایش حجم (پیش‌فرض مخفی) -->
+              <!-- 🆕 باکس نمایش زنده حجم (پیش‌فرض مخفی) -->
               <div id="usage-${index}" class="hidden bg-slate-900/80 rounded-xl p-3 mb-3 border border-slate-700"></div>
 
               <div class="flex gap-2 mt-2">
@@ -756,7 +763,7 @@
         // محاسبه درصد مصرف برای نوار پیشرفت
         const percentUsed = data.total_gb > 0 ? Math.min(100, (data.used_gb / data.total_gb) * 100).toFixed(0) : 0;
         
-        let daysColor = data.remain_days <= 3 && data.remain_days !== 'نامحدود' ? 'text-red-400' : 'text-green-400';
+        let daysColor = (data.remain_days <= 3 && data.remain_days !== 'نامحدود' && data.remain_days !== 'منقضی شده') ? 'text-red-400' : 'text-green-400';
         let barColor = percentUsed > 90 ? 'bg-red-500' : (percentUsed > 70 ? 'bg-yellow-500' : 'bg-blue-500');
 
         container.innerHTML = `
