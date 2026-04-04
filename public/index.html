@@ -123,6 +123,7 @@
       </div>
 
       <h3 class="font-bold text-slate-200 mb-3 text-sm">۱. انتخاب سرویس (تضمینی)</h3>
+      
       <div class="grid grid-cols-1 gap-3 mb-5" id="plans-container">
         <div class="glass p-4 rounded-xl flex justify-between items-center border border-white/5"><div class="space-y-3 w-2/3"><div class="h-4 skeleton w-full"></div></div></div>
       </div>
@@ -131,14 +132,17 @@
         <div class="glass rounded-xl p-4 border border-blue-500/30">
           <h3 class="font-bold text-white mb-1 text-center" id="selected-plan-title">نام پلن</h3>
           <p class="text-xs text-blue-300 text-center mb-4">جهت دریافت سرویس، یکی از روش‌های پرداخت را انتخاب کنید:</p>
+          
           <button id="btn-wallet-buy" onclick="buyWithWallet()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl text-white font-bold mb-3 flex justify-center items-center gap-2 shadow-lg shadow-blue-900/50 active:scale-[0.98] transition">
             <i class="ph-bold ph-lightning text-xl"></i> خرید آنی (کسر از کیف پول)
           </button>
+          
           <div id="or-divider" class="flex items-center gap-3 my-4">
             <div class="flex-1 h-px bg-slate-700"></div>
             <span class="text-[10px] text-slate-400 font-bold">یــا</span>
             <div class="flex-1 h-px bg-slate-700"></div>
           </div>
+
           <button onclick="showCryptoPayment()" class="w-full bg-slate-800 border border-slate-600 hover:bg-slate-700 py-3 rounded-xl text-white font-bold text-sm flex justify-center items-center gap-2 active:scale-[0.98] transition">
             <i class="ph-bold ph-currency-btc text-lg text-yellow-500"></i> واریز مستقیم ارز دیجیتال
           </button>
@@ -175,6 +179,7 @@
             </div>
             <p class="text-[10px] text-slate-500 mt-1 font-mono">≈ $<span id="plan-usd-value">0.00</span></p>
           </div>
+
           <div class="mb-4">
             <p class="text-[11px] text-slate-300 mb-2">آدرس کیف پول <span id="wallet-network-label" class="font-bold text-white">TRC20</span>:</p>
             <div class="flex items-center gap-2">
@@ -182,6 +187,7 @@
               <button onclick="copyToClipboard('wallet-address')" class="bg-blue-600 p-3 rounded-lg text-white hover:bg-blue-500"><i class="ph-bold ph-copy text-lg"></i></button>
             </div>
           </div>
+
           <div class="bg-slate-900/50 rounded-xl p-4 border border-white/5">
             <h3 class="text-xs font-bold text-slate-200 mb-2">۳. ثبت رسید پرداختی</h3>
             <input type="text" id="txid-input" placeholder="هش تراکنش (TX HASH)..." class="bg-slate-950 border border-slate-700 text-white text-xs rounded-lg p-3 w-full focus:outline-none focus:border-blue-500 font-mono mb-2">
@@ -194,8 +200,9 @@
       </div>
     </section>
 
-    <!-- TAB 2: DASHBOARD -->
+    <!-- TAB 2: DASHBOARD (پروفایل و سرویس‌ها) -->
     <section id="tab-dashboard" class="tab-content">
+      
       <div class="glass rounded-2xl p-5 mb-5 relative overflow-hidden">
         <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full pointer-events-none"></div>
         <div class="flex items-center gap-4 relative z-10">
@@ -221,25 +228,33 @@
         </button>
       </div>
       
-      <div id="active-services" class="space-y-4 mb-6">
+      <!-- Container for Active Services -->
+      <div id="active-services" class="space-y-3 mb-6">
         <div class="glass p-4 rounded-xl border-r-2 border-slate-700 mb-3"><div class="h-4 skeleton w-1/2 mb-3"></div><div class="h-3 skeleton w-1/4"></div></div>
       </div>
 
       <div class="glass rounded-2xl p-5 mb-6 border border-red-500/20">
         <div class="flex items-center gap-2 mb-3">
           <i class="ph-fill ph-users-three text-3xl text-red-400"></i>
-          <div><h3 class="font-bold text-slate-200 text-sm">دعوت از دوستان</h3><p class="text-[10px] text-slate-400">لینک اختصاصی خود را به اشتراک بگذارید</p></div>
+          <div>
+            <h3 class="font-bold text-slate-200 text-sm">دعوت از دوستان</h3>
+            <p class="text-[10px] text-slate-400">لینک اختصاصی خود را به اشتراک بگذارید</p>
+          </div>
         </div>
+        
         <div class="grid grid-cols-2 gap-2 mb-4">
           <div class="bg-slate-900 rounded-lg p-3 border border-slate-700 text-center">
             <div class="text-[10px] text-slate-400 mb-1">تعداد افراد دعوت شده</div>
-            <div class="text-lg font-bold text-white font-mono flex justify-center items-center gap-1"><i class="ph-fill ph-users text-slate-500"></i> <span id="ref-count">0</span></div>
+            <div class="text-lg font-bold text-white font-mono flex justify-center items-center gap-1">
+               <i class="ph-fill ph-users text-slate-500"></i> <span id="ref-count">0</span>
+            </div>
           </div>
           <div class="bg-slate-900 rounded-lg p-3 border border-red-900/30 text-center">
             <div class="text-[10px] text-red-300/70 mb-1">درآمد کل شما</div>
             <div class="text-lg font-bold text-red-400 font-mono" id="ref-earnings">0 <span class="text-[10px]">TRX</span></div>
           </div>
         </div>
+
         <div class="flex items-center gap-2">
           <input type="text" id="ref-link" readonly class="bg-slate-900 border border-slate-700 text-slate-300 text-[10px] rounded-lg p-3 w-full font-mono focus:outline-none" dir="ltr">
           <button onclick="copyToClipboard('ref-link')" class="bg-red-600 p-3 rounded-lg text-white hover:bg-red-500 min-w-max transition">کپی <i class="ph-bold ph-copy"></i></button>
@@ -247,15 +262,17 @@
       </div>
     </section>
 
-    <!-- TAB 3: WALLET -->
+    <!-- TAB 3: WALLET (کیف پول مالی) -->
     <section id="tab-wallet" class="tab-content">
       <div class="wallet-card rounded-2xl p-5 mb-6 relative overflow-hidden border border-white/10 mt-1">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 blur-3xl rounded-full"></div>
         <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-indigo-900/50 blur-2xl rounded-full"></div>
+        
         <div class="relative z-10 flex justify-between items-start mb-2">
           <p class="text-indigo-100 text-xs flex items-center gap-1"><i class="ph-fill ph-wallet"></i> موجودی کل کیف پول</p>
           <div class="bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-white">USD Equivalent</div>
         </div>
+        
         <div class="relative z-10 flex items-baseline gap-2 mb-1">
           <span class="text-3xl font-bold font-mono text-white tracking-tight" id="exchange-balance-usd">0.00</span>
           <span class="text-sm text-indigo-200">دلار ($)</span>
@@ -301,31 +318,62 @@
 
       <div id="deposit-section" class="glass rounded-2xl p-5 mb-6 border border-white/5">
         <h3 class="font-bold text-slate-200 text-sm mb-3">فرم درخواست واریز</h3>
+        <p class="text-[10px] text-slate-400 mb-4 leading-relaxed">مبلغ واریزی را به دلار (USD) مشخص کنید تا سیستم معادل رمزارزهای قابل پرداخت را برای شما محاسبه کند.</p>
+        
         <div class="flex items-center gap-2 mb-4">
-          <input type="number" id="topup-amount" oninput="updateTopupPreview()" placeholder="مبلغ دلخواه به دلار..." class="bg-slate-900 border border-slate-700 text-white text-sm font-mono rounded-lg p-3 w-full focus:outline-none focus:border-blue-500" step="0.5" min="1">
+          <input type="number" id="topup-amount" oninput="updateTopupPreview()" placeholder="مبلغ دلخواه به دلار..." class="bg-slate-900 border border-slate-700 text-white text-sm font-mono rounded-lg p-3 w-full focus:outline-none focus:border-blue-500 transition-colors" step="0.5" min="1">
           <span class="text-xs text-blue-300 bg-blue-900/20 px-4 py-3 rounded-lg border border-blue-900/30 font-bold">USD</span>
         </div>
+        
         <div id="crypto-previews" class="grid grid-cols-4 gap-2 mb-5 hidden">
-          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50"><div class="text-[9px] text-slate-400 mb-0.5">تتر</div><div class="text-[11px] font-bold text-white font-mono" id="prev-usdt">0</div></div>
-          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50"><div class="text-[9px] text-slate-400 mb-0.5">ترون</div><div class="text-[11px] font-bold text-white font-mono" id="prev-trx">0</div></div>
-          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50"><div class="text-[9px] text-slate-400 mb-0.5">تون</div><div class="text-[11px] font-bold text-white font-mono" id="prev-ton">0</div></div>
-          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50"><div class="text-[9px] text-slate-400 mb-0.5">ریپل</div><div class="text-[11px] font-bold text-white font-mono" id="prev-xrp">0</div></div>
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">تتر</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-usdt">0</div>
+          </div>
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">ترون</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-trx">0</div>
+          </div>
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">تون</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-ton">0</div>
+          </div>
+          <div class="bg-slate-900/80 rounded-lg p-2 text-center border border-slate-700/50">
+            <div class="text-[9px] text-slate-400 mb-0.5">ریپل</div>
+            <div class="text-[11px] font-bold text-white font-mono" id="prev-xrp">0</div>
+          </div>
         </div>
-        <button onclick="startTopup()" class="w-full bg-white text-slate-900 hover:bg-slate-200 py-3 rounded-xl font-bold text-sm active:scale-95 transition flex justify-center items-center gap-2">ادامه مراحل پرداخت <i class="ph-bold ph-arrow-left"></i></button>
+        
+        <button onclick="startTopup()" class="w-full bg-white text-slate-900 hover:bg-slate-200 py-3 rounded-xl font-bold text-sm active:scale-95 transition flex justify-center items-center gap-2">
+          ادامه مراحل پرداخت <i class="ph-bold ph-arrow-left"></i>
+        </button>
       </div>
 
       <div class="flex items-center justify-between mb-3 mt-2">
         <h3 class="font-bold text-slate-200 text-sm flex items-center gap-1"><i class="ph-fill ph-clock-counter-clockwise text-slate-400"></i> تاریخچه مالی شما</h3>
-        <button class="text-xs text-slate-400 flex items-center gap-1 bg-slate-800 px-2 py-1 rounded hover:bg-slate-700 transition" onclick="loadUserData()"><i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی</button>
+        <button class="text-xs text-slate-400 flex items-center gap-1 bg-slate-800 px-2 py-1 rounded hover:bg-slate-700 transition" onclick="loadUserData()">
+          <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی
+        </button>
       </div>
-      <div id="tx-history" class="space-y-2 mb-5"></div>
+      <div id="tx-history" class="space-y-2 mb-5">
+        <div class="glass p-3 rounded-lg border border-slate-800 mb-2 opacity-50"><div class="h-3 skeleton w-1/4 mb-3"></div><div class="h-4 skeleton w-full"></div></div>
+      </div>
     </section>
   </main>
 
   <nav class="bottom-nav">
-    <button class="nav-item active" onclick="switchTab('buy', this)"><i class="ph-fill ph-shopping-cart"></i><span>فروشگاه</span></button>
-    <button class="nav-item" onclick="switchTab('dashboard', this)"><i class="ph-fill ph-squares-four"></i><span>سرویس‌ها</span></button>
-    <button class="nav-item" onclick="switchTab('wallet', this)"><i class="ph-fill ph-wallet"></i><span>کیف پول</span></button>
+    <button class="nav-item active" onclick="switchTab('buy', this)">
+      <i class="ph-fill ph-shopping-cart"></i>
+      <span>فروشگاه</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('dashboard', this)">
+      <i class="ph-fill ph-squares-four"></i>
+      <span>سرویس‌ها</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('wallet', this)">
+      <i class="ph-fill ph-wallet"></i>
+      <span>کیف پول مالی</span>
+    </button>
   </nav>
 
   <script>
@@ -334,11 +382,13 @@
     tg.ready();
     
     const tgUser = tg.initDataUnsafe?.user || { id: 111222333, first_name: "کاربر مهمان" };
+    const botUsername = "NoovaVpn_Bot";
     
     let currentUser = null;
     let currentPlan = null;
     let selectedCrypto = 'USDT';
     let plans = []; 
+    
     let dynamicUsdRate = 60000; 
     
     const cryptoData = {
@@ -351,14 +401,17 @@
     window.onload = async () => {
       document.querySelectorAll('.user-name-display').forEach(el => el.innerText = tgUser.first_name);
       document.querySelectorAll('.user-id-display').forEach(el => el.innerText = `ID: ${tgUser.id}`);
+      
       if (tgUser.photo_url) {
         document.querySelectorAll('.user-avatar-container').forEach(el => {
           el.innerHTML = `<img src="${tgUser.photo_url}" class="w-full h-full object-cover">`;
         });
       }
-      document.getElementById('ref-link').value = `https://t.me/NoovaVpn_Bot?start=${tgUser.id}`;
+      
+      document.getElementById('ref-link').value = `https://t.me/${botUsername}?start=${tgUser.id}`;
       
       updateCryptoUI();
+      
       fetchSettings();
       fetchWallets(); 
       fetchCryptoPrices(); 
@@ -375,7 +428,7 @@
              document.getElementById('display-usd-rate').innerText = dynamicUsdRate.toLocaleString();
            }
         }
-      } catch(e) {}
+      } catch(e) { console.error("Settings fetch error", e); }
     }
 
     async function fetchWallets() {
@@ -390,7 +443,7 @@
               cryptoData[net].walletId = wallet.id; 
             }
           }
-        } catch(e) {}
+        } catch(e) { console.error("Wallet fetch error for", net); }
       }
       updateCryptoUI();
     }
@@ -403,17 +456,217 @@
       window.scrollTo(0, 0);
     }
 
+    function renderPlans() {
+      const container = document.getElementById('plans-container');
+      const visiblePlans = plans.filter(p => p.internal_name !== 'wallet_topup');
+      
+      if (visiblePlans.length === 0) {
+        container.innerHTML = `<div class="glass p-4 rounded-xl text-center text-slate-400 text-sm">محصولی برای فروش وجود ندارد.</div>`;
+        return;
+      }
+
+      container.innerHTML = visiblePlans.map(p => {
+        const isDisabled = !p.is_active;
+        const exactUsd = p.price_usd ? p.price_usd : (p.price_toman / dynamicUsdRate).toFixed(2);
+        return `
+        <div class="glass plan-card p-4 rounded-xl flex justify-between items-center ${isDisabled ? 'disabled' : 'cursor-pointer'}" onclick="${isDisabled ? '' : `selectPlan('${p.internal_name}', this, ${exactUsd}, ${p.price_toman})`}">
+          <div>
+            <div class="text-sm font-bold text-white mb-1 flex items-center gap-1">${p.title_fa}</div>
+            <div class="text-[10px] text-slate-400">${isDisabled ? 'فعلا غیرفعال' : (p.gb_amount > 0 ? `${p.gb_amount} گیگابایت` : 'تضمینی بدون قطعی')}</div>
+          </div>
+          <div class="text-left">
+            <div class="text-green-400 font-mono text-sm font-bold">$${exactUsd}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">${Number(p.price_toman).toLocaleString()} تومان</div>
+          </div>
+        </div>`
+      }).join('');
+    }
+
+    function selectPlan(planId, element, usdPrice, tomanPrice) {
+      if(element) {
+        document.querySelectorAll('.plan-card').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+      }
+      
+      const pName = planId === 'wallet_topup' ? 'واریز به کیف پول (Deposit)' : plans.find(x => x.internal_name === planId)?.title_fa;
+      currentPlan = { id: planId, name: pName, priceUsd: usdPrice, priceToman: tomanPrice };
+      
+      document.getElementById('action-section').classList.remove('hidden');
+      document.getElementById('payment-section').classList.add('hidden'); 
+      document.getElementById('selected-plan-title').innerText = pName;
+      
+      const walletBtn = document.getElementById('btn-wallet-buy');
+      const orDivider = document.getElementById('or-divider');
+
+      if (planId === 'wallet_topup') {
+        walletBtn.classList.add('hidden'); 
+        orDivider.classList.add('hidden');
+        showCryptoPayment(); 
+      } else {
+        walletBtn.classList.remove('hidden');
+        orDivider.classList.remove('hidden');
+        
+        const userBalanceToman = Number(currentUser?.wallet_balance || 0);
+        const planPriceToman = Number(tomanPrice || 0);
+
+        if (currentUser && userBalanceToman >= planPriceToman) {
+          walletBtn.disabled = false;
+          walletBtn.className = "w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl text-white font-bold mb-3 flex justify-center items-center gap-2 shadow-lg shadow-blue-900/50 active:scale-[0.98] transition";
+          walletBtn.innerHTML = `<i class="ph-bold ph-lightning text-xl"></i> خرید آنی (موجودی کافی)`;
+        } else {
+          walletBtn.disabled = true;
+          walletBtn.className = "w-full bg-slate-800 py-3 rounded-xl text-slate-400 font-bold mb-3 flex justify-center items-center gap-2 opacity-50 cursor-not-allowed";
+          walletBtn.innerHTML = `<i class="ph-bold ph-warning-circle text-xl"></i> موجودی کیف پول کافی نیست`;
+        }
+      }
+      
+      calculateExactAmount();
+      setTimeout(() => document.getElementById('action-section').scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+
+    function updateTopupPreview() {
+      const usd = Number(document.getElementById('topup-amount').value) || 0;
+      if (usd > 0) {
+        document.getElementById('crypto-previews').classList.remove('hidden');
+        document.getElementById('prev-usdt').innerText = (usd / (cryptoData.USDT?.price || 1.00)).toFixed(2);
+        document.getElementById('prev-trx').innerText = (usd / (cryptoData.TRX.price || 0.12)).toFixed(1);
+        document.getElementById('prev-ton').innerText = (usd / (cryptoData.TON?.price || 5.00)).toFixed(2);
+        document.getElementById('prev-xrp').innerText = (usd / (cryptoData.XRP?.price || 0.60)).toFixed(1);
+      } else {
+        document.getElementById('crypto-previews').classList.add('hidden');
+      }
+    }
+
+    function startTopup() {
+      const usdInput = document.getElementById('topup-amount').value;
+      const usd = Number(usdInput);
+      if (!usd || usd < 1) {
+        tg.showAlert("مبلغ واریز باید حداقل ۱ دلار باشد.");
+        return;
+      }
+      const tomanApprox = usd * dynamicUsdRate;
+      switchTab('buy', document.querySelectorAll('.nav-item')[0]);
+      selectPlan('wallet_topup', null, usd.toFixed(2), tomanApprox);
+    }
+
+    function showCryptoPayment() {
+      document.getElementById('payment-section').classList.remove('hidden');
+      setTimeout(() => document.getElementById('payment-section').scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+
+    async function buyWithWallet() {
+      const btn = document.getElementById('btn-wallet-buy');
+      btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-xl"></i> در حال صدور...`;
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/walletBuy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: tgUser.id, plan_id: currentPlan.id })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          tg.showAlert("✅ خرید شما موفقیت آمیز بود! کانفیگ در تلگرام ارسال شد.");
+          await loadUserData(); 
+          switchTab('dashboard', document.querySelectorAll('.nav-item')[1]);
+        } else {
+          tg.showAlert("❌ " + data.error);
+        }
+      } catch (e) {
+        tg.showAlert("خطا در ارتباط با سرور");
+      } finally {
+        btn.innerHTML = `<i class="ph-bold ph-lightning text-xl"></i> خرید آنی`;
+        btn.disabled = false;
+      }
+    }
+
+    function selectCrypto(symbol, element) {
+      document.querySelectorAll('.crypto-btn').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      selectedCrypto = symbol;
+      updateCryptoUI();
+      if(currentPlan) calculateExactAmount();
+    }
+
+    function updateCryptoUI() {
+      const data = cryptoData[selectedCrypto];
+      document.getElementById('wallet-address').value = data.wallet;
+      document.getElementById('wallet-network-label').innerText = data.network;
+      document.getElementById('selected-crypto-symbol').innerText = data.symbol;
+    }
+
+    function calculateExactAmount() {
+      if(!currentPlan) return;
+      const cryptoPrice = cryptoData[selectedCrypto].price;
+      
+      if (!cryptoPrice) {
+        document.getElementById('plan-usd-value').innerText = "خطا";
+        document.getElementById('exact-crypto-amount').innerText = "خطا";
+        return;
+      }
+
+      let exactAmount = 0;
+      if (selectedCrypto === 'USDT') {
+        exactAmount = Number(currentPlan.priceUsd);
+      } else {
+        exactAmount = Number(currentPlan.priceUsd) / cryptoPrice;
+      }
+      
+      document.getElementById('plan-usd-value').innerText = Number(currentPlan.priceUsd).toFixed(2);
+      document.getElementById('exact-crypto-amount').innerText = exactAmount.toFixed(2);
+    }
+
+    function copyToClipboard(elementId) {
+      const copyText = document.getElementById(elementId);
+      copyText.select();
+      copyText.setSelectionRange(0, 99999); 
+      document.execCommand("copy");
+      tg.showAlert("کپی شد ✅");
+    }
+
+    async function fetchCryptoPrices() {
+      try {
+        const res = await fetch(`/api/cryptoPrice`);
+        if (!res.ok) throw new Error("Price API Error");
+        const data = await res.json();
+        
+        if(data.USDT) cryptoData.USDT.price = data.USDT;
+        if(data.TRX) {
+            cryptoData.TRX.price = data.TRX;
+            document.getElementById('market-price-trx').innerText = `$${data.TRX.toFixed(3)}`;
+        }
+        if(data.TON) {
+            cryptoData.TON.price = data.TON;
+            document.getElementById('market-price-ton').innerText = `$${data.TON.toFixed(2)}`;
+        }
+        if(data.XRP) {
+            cryptoData.XRP.price = data.XRP;
+            document.getElementById('market-price-xrp').innerText = `$${data.XRP.toFixed(3)}`;
+        }
+        
+        if(currentPlan) calculateExactAmount();
+      } catch (e) { 
+        console.error("Price fetch failed", e);
+      }
+    }
+
     async function loadUserData() {
       try {
         const res = await fetch(`/api/profile?chat_id=${tgUser.id}`);
+        if (!res.ok) throw new Error("Profile API Error");
         const data = await res.json();
+        
         currentUser = data.user;
         plans = data.plans || []; 
+        
         renderPlans(); 
 
         const balToman = Number(currentUser.wallet_balance || 0);
         const balUsd = balToman / dynamicUsdRate;
         document.getElementById('header-balance-usd').innerText = balUsd.toFixed(2) + " $";
+        
         document.getElementById('exchange-balance-usd').innerText = balUsd.toFixed(2);
         document.getElementById('exchange-balance-trx').innerText = (balUsd / (cryptoData.TRX.price || 0.12)).toFixed(1);
         document.getElementById('exchange-balance-ton').innerText = (balUsd / (cryptoData.TON.price || 5.00)).toFixed(2);
@@ -425,7 +678,22 @@
         if (data.services && data.services.length > 0) {
           srvContainer.innerHTML = data.services.map((s, index) => {
             const pInfo = plans.find(pl => pl.internal_name === s.plan_name) || {title_fa: s.plan_name};
+            const defaultNote = "برای اتصال، لینک ساب زیر را در برنامه (V2ray/Streisand) کپی و آپدیت کنید.";
+            const noteText = s.panel_note || defaultNote;
+            
+            // 🚀 تشخیص هوشمندانه لینک ساب:
+            // اگر ادمین در فیلد پنل چیزی نوشته باشد از آن استفاده می‌کند،
+            // در غیر این صورت اگر خود کد کانفیگ با http شروع شود (یعنی ساب باشد)، از آن برای استعلام استفاده می‌کند.
             const subLinkToUse = s.web_panel_url || (s.v2ray_uri && s.v2ray_uri.startsWith('http') ? s.v2ray_uri : null);
+
+            // 🆕 دکمه استعلام حجم: اگر لینک سابی وجود داشته باشد دکمه نشان داده می‌شود، وگرنه یک پیام راهنما.
+            const usageBtn = subLinkToUse ? `
+              <button onclick="checkUsage('${subLinkToUse}', 'usage-${index}', this)" class="bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 text-[11px] px-4 py-2 rounded-lg transition text-center font-bold flex-1 flex justify-center items-center gap-1 border border-indigo-500/30">
+                <i class="ph-bold ph-chart-pie-slice"></i> استعلام زنده حجم
+              </button>
+            ` : `<div class="bg-slate-800/50 text-slate-500 text-[10px] px-4 py-2 rounded-lg text-center flex-1 border border-slate-700/50">استعلام نامشخص (ساب ثبت نشده)</div>`;
+
+            const panelBtn = s.web_panel_url ? `<a href="${s.web_panel_url}" target="_blank" class="bg-blue-600 hover:bg-blue-500 text-white text-[11px] px-4 py-2 rounded-lg transition text-center font-bold flex-1">ورود به پنل</a>` : ``;
 
             return `
             <div class="glass p-4 rounded-xl border-t-4 border-blue-500 mb-4 shadow-lg">
@@ -434,139 +702,182 @@
                 <div class="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 font-mono">${s.created_at.split('T')[0]}</div>
               </div>
               
-              <div id="usage-${index}" class="bg-slate-900/80 rounded-xl p-3 mb-3 border border-slate-700 min-h-[60px] flex items-center justify-center">
-                <div class="text-[10px] text-slate-500 italic">در حال استعلام حجم واقعی...</div>
+              <div class="bg-blue-900/20 border border-blue-500/20 rounded-lg p-2.5 mb-3">
+                <p class="text-[10px] text-blue-200 leading-relaxed text-justify flex gap-1.5">
+                  <i class="ph-fill ph-info text-blue-400 shrink-0 mt-0.5"></i>
+                  <span>${noteText}</span>
+                </p>
               </div>
 
               <div class="space-y-2 mb-3">
                 <div class="flex items-center gap-2">
                   <input type="text" id="conf-${index}" value="${s.v2ray_uri}" readonly class="bg-slate-900 border border-slate-700 text-slate-400 text-[10px] rounded-lg p-2.5 w-full font-mono outline-none">
-                  <button onclick="copyToClipboard('conf-${index}')" class="bg-slate-800 p-2.5 rounded-lg text-white hover:bg-slate-700 shrink-0 border border-slate-600"><i class="ph-bold ph-copy"></i></button>
+                  <button onclick="copyToClipboard('conf-${index}')" class="bg-slate-800 p-2.5 rounded-lg text-white hover:bg-slate-700 shrink-0 border border-slate-600" title="کپی کانفیگ/ساب"><i class="ph-bold ph-copy"></i></button>
                 </div>
+                ${s.web_panel_url ? `
+                <div class="flex items-center gap-2">
+                  <input type="text" id="sub-${index}" value="${s.web_panel_url}" readonly class="bg-slate-900 border border-slate-700 text-slate-400 text-[10px] rounded-lg p-2.5 w-full font-mono outline-none">
+                  <button onclick="copyToClipboard('sub-${index}')" class="bg-slate-800 p-2.5 rounded-lg text-white hover:bg-slate-700 shrink-0 border border-slate-600" title="کپی لینک ساب/پنل"><i class="ph-bold ph-link"></i></button>
+                </div>
+                ` : ''}
               </div>
+              
+              <!-- 🆕 باکس نمایش زنده حجم (پیش‌فرض مخفی) -->
+              <div id="usage-${index}" class="hidden bg-slate-900/80 rounded-xl p-3 mb-3 border border-slate-700"></div>
 
-              <div class="flex gap-2">
-                <button onclick="checkUsage('${subLinkToUse}', 'usage-${index}', this)" class="bg-indigo-600/20 text-indigo-400 text-[11px] px-4 py-2 rounded-lg font-bold flex-1 flex justify-center items-center gap-1 border border-indigo-500/30">
-                  <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی حجم
-                </button>
-                ${s.web_panel_url ? `<a href="${s.web_panel_url}" target="_blank" class="bg-blue-600 text-white text-[11px] px-4 py-2 rounded-lg font-bold flex-1 text-center flex justify-center items-center">ورود به پنل</a>` : ''}
+              <div class="flex gap-2 mt-2">
+                ${usageBtn}
+                ${panelBtn}
               </div>
             </div>
           `}).join('');
-
-          data.services.forEach((s, index) => {
-             const subLinkToUse = s.web_panel_url || (s.v2ray_uri && s.v2ray_uri.startsWith('http') ? s.v2ray_uri : null);
-             if(subLinkToUse) checkUsage(subLinkToUse, `usage-${index}`, null);
-             else {
-               document.getElementById(`usage-${index}`).innerHTML = `<div class="text-center text-[10px] text-slate-500">استعلام نامشخص (ساب ثبت نشده)</div>`;
-             }
-          });
-
         } else {
           srvContainer.innerHTML = `<div class="glass rounded-xl p-6 text-center text-slate-500 text-xs">سرویس فعالی یافت نشد.</div>`;
         }
+
         renderTransactionHistory(data.transactions);
-      } catch (e) { console.error(e); }
-    }
 
-    async function checkUsage(subLink, containerId, btnElement) {
-      const container = document.getElementById(containerId);
-      if(btnElement) btnElement.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> ...`;
-
-      try {
-        if(!subLink || subLink === 'null') throw new Error("لینک ساب موجود نیست");
-        const res = await fetch(`/api/usage?sub_link=${encodeURIComponent(subLink)}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'خطا در دریافت اطلاعات');
-
-        const percentUsed = data.total_gb > 0 ? Math.min(100, (data.used_gb / data.total_gb) * 100).toFixed(0) : 0;
-        let barColor = percentUsed > 90 ? 'bg-red-500' : (percentUsed > 70 ? 'bg-yellow-500' : 'bg-blue-500');
-
-        container.innerHTML = `
-          <div class="w-full">
-            <div class="flex justify-between items-center text-[10px] text-slate-300 mb-1.5">
-              <span>باقیمانده: <strong class="text-white text-xs">${data.remain_gb} GB</strong></span>
-              <span class="text-green-400 font-bold">${data.remain_days} ${data.remain_days !== 'نامحدود' && data.remain_days !== 'منقضی شده' ? 'روز اعتبار' : ''}</span>
-            </div>
-            <div class="w-full bg-slate-800 rounded-full h-1.5 mb-2 overflow-hidden border border-slate-700">
-              <div class="${barColor} h-full rounded-full transition-all duration-1000" style="width: ${percentUsed}%"></div>
-            </div>
-            <div class="flex justify-between text-[9px] text-slate-500 font-mono">
-              <span>مصرف: ${data.used_gb}GB</span>
-              <span>حجم کل: ${data.total_gb}GB</span>
-            </div>
-          </div>
-        `;
-      } catch (err) {
-        container.innerHTML = `<div class="text-[10px] text-red-400 text-center w-full">❌ وضعیت: ${err.message}</div>`;
-      } finally {
-        if(btnElement) btnElement.innerHTML = `<i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی حجم`;
+      } catch (e) { 
+        console.error("Profile fetch failed", e);
+        document.getElementById('plans-container').innerHTML = `<div class="glass rounded-xl p-6 text-center text-slate-500 text-xs">خطا در دریافت اطلاعات. بررسی اینترنت...</div>`;
       }
     }
 
-    function renderPlans() {
-      const container = document.getElementById('plans-container');
-      const visiblePlans = plans.filter(p => p.internal_name !== 'wallet_topup');
-      container.innerHTML = visiblePlans.map(p => {
-        const exactUsd = (p.price_toman / dynamicUsdRate).toFixed(2);
-        return `
-        <div class="glass plan-card p-4 rounded-xl flex justify-between items-center cursor-pointer" onclick="selectPlan('${p.internal_name}', this, ${exactUsd}, ${p.price_toman})">
-          <div><div class="text-sm font-bold text-white mb-1">${p.title_fa}</div><div class="text-[10px] text-slate-400">${p.gb_amount > 0 ? `${p.gb_amount} GB` : 'VIP'}</div></div>
-          <div class="text-left"><div class="text-green-400 font-mono text-sm font-bold">$${exactUsd}</div><div class="text-[10px] text-slate-400 mt-0.5">${Number(p.price_toman).toLocaleString()} T</div></div>
-        </div>`
-      }).join('');
-    }
-    function selectPlan(id, el, usd, toman) {
-      document.querySelectorAll('.plan-card').forEach(x => x.classList.remove('selected'));
-      el.classList.add('selected');
-      currentPlan = { id, priceUsd: usd, priceToman: toman };
-      document.getElementById('action-section').classList.remove('hidden');
-      document.getElementById('selected-plan-title').innerText = plans.find(x => x.internal_name === id).title_fa;
-      calculateExactAmount();
-    }
-    function updateCryptoUI() {
-      const data = cryptoData[selectedCrypto];
-      document.getElementById('wallet-address').value = data.wallet;
-      document.getElementById('wallet-network-label').innerText = data.network;
-      document.getElementById('selected-crypto-symbol').innerText = data.symbol;
-    }
-    function calculateExactAmount() {
-      if(!currentPlan) return;
-      const cp = cryptoData[selectedCrypto].price || 1;
-      const exact = (currentPlan.priceUsd / cp).toFixed(2);
-      document.getElementById('plan-usd-value').innerText = currentPlan.priceUsd;
-      document.getElementById('exact-crypto-amount').innerText = exact;
-    }
-    function selectCrypto(sym, el) {
-      document.querySelectorAll('.crypto-btn').forEach(x => x.classList.remove('selected'));
-      el.classList.add('selected');
-      selectedCrypto = sym;
-      updateCryptoUI(); calculateExactAmount();
-    }
-    function copyToClipboard(id) {
-      const el = document.getElementById(id); el.select(); document.execCommand("copy"); tg.showAlert("کپی شد ✅");
-    }
-    async function fetchCryptoPrices() {
+    // 🆕 تابع استعلام زنده حجم از سرور شما
+    async function checkUsage(subLink, containerId, btnElement) {
+      const container = document.getElementById(containerId);
+      const originalBtnText = btnElement.innerHTML;
+      
+      // حالت لودینگ
+      btnElement.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> کمی صبر کنید...`;
+      btnElement.disabled = true;
+      container.classList.remove('hidden');
+      container.innerHTML = `<div class="text-center text-[10px] text-slate-400 py-2">در حال دریافت اطلاعات از سرور...</div>`;
+
       try {
-        const res = await fetch(`/api/cryptoPrice`);
+        const res = await fetch(`/api/usage?sub_link=${encodeURIComponent(subLink)}`);
         const data = await res.json();
-        if(data.TRX) { cryptoData.TRX.price = data.TRX; document.getElementById('market-price-trx').innerText = `$${data.TRX.toFixed(3)}`; }
-        if(data.TON) { cryptoData.TON.price = data.TON; document.getElementById('market-price-ton').innerText = `$${data.TON.toFixed(2)}`; }
-        if(data.XRP) { cryptoData.XRP.price = data.XRP; document.getElementById('market-price-xrp').innerText = `$${data.XRP.toFixed(3)}`; }
-      } catch (e) {}
+
+        if (!res.ok) throw new Error(data.error || 'خطا در دریافت حجم');
+
+        // محاسبه درصد مصرف برای نوار پیشرفت
+        const percentUsed = data.total_gb > 0 ? Math.min(100, (data.used_gb / data.total_gb) * 100).toFixed(0) : 0;
+        
+        let daysColor = (data.remain_days <= 3 && data.remain_days !== 'نامحدود' && data.remain_days !== 'منقضی شده') ? 'text-red-400' : 'text-green-400';
+        let barColor = percentUsed > 90 ? 'bg-red-500' : (percentUsed > 70 ? 'bg-yellow-500' : 'bg-blue-500');
+
+        container.innerHTML = `
+          <div class="flex justify-between items-center text-[10px] text-slate-300 mb-1">
+            <span>حجم باقی‌مانده: <strong class="text-white">${data.remain_gb} گیگابایت</strong></span>
+            <span class="${daysColor} font-bold">${data.remain_days} ${data.remain_days !== 'نامحدود' && data.remain_days !== 'منقضی شده' ? 'روز اعتبار' : ''}</span>
+          </div>
+          <!-- نوار پیشرفت (Progress Bar) -->
+          <div class="w-full bg-slate-800 rounded-full h-2 mb-2 overflow-hidden border border-slate-700">
+            <div class="${barColor} h-2 rounded-full transition-all duration-1000" style="width: ${percentUsed}%"></div>
+          </div>
+          <div class="flex justify-between text-[9px] text-slate-500 font-mono">
+            <span>مصرف: ${data.used_gb}GB</span>
+            <span>کل: ${data.total_gb}GB</span>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = `<div class="text-center text-[10px] text-red-400 py-1"><i class="ph-fill ph-warning-circle"></i> ${err.message}</div>`;
+      } finally {
+        btnElement.innerHTML = originalBtnText;
+        btnElement.disabled = false;
+      }
     }
-    function renderTransactionHistory(txs) {
-      const container = document.getElementById('tx-history');
-      container.innerHTML = txs.map(tx => `<div class="glass p-3 rounded-lg border border-slate-800 mb-2 flex justify-between items-center"><div class="text-[10px] text-slate-400">${tx.created_at.split('T')[0]}</div><div class="text-[11px] font-bold">${tx.crypto_amount} ${tx.crypto_currency}</div><div class="status-badge ${tx.status === 'approved' ? 'status-approved' : 'status-pending'}">${tx.status === 'approved' ? 'موفق' : 'درانتظار'}</div></div>`).join('');
+
+    function renderTransactionHistory(transactions) {
+      const txContainer = document.getElementById('tx-history');
+      if (transactions && transactions.length > 0) {
+        txContainer.innerHTML = transactions.map(tx => {
+          let statusHtml = ''; let statusText = '';
+          if(tx.status === 'pending') { statusHtml = 'status-pending'; statusText = 'در انتظار بررسی'; }
+          else if(tx.status === 'pending_verification') { statusHtml = 'status-pending_verification'; statusText = 'در حال اعتبارسنجی'; }
+          else if(tx.status === 'approved') { statusHtml = 'status-approved'; statusText = 'موفق'; }
+          else { statusHtml = 'status-rejected'; statusText = 'رد شده'; }
+          
+          const isTopup = tx.target_plan === 'wallet_topup';
+          const title = isTopup ? 'واریز به کیف پول' : (plans.find(pl => pl.internal_name === tx.target_plan)?.title_fa || tx.target_plan);
+          
+          const usdEq = (Number(tx.amount_toman) / dynamicUsdRate).toFixed(2);
+
+          return `
+          <div class="glass p-3 rounded-lg border ${isTopup ? 'border-purple-500/30' : 'border-slate-800'} relative mb-2">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                ${isTopup ? '<i class="ph-fill ph-download-simple text-purple-400"></i>' : '<i class="ph-fill ph-shopping-cart text-slate-500"></i>'}
+                ${tx.created_at.split('T')[0]} - ${title}
+              </span>
+              <span class="status-badge ${statusHtml}">${statusText}</span>
+            </div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="text-xs font-bold text-white">${tx.crypto_amount || 0} ${tx.crypto_currency || ''}</span>
+              <span class="text-[10px] text-slate-500">(${usdEq} USD)</span>
+            </div>
+            <div class="text-[10px] text-slate-500 font-mono break-all line-clamp-1 mb-1">TXID: ${tx.txid_or_receipt}</div>
+          </div>
+        `}).join('');
+      } else {
+        txContainer.innerHTML = `<div class="glass rounded-xl p-4 text-center text-slate-500 text-[11px]">تاکنون تراکنشی نداشته‌اید.</div>`;
+      }
     }
+
     async function submitPayment() {
       const txid = document.getElementById('txid-input').value.trim();
-      if(!txid) return tg.showAlert("هش تراکنش را وارد کنید");
-      const btn = document.getElementById('submit-btn'); btn.disabled = true; btn.innerText = "...";
+      const notes = document.getElementById('tx-notes').value.trim();
+      if (!txid) return tg.showAlert("❌ وارد کردن هش تراکنش الزامی است!");
+      if (!currentPlan) return tg.showAlert("لطفاً یک پلن انتخاب کنید.");
+
+      const exactCryptoAmountText = document.getElementById('exact-crypto-amount').innerText;
+      
+      if (exactCryptoAmountText === "خطا" || isNaN(parseFloat(exactCryptoAmountText))) {
+        return tg.showAlert("❌ امکان محاسبه قیمت لحظه‌ای وجود ندارد. لطفاً دقایقی دیگر تلاش کنید.");
+      }
+
+      const exactCryptoAmount = parseFloat(exactCryptoAmountText);
+      const btn = document.getElementById('submit-btn');
+      btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-lg"></i> در حال ارتباط...`;
+      btn.disabled = true;
+
       try {
-        const res = await fetch('/api/submitReceipt', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ chat_id: tgUser.id, plan: currentPlan.id, txid: txid, amount_toman: currentPlan.priceToman, crypto_currency: selectedCrypto, crypto_amount: parseFloat(document.getElementById('exact-crypto-amount').innerText), wallet_id: cryptoData[selectedCrypto].walletId })});
-        if(res.ok) { tg.showAlert("✅ ثبت شد"); loadUserData(); switchTab('wallet', document.querySelectorAll('.nav-item')[2]); }
-      } catch(e) { tg.showAlert("خطا در ارتباط"); } finally { btn.disabled = false; btn.innerText = "بررسی خودکار و تحویل"; }
+        const payload = {
+          chat_id: tgUser.id,
+          plan: currentPlan.id,
+          txid: txid,
+          amount_toman: currentPlan.priceToman,
+          crypto_currency: selectedCrypto,
+          crypto_amount: exactCryptoAmount,
+          notes: notes,
+          wallet_id: cryptoData[selectedCrypto].walletId
+        };
+
+        const res = await fetch('/api/submitReceipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          tg.showAlert("✅ تراکنش ثبت شد! پس از تایید شبکه، سرویس شما تحویل می‌شود.");
+          document.getElementById('txid-input').value = "";
+          document.getElementById('tx-notes').value = "";
+          
+          await loadUserData(); 
+          const walletBtn = document.querySelectorAll('.nav-item')[2];
+          switchTab('wallet', walletBtn);
+          
+        } else {
+          const errData = await res.json();
+          tg.showAlert(errData.error || "❌ خطا در ثبت تراکنش.");
+        }
+      } catch (e) {
+        tg.showAlert("خطای ارتباط با سرور.");
+      } finally {
+        btn.innerHTML = `<i class="ph-bold ph-check-circle text-lg"></i> بررسی خودکار و تحویل`;
+        btn.disabled = false;
+      }
     }
   </script>
 </body>
