@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -9,10 +7,21 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const authHeader = req.headers.authorization;
-  const isAdmin = authHeader === `Bearer ${process.env.ADMIN_TOKEN}`;
-
   try {
+    // گرفتن متغیرهای محیطی به صورت امن داخل تابع
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("تنظیمات دیتابیس در سرور یافت نشد.");
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const authHeader = req.headers.authorization;
+    const adminToken = process.env.ADMIN_TOKEN || process.env.ADMIN_PASSWORD || "Nova@Manager2026";
+    const isAdmin = authHeader === `Bearer ${adminToken}`;
+
     // گرفتن اطلاعات کیف پول‌ها
     if (req.method === 'GET') {
       const { network, select_best } = req.query;
@@ -27,9 +36,10 @@ export default async function handler(req, res) {
           .order('priority', { ascending: false }) // اولویت بالاتر
           .order('usage_count', { ascending: true }) // کمترین استفاده
           .limit(1)
-          .single();
+          .maybeSingle();
 
-        if (error) return res.status(404).json({ error: 'No active wallet found for this network' });
+        if (error) throw error;
+        if (!data) return res.status(404).json({ error: 'No active wallet found for this network' });
         return res.status(200).json(data);
       } 
       
@@ -37,7 +47,7 @@ export default async function handler(req, res) {
       if (isAdmin) {
         const { data, error } = await supabase.from('wallets').select('*').order('created_at', { ascending: false });
         if (error) throw error;
-        return res.status(200).json(data);
+        return res.status(200).json(data || []);
       }
 
       return res.status(401).json({ error: 'Unauthorized' });
@@ -69,6 +79,7 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
+    console.error("Wallets API Error:", error);
     return res.status(500).json({ error: error.message });
   }
 }
