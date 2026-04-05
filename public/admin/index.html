@@ -11,7 +11,6 @@
     body { font-family: 'Vazirmatn', sans-serif; background-color: #020617; color: #f1f5f9; overflow: hidden; }
     .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
     
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
@@ -27,6 +26,9 @@
     .view-section { display: none; animation: fade 0.3s; height: 100%; overflow-y: auto; padding: 20px; }
     .view-section.active { display: block; }
     @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .stat-card { background: linear-gradient(145deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.9) 100%); border: 1px solid rgba(255,255,255,0.05); transition: transform 0.2s; }
+    .stat-card:hover { transform: translateY(-3px); border-color: rgba(59,130,246,0.3); }
   </style>
 </head>
 <body class="flex h-screen w-screen">
@@ -39,7 +41,7 @@
       </div>
       <div>
         <h1 class="font-bold text-lg tracking-wide">NOVA CRM</h1>
-        <p class="text-[10px] text-slate-400">مدیریت هوشمند مشتریان</p>
+        <p class="text-[10px] text-slate-400">پنل جامع مدیریت</p>
       </div>
     </div>
 
@@ -48,20 +50,32 @@
     </div>
 
     <nav class="flex-1 overflow-y-auto py-4 flex flex-col gap-1">
-      <button onclick="switchView('receipts', this)" class="sidebar-item active px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+      <!-- 🆕 Dashboard Tab -->
+      <button onclick="switchView('dashboard', this)" class="sidebar-item active px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+        <i class="ph-fill ph-squares-four text-lg text-blue-400"></i> پیشخوان آماری
+      </button>
+      <button onclick="switchView('receipts', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
         <i class="ph-fill ph-receipt text-lg"></i> تراکنش‌های معلق
       </button>
-      <button onclick="switchView('tickets', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right relative">
+      <button onclick="switchView('tickets', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
         <i class="ph-fill ph-chats-teardrop text-lg"></i> مرکز پیام (پشتیبانی)
+      </button>
+      <!-- 🆕 Sold Services Tab -->
+      <button onclick="switchView('sold', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+        <i class="ph-fill ph-check-circle text-lg text-emerald-400"></i> سرویس‌های فروخته‌شده
       </button>
       <button onclick="switchView('users', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
         <i class="ph-fill ph-users text-lg"></i> پرونده مشتریان
       </button>
       <button onclick="switchView('inventory', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-package text-lg"></i> مدیریت محصولات و انبار
+        <i class="ph-fill ph-package text-lg"></i> انبار و محصولات
+      </button>
+      <!-- 🆕 All Transactions Tab -->
+      <button onclick="switchView('history', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+        <i class="ph-fill ph-clock-counter-clockwise text-lg text-purple-400"></i> تاریخچه مالی کل
       </button>
       <button onclick="switchView('broadcast', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-megaphone text-lg text-red-400"></i> پیام همگانی کانال
+        <i class="ph-fill ph-megaphone text-lg text-red-400"></i> پیام همگانی
       </button>
       <button onclick="switchView('wallets', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
         <i class="ph-fill ph-wallet text-lg text-emerald-400"></i> کیف‌پول‌های پرداخت
@@ -82,7 +96,10 @@
   <div class="md:hidden fixed top-0 left-0 w-full glass p-4 flex justify-between items-center z-30 border-b border-white/10">
     <h1 class="font-bold">NOVA CRM</h1>
     <select onchange="switchView(this.value, null)" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white outline-none">
+      <option value="dashboard">پیشخوان آماری</option>
       <option value="receipts">تراکنش‌ها</option>
+      <option value="sold">سرویس‌های فروخته‌شده</option>
+      <option value="history">تاریخچه مالی</option>
       <option value="tickets">پشتیبانی</option>
       <option value="users">مشتریان</option>
       <option value="inventory">انبار</option>
@@ -95,11 +112,107 @@
   <!-- Main Content -->
   <main class="flex-1 bg-[#020617] h-full pt-16 md:pt-0 relative">
     
+    <!-- 🆕 0. Dashboard (پیشخوان) -->
+    <section id="view-dashboard" class="view-section active">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-squares-four text-blue-500"></i> پیشخوان آماری و سلامت سیستم</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- Revenue Card -->
+        <div class="stat-card p-6 rounded-3xl flex items-center gap-4 relative overflow-hidden">
+          <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-500/20 blur-2xl rounded-full"></div>
+          <div class="w-14 h-14 bg-green-500/20 text-green-400 rounded-2xl flex items-center justify-center shrink-0 z-10"><i class="ph-fill ph-money text-3xl"></i></div>
+          <div class="z-10">
+            <p class="text-xs text-slate-400 mb-1">مجموع درآمد (تایید شده)</p>
+            <h3 class="text-2xl font-bold font-mono text-white" id="stat-revenue">0 <span class="text-xs">T</span></h3>
+          </div>
+        </div>
+
+        <!-- Users Card -->
+        <div class="stat-card p-6 rounded-3xl flex items-center gap-4 relative overflow-hidden">
+          <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/20 blur-2xl rounded-full"></div>
+          <div class="w-14 h-14 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center shrink-0 z-10"><i class="ph-fill ph-users text-3xl"></i></div>
+          <div class="z-10">
+            <p class="text-xs text-slate-400 mb-1">مجموع کاربران ربات</p>
+            <h3 class="text-2xl font-bold font-mono text-white" id="stat-users">0</h3>
+          </div>
+        </div>
+
+        <!-- Pending Card -->
+        <div class="stat-card p-6 rounded-3xl flex items-center gap-4 relative overflow-hidden">
+          <div class="absolute -right-6 -top-6 w-24 h-24 bg-yellow-500/20 blur-2xl rounded-full"></div>
+          <div class="w-14 h-14 bg-yellow-500/20 text-yellow-400 rounded-2xl flex items-center justify-center shrink-0 z-10"><i class="ph-fill ph-receipt text-3xl"></i></div>
+          <div class="z-10">
+            <p class="text-xs text-slate-400 mb-1">تراکنش‌های در انتظار تایید</p>
+            <h3 class="text-2xl font-bold font-mono text-white" id="stat-pending">0</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="stat-card p-6 rounded-3xl flex justify-between items-center">
+          <div>
+            <p class="text-xs text-slate-400 mb-1">سرویس‌های فروخته شده (فعال)</p>
+            <h3 class="text-3xl font-bold text-emerald-400 font-mono" id="stat-sold">0</h3>
+          </div>
+          <i class="ph-fill ph-check-circle text-5xl text-emerald-500/20"></i>
+        </div>
+        <div class="stat-card p-6 rounded-3xl flex justify-between items-center border border-red-500/20">
+          <div>
+            <p class="text-xs text-slate-400 mb-1">کانفیگ‌های آزاد (در انبار)</p>
+            <h3 class="text-3xl font-bold text-red-400 font-mono" id="stat-avail">0</h3>
+          </div>
+          <i class="ph-fill ph-package text-5xl text-red-500/20"></i>
+        </div>
+      </div>
+    </section>
+
     <!-- 1. Receipts -->
-    <section id="view-receipts" class="view-section active">
+    <section id="view-receipts" class="view-section">
       <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-receipt text-blue-500"></i> بررسی تراکنش‌های معلق</h2>
       <div class="grid grid-cols-1 gap-4 max-w-4xl" id="receipts-list">
-        <div class="glass p-10 text-center text-slate-500 rounded-3xl">در حال دریافت تراکنش‌ها...</div>
+        <div class="glass p-10 text-center text-slate-500 rounded-3xl">در حال دریافت...</div>
+      </div>
+    </section>
+
+    <!-- 🆕 1.5 Sold Services -->
+    <section id="view-sold" class="view-section">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-check-circle text-emerald-500"></i> مدیریت سرویس‌های فروخته‌شده</h2>
+      <div class="glass overflow-hidden rounded-3xl border border-white/5">
+        <table class="w-full text-right text-sm">
+          <thead class="bg-slate-900/50 text-slate-400">
+            <tr>
+              <th class="p-4">خریدار (Chat ID)</th>
+              <th class="p-4">پلن</th>
+              <th class="p-4">تاریخ فروش</th>
+              <th class="p-4">لینک کانفیگ/پنل</th>
+              <th class="p-4 text-center">عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="sold-configs-body">
+             <tr><td colspan="5" class="text-center p-6 text-slate-500">در حال دریافت...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 🆕 1.6 All Transactions History -->
+    <section id="view-history" class="view-section">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-clock-counter-clockwise text-purple-500"></i> تاریخچه و بایگانی تراکنش‌ها</h2>
+      <div class="glass overflow-hidden rounded-3xl border border-white/5 max-w-5xl">
+        <table class="w-full text-right text-sm">
+          <thead class="bg-slate-900/50 text-slate-400">
+            <tr>
+              <th class="p-4">تاریخ بررسی</th>
+              <th class="p-4">کاربر</th>
+              <th class="p-4">عملیات/پلن</th>
+              <th class="p-4">مبلغ (تومان)</th>
+              <th class="p-4">وضعیت</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr><td colspan="5" class="text-center p-6 text-slate-500">در حال دریافت...</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -251,7 +364,7 @@
   </main>
 
   <script>
-    let activeView = 'receipts';
+    let activeView = 'dashboard'; // پیش‌فرض روی داشبورد تنظیم شد
     let allTickets = [];
     let currentChatId = null;
 
@@ -295,6 +408,9 @@
     }
 
     async function refreshAll() {
+      if (activeView === 'dashboard') loadDashboard();
+      if (activeView === 'sold') loadSoldConfigs();
+      if (activeView === 'history') loadTransactionHistory();
       if (activeView === 'receipts') loadReceipts();
       if (activeView === 'tickets') loadTickets();
       if (activeView === 'users') loadUsers();
@@ -303,6 +419,82 @@
       if (activeView === 'settings') loadSettings();
     }
 
+    // 🆕 --- Dashboard Functions ---
+    async function loadDashboard() {
+      const data = await apiCall('get_dashboard_stats');
+      if (data) {
+        document.getElementById('stat-revenue').innerHTML = `${Number(data.total_revenue).toLocaleString()} <span class="text-xs text-slate-500">T</span>`;
+        document.getElementById('stat-users').innerText = data.users_count;
+        document.getElementById('stat-pending').innerText = data.pending_receipts;
+        document.getElementById('stat-avail').innerText = data.available_configs;
+        document.getElementById('stat-sold').innerText = data.sold_configs;
+      }
+    }
+
+    // 🆕 --- Sold Services Functions ---
+    async function loadSoldConfigs() {
+      const data = await apiCall('get_sold_configs');
+      const tbody = document.getElementById('sold-configs-body');
+      if (!data || data.configs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center p-6 text-slate-500">هیچ سرویس فروخته شده‌ای یافت نشد.</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = data.configs.map(c => `
+        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+          <td class="p-4 font-mono text-xs text-blue-400">${c.owner_id || 'نامشخص'}</td>
+          <td class="p-4 font-bold text-xs">${c.plan_name}</td>
+          <td class="p-4 text-[10px] text-slate-400 font-mono">${new Date(c.sold_at).toLocaleString('fa-IR')}</td>
+          <td class="p-4">
+            <div class="text-[10px] text-slate-400 font-mono truncate max-w-[150px] bg-black/30 p-1 rounded" title="${c.v2ray_uri}">
+              ${c.v2ray_uri || c.web_panel_url || '-'}
+            </div>
+          </td>
+          <td class="p-4 text-center">
+            <button onclick="deleteConfig('${c.id}')" class="bg-slate-800 p-2 rounded-lg text-red-400 hover:bg-red-900/30 transition" title="حذف این کانفیگ از سیستم"><i class="ph ph-trash"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function deleteConfig(id) {
+      if(!confirm('آیا از حذف دائم این کانفیگ از دیتابیس مطمئن هستید؟ (اگر کاربر این کانفیگ را خریده باشد، از پنل او نیز پاک می‌شود!)')) return;
+      const res = await apiCall('delete_config', { config_id: id });
+      if (res) {
+        alert('کانفیگ با موفقیت حذف شد.');
+        if (activeView === 'sold') loadSoldConfigs();
+        if (activeView === 'inventory') loadInventory();
+      }
+    }
+
+    // 🆕 --- All Transactions History ---
+    async function loadTransactionHistory() {
+      const data = await apiCall('get_all_transactions');
+      const tbody = document.getElementById('history-body');
+      if (!data || data.transactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center p-6 text-slate-500">هیچ تاریخچه‌ای وجود ندارد.</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = data.transactions.map(t => {
+        const isApproved = t.status === 'approved';
+        const isTopup = t.target_plan === 'wallet_topup';
+        return `
+        <tr class="border-b border-white/5 hover:bg-white/5 transition opacity-${isApproved ? '100' : '50'}">
+          <td class="p-4 text-[10px] text-slate-400 font-mono">${new Date(t.handled_at || t.created_at).toLocaleString('fa-IR')}</td>
+          <td class="p-4 font-mono text-xs text-blue-400">${t.chat_id}</td>
+          <td class="p-4 text-xs font-bold">${isTopup ? 'شارژ کیف‌پول' : t.target_plan}</td>
+          <td class="p-4 font-mono text-xs">${Number(t.amount_toman).toLocaleString()} <span class="text-[9px] text-slate-500">(${t.crypto_amount} ${t.crypto_currency})</span></td>
+          <td class="p-4">
+            <span class="px-2 py-1 rounded text-[10px] font-bold ${isApproved ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}">
+              ${isApproved ? 'موفق' : 'رد شده'}
+            </span>
+          </td>
+        </tr>
+      `}).join('');
+    }
+
+    // --- 1. Receipts ---
     async function loadReceipts() {
       const data = await apiCall('get_pending');
       const container = document.getElementById('receipts-list');
@@ -340,7 +532,9 @@
     async function txAction(id, type) {
       if (!confirm('آیا مطمئن هستید؟')) return;
       const res = await apiCall(type, { tx_id: id });
-      if (res) loadReceipts();
+      if (res) {
+        if(activeView === 'receipts') loadReceipts();
+      }
     }
 
     async function loadTickets() {
