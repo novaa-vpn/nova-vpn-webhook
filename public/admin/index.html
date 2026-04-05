@@ -2,816 +2,404 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Nova CRM | مدیریت ارتباط با مشتری</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700&display=swap');
-    body { font-family: 'Vazirmatn', sans-serif; background-color: #020617; color: #f1f5f9; overflow: hidden; }
-    .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
-    
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-    .sidebar-item { transition: all 0.2s ease; border-right: 3px solid transparent; }
-    .sidebar-item.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-right-color: #3b82f6; }
-    .sidebar-item:hover:not(.active) { background: rgba(255,255,255,0.02); }
-
-    .chat-bubble-user { background: rgba(30, 41, 59, 0.8); border-radius: 16px 16px 4px 16px; border: 1px solid rgba(255,255,255,0.05); }
-    .chat-bubble-admin { background: rgba(59, 130, 246, 0.2); border-radius: 16px 16px 16px 4px; border: 1px solid rgba(59, 130, 246, 0.3); }
-    
-    .view-section { display: none; animation: fade 0.3s; height: 100%; overflow-y: auto; padding: 20px; }
-    .view-section.active { display: block; }
-    @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .stat-card { background: linear-gradient(145deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.9) 100%); border: 1px solid rgba(255,255,255,0.05); transition: transform 0.2s; }
-    .stat-card:hover { transform: translateY(-3px); border-color: rgba(59,130,246,0.3); }
-  </style>
+  
+  <!-- اتصال به فایل استایل‌های جدا شده -->
+  <link rel="stylesheet" href="/admin/admin.css">
 </head>
-<body class="flex h-screen w-screen">
+<body class="bg-[#020617]">
 
-  <!-- Sidebar -->
-  <aside class="w-64 glass border-l border-white/10 flex flex-col z-20 shrink-0 hidden md:flex">
-    <div class="p-6 border-b border-white/5 flex items-center gap-3">
-      <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/50">
-        <i class="ph-bold ph-lightning text-xl"></i>
+  <!-- Auth Modal (صفحه ورود امن) -->
+  <div id="auth-modal" class="fixed inset-0 bg-[#020617]/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
+    <div class="glass p-8 rounded-3xl max-w-sm w-full border border-white/10 shadow-2xl text-center relative overflow-hidden">
+      <div class="absolute -right-10 -top-10 w-32 h-32 bg-blue-600/20 blur-3xl rounded-full"></div>
+      <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-900/50 relative z-10">
+        <i class="ph-bold ph-shield-check text-3xl text-white"></i>
       </div>
-      <div>
-        <h1 class="font-bold text-lg tracking-wide">NOVA CRM</h1>
-        <p class="text-[10px] text-slate-400">پنل جامع مدیریت</p>
+      <h2 class="text-2xl font-bold mb-2 relative z-10">ورود به پنل مدیریت</h2>
+      <p class="text-xs text-slate-400 mb-8 relative z-10">برای دسترسی به اطلاعات، کلید امنیتی (Admin Key) را وارد کنید.</p>
+      
+      <div class="relative z-10 space-y-4">
+        <input type="password" id="admin-pass-input" placeholder="رمز عبور مدیریت..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-4 text-sm font-mono focus:border-blue-500 outline-none text-center transition shadow-inner" dir="ltr">
+        <button id="login-btn" onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-900/40 active:scale-95 flex items-center justify-center gap-2">
+          تایید و ورود <i class="ph-bold ph-sign-in"></i>
+        </button>
       </div>
     </div>
-
-    <div class="p-4 border-b border-white/5">
-      <input type="password" id="admin-pass" value="Nova@Manager2026" placeholder="Admin Key" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono focus:border-blue-500 outline-none text-left" dir="ltr">
-    </div>
-
-    <nav class="flex-1 overflow-y-auto py-4 flex flex-col gap-1">
-      <!-- 🆕 Dashboard Tab -->
-      <button onclick="switchView('dashboard', this)" class="sidebar-item active px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-squares-four text-lg text-blue-400"></i> پیشخوان آماری
-      </button>
-      <button onclick="switchView('receipts', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-receipt text-lg"></i> تراکنش‌های معلق
-      </button>
-      <button onclick="switchView('tickets', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-chats-teardrop text-lg"></i> مرکز پیام (پشتیبانی)
-      </button>
-      <!-- 🆕 Sold Services Tab -->
-      <button onclick="switchView('sold', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-check-circle text-lg text-emerald-400"></i> سرویس‌های فروخته‌شده
-      </button>
-      <button onclick="switchView('users', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-users text-lg"></i> پرونده مشتریان
-      </button>
-      <button onclick="switchView('inventory', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-package text-lg"></i> انبار و محصولات
-      </button>
-      <!-- 🆕 All Transactions Tab -->
-      <button onclick="switchView('history', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-clock-counter-clockwise text-lg text-purple-400"></i> تاریخچه مالی کل
-      </button>
-      <button onclick="switchView('broadcast', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-megaphone text-lg text-red-400"></i> پیام همگانی
-      </button>
-      <button onclick="switchView('wallets', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-wallet text-lg text-emerald-400"></i> کیف‌پول‌های پرداخت
-      </button>
-      <button onclick="switchView('settings', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
-        <i class="ph-fill ph-gear text-lg text-slate-400"></i> تنظیمات سیستم
-      </button>
-    </nav>
-    
-    <div class="p-4 border-t border-white/5">
-      <button onclick="refreshAll()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-bold transition flex justify-center items-center gap-2">
-        <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی اطلاعات
-      </button>
-    </div>
-  </aside>
-
-  <!-- Mobile Header -->
-  <div class="md:hidden fixed top-0 left-0 w-full glass p-4 flex justify-between items-center z-30 border-b border-white/10">
-    <h1 class="font-bold">NOVA CRM</h1>
-    <select onchange="switchView(this.value, null)" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white outline-none">
-      <option value="dashboard">پیشخوان آماری</option>
-      <option value="receipts">تراکنش‌ها</option>
-      <option value="sold">سرویس‌های فروخته‌شده</option>
-      <option value="history">تاریخچه مالی</option>
-      <option value="tickets">پشتیبانی</option>
-      <option value="users">مشتریان</option>
-      <option value="inventory">انبار</option>
-      <option value="broadcast">پیام همگانی</option>
-      <option value="wallets">کیف‌پول‌ها</option>
-      <option value="settings">تنظیمات</option>
-    </select>
   </div>
 
-  <!-- Main Content -->
-  <main class="flex-1 bg-[#020617] h-full pt-16 md:pt-0 relative">
+  <!-- Main App Container (مخفی تا زمان ورود) -->
+  <div id="app-container" class="hidden h-screen w-screen flex-col md:flex-row overflow-hidden">
     
-    <!-- 🆕 0. Dashboard (پیشخوان) -->
-    <section id="view-dashboard" class="view-section active">
-      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-squares-four text-blue-500"></i> پیشخوان آماری و سلامت سیستم</h2>
+    <!-- Sidebar (Desktop) -->
+    <aside class="w-64 glass border-l border-white/10 flex-col z-20 shrink-0 hidden md:flex h-full">
+      <div class="p-6 border-b border-white/5 flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/50">
+          <i class="ph-bold ph-lightning text-xl"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg tracking-wide">NOVA CRM</h1>
+          <p class="text-[10px] text-slate-400">پنل جامع مدیریت</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto py-4 flex flex-col gap-1">
+        <button onclick="switchView('dashboard', this)" class="sidebar-item active px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+          <i class="ph-fill ph-squares-four text-lg text-blue-400"></i> پیشخوان آماری
+        </button>
+        <button onclick="switchView('receipts', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+          <i class="ph-fill ph-receipt text-lg"></i> تراکنش‌های معلق
+        </button>
+        <button onclick="switchView('sold', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+          <i class="ph-fill ph-check-circle text-lg text-emerald-400"></i> سرویس‌های فروخته‌شده
+        </button>
+        <button onclick="switchView('users', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+          <i class="ph-fill ph-users text-lg"></i> پرونده مشتریان
+        </button>
+        <button onclick="switchView('inventory', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+          <i class="ph-fill ph-package text-lg"></i> انبار و محصولات
+        </button>
+        <button onclick="switchView('history', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+          <i class="ph-fill ph-clock-counter-clockwise text-lg text-purple-400"></i> تاریخچه مالی کل
+        </button>
+        <button onclick="switchView('tickets', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right relative">
+          <i class="ph-fill ph-chats-teardrop text-lg"></i> مرکز پیام (پشتیبانی)
+        </button>
+        <button onclick="switchView('broadcast', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+          <i class="ph-fill ph-megaphone text-lg text-red-400"></i> پیام همگانی
+        </button>
+        <button onclick="switchView('wallets', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+          <i class="ph-fill ph-wallet text-lg text-emerald-400"></i> کیف‌پول‌های پرداخت
+        </button>
+        <button onclick="switchView('settings', this)" class="sidebar-item px-6 py-3 flex items-center gap-3 text-sm font-bold w-full text-right">
+          <i class="ph-fill ph-gear text-lg text-slate-400"></i> تنظیمات سیستم
+        </button>
+      </nav>
       
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <!-- Revenue Card -->
-        <div class="stat-card p-6 rounded-3xl flex items-center gap-4 relative overflow-hidden">
-          <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-500/20 blur-2xl rounded-full"></div>
-          <div class="w-14 h-14 bg-green-500/20 text-green-400 rounded-2xl flex items-center justify-center shrink-0 z-10"><i class="ph-fill ph-money text-3xl"></i></div>
-          <div class="z-10">
-            <p class="text-xs text-slate-400 mb-1">مجموع درآمد (تایید شده)</p>
-            <h3 class="text-2xl font-bold font-mono text-white" id="stat-revenue">0 <span class="text-xs">T</span></h3>
-          </div>
-        </div>
-
-        <!-- Users Card -->
-        <div class="stat-card p-6 rounded-3xl flex items-center gap-4 relative overflow-hidden">
-          <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/20 blur-2xl rounded-full"></div>
-          <div class="w-14 h-14 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center shrink-0 z-10"><i class="ph-fill ph-users text-3xl"></i></div>
-          <div class="z-10">
-            <p class="text-xs text-slate-400 mb-1">مجموع کاربران ربات</p>
-            <h3 class="text-2xl font-bold font-mono text-white" id="stat-users">0</h3>
-          </div>
-        </div>
-
-        <!-- Pending Card -->
-        <div class="stat-card p-6 rounded-3xl flex items-center gap-4 relative overflow-hidden">
-          <div class="absolute -right-6 -top-6 w-24 h-24 bg-yellow-500/20 blur-2xl rounded-full"></div>
-          <div class="w-14 h-14 bg-yellow-500/20 text-yellow-400 rounded-2xl flex items-center justify-center shrink-0 z-10"><i class="ph-fill ph-receipt text-3xl"></i></div>
-          <div class="z-10">
-            <p class="text-xs text-slate-400 mb-1">تراکنش‌های در انتظار تایید</p>
-            <h3 class="text-2xl font-bold font-mono text-white" id="stat-pending">0</h3>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="stat-card p-6 rounded-3xl flex justify-between items-center">
-          <div>
-            <p class="text-xs text-slate-400 mb-1">سرویس‌های فروخته شده (فعال)</p>
-            <h3 class="text-3xl font-bold text-emerald-400 font-mono" id="stat-sold">0</h3>
-          </div>
-          <i class="ph-fill ph-check-circle text-5xl text-emerald-500/20"></i>
-        </div>
-        <div class="stat-card p-6 rounded-3xl flex justify-between items-center border border-red-500/20">
-          <div>
-            <p class="text-xs text-slate-400 mb-1">کانفیگ‌های آزاد (در انبار)</p>
-            <h3 class="text-3xl font-bold text-red-400 font-mono" id="stat-avail">0</h3>
-          </div>
-          <i class="ph-fill ph-package text-5xl text-red-500/20"></i>
-        </div>
-      </div>
-    </section>
-
-    <!-- 1. Receipts -->
-    <section id="view-receipts" class="view-section">
-      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-receipt text-blue-500"></i> بررسی تراکنش‌های معلق</h2>
-      <div class="grid grid-cols-1 gap-4 max-w-4xl" id="receipts-list">
-        <div class="glass p-10 text-center text-slate-500 rounded-3xl">در حال دریافت...</div>
-      </div>
-    </section>
-
-    <!-- 🆕 1.5 Sold Services -->
-    <section id="view-sold" class="view-section">
-      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-check-circle text-emerald-500"></i> مدیریت سرویس‌های فروخته‌شده</h2>
-      <div class="glass overflow-hidden rounded-3xl border border-white/5">
-        <table class="w-full text-right text-sm">
-          <thead class="bg-slate-900/50 text-slate-400">
-            <tr>
-              <th class="p-4">خریدار (Chat ID)</th>
-              <th class="p-4">پلن</th>
-              <th class="p-4">تاریخ فروش</th>
-              <th class="p-4">لینک کانفیگ/پنل</th>
-              <th class="p-4 text-center">عملیات</th>
-            </tr>
-          </thead>
-          <tbody id="sold-configs-body">
-             <tr><td colspan="5" class="text-center p-6 text-slate-500">در حال دریافت...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 🆕 1.6 All Transactions History -->
-    <section id="view-history" class="view-section">
-      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-clock-counter-clockwise text-purple-500"></i> تاریخچه و بایگانی تراکنش‌ها</h2>
-      <div class="glass overflow-hidden rounded-3xl border border-white/5 max-w-5xl">
-        <table class="w-full text-right text-sm">
-          <thead class="bg-slate-900/50 text-slate-400">
-            <tr>
-              <th class="p-4">تاریخ بررسی</th>
-              <th class="p-4">کاربر</th>
-              <th class="p-4">عملیات/پلن</th>
-              <th class="p-4">مبلغ (تومان)</th>
-              <th class="p-4">وضعیت</th>
-            </tr>
-          </thead>
-          <tbody id="history-body">
-            <tr><td colspan="5" class="text-center p-6 text-slate-500">در حال دریافت...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 2. Tickets (CRM Chat) -->
-    <section id="view-tickets" class="view-section p-0 md:p-6">
-      <div class="h-full max-w-6xl mx-auto glass md:rounded-3xl border-0 md:border border-white/5 flex flex-col md:flex-row overflow-hidden">
-        <div class="w-full md:w-80 border-l border-white/5 bg-slate-900/30 flex flex-col h-1/3 md:h-full">
-          <div class="p-4 border-b border-white/5 bg-slate-900/80 font-bold text-sm">لیست گفتگوها</div>
-          <div class="flex-1 overflow-y-auto" id="ticket-users-list">
-            <div class="p-5 text-center text-xs text-slate-500">درحال لود...</div>
-          </div>
-        </div>
-        <div class="flex-1 flex flex-col bg-slate-950/50 h-2/3 md:h-full relative">
-          <div class="p-4 border-b border-white/5 bg-slate-900/80 flex justify-between items-center h-14 shrink-0">
-            <span class="font-bold text-sm" id="chat-header-name">یک چت را انتخاب کنید</span>
-            <span class="text-xs font-mono text-slate-500" id="chat-header-id"></span>
-          </div>
-          <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-history">
-            <div class="h-full flex items-center justify-center text-slate-500 text-sm">پیامی برای نمایش وجود ندارد.</div>
-          </div>
-          <div class="p-4 bg-slate-900/80 border-t border-white/5 shrink-0 flex gap-2">
-            <input type="text" id="reply-input" placeholder="پاسخ متنی به مشتری..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 text-sm outline-none focus:border-blue-500" disabled>
-            <button id="reply-btn" onclick="sendReply()" class="bg-blue-600 px-6 rounded-xl font-bold active:scale-95 transition disabled:opacity-50" disabled><i class="ph-bold ph-paper-plane-right"></i></button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3. Users CRM -->
-    <section id="view-users" class="view-section">
-      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-users text-blue-500"></i> پرونده مشتریان</h2>
-      <div class="glass overflow-hidden rounded-3xl border border-white/5">
-        <table class="w-full text-right text-sm">
-          <thead class="bg-slate-900/50 text-slate-400">
-            <tr>
-              <th class="p-4">کاربر</th>
-              <th class="p-4">کیف پول (T)</th>
-              <th class="p-4">پاداش (TRX)</th>
-              <th class="p-4">زیرمجموعه</th>
-              <th class="p-4 text-center">عملیات</th>
-            </tr>
-          </thead>
-          <tbody id="users-table-body"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 4. Inventory & Plans -->
-    <section id="view-inventory" class="view-section">
-      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-package text-blue-500"></i> مدیریت محصولات و انبار</h2>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="glass p-6 rounded-3xl">
-          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-plus-circle text-green-400"></i> شارژ انبار کانفیگ</h3>
-          <div class="space-y-3">
-            <select id="inv-plan" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none"></select>
-            <input type="text" id="inv-v2ray" placeholder="vless://... (کد کانفیگ)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
-            <input type="text" id="inv-panel" placeholder="https://... (لینک پنل وب - اختیاری)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
-            <textarea id="inv-note" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs outline-none text-blue-300 resize-none">برای لود پنل نیاز است vpn خاموش کنید یا لینک sub را از زیر کپی و در کروم بزنید</textarea>
-            <button onclick="addConfig()" class="w-full bg-green-600 py-3 rounded-xl font-bold active:scale-95 transition">افزودن به موجودی</button>
-          </div>
-        </div>
-        <div class="glass p-6 rounded-3xl">
-          <h3 class="font-bold mb-4">آمار موجودی (کانفیگ‌های آزاد)</h3>
-          <div id="inventory-status" class="space-y-2"></div>
-        </div>
-      </div>
-
-      <div class="glass p-6 rounded-3xl mb-6 border border-white/5">
-        <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-tag text-purple-400"></i> ایجاد محصول جدید</h3>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <input type="text" id="p-id" placeholder="شناسه سیستمی (انگلیسی)" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
-          <input type="text" id="p-title" placeholder="نام فارسی نمایشی" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
-          <input type="number" id="p-toman" placeholder="قیمت به تومان" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
-          <input type="number" step="0.01" id="p-usd" placeholder="قیمت به دلار" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
-          <button onclick="addNewPlan()" class="md:col-span-4 bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-bold text-sm transition">ثبت محصول در دیتابیس</button>
-        </div>
-      </div>
-      
-      <div id="plans-list" class="space-y-3"></div>
-    </section>
-
-    <!-- 5. Broadcast -->
-    <section id="view-broadcast" class="view-section">
-      <div class="glass p-8 rounded-3xl max-w-2xl mx-auto mt-10">
-        <h3 class="font-bold text-xl mb-4 flex items-center gap-2"><i class="ph-fill ph-megaphone text-red-500"></i> ارسال پیام همگانی (Broadcast)</h3>
-        <p class="text-sm text-slate-400 mb-6 leading-relaxed">این ابزار، متن شما را برای تک‌تک کاربرانی که تا به حال ربات را استارت کرده‌اند ارسال می‌کند. بسیار سریع و بدون افت سرعت سرور.</p>
-        <textarea id="bc-text" rows="6" placeholder="متن اطلاعیه شما..." class="w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-blue-500 mb-4 resize-none"></textarea>
-        <button onclick="sendBroadcast()" class="w-full bg-red-600 py-4 rounded-2xl font-bold shadow-lg shadow-red-900/30 active:scale-95 transition flex justify-center items-center gap-2">
-          <i class="ph-bold ph-paper-plane-tilt text-lg"></i> ارسال اطلاعیه به کل مشتریان
+      <div class="p-4 border-t border-white/5 space-y-2">
+        <button onclick="refreshAll()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-bold transition flex justify-center items-center gap-2">
+          <i class="ph-bold ph-arrows-clockwise"></i> بروزرسانی
+        </button>
+        <button onclick="logout()" class="w-full bg-red-900/30 hover:bg-red-900/50 text-red-400 py-2.5 rounded-xl text-xs font-bold transition flex justify-center items-center gap-2 border border-red-500/20">
+          <i class="ph-bold ph-sign-out"></i> خروج از پنل
         </button>
       </div>
-    </section>
+    </aside>
 
-    <!-- 6. Wallets Management -->
-    <section id="view-wallets" class="view-section">
-      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-wallet text-emerald-400"></i> مدیریت کیف‌پول‌های پرداخت</h2>
-      
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div class="glass p-6 rounded-3xl md:col-span-1">
-          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-plus-circle text-emerald-400"></i> افزودن کیف پول جدید</h3>
-          <div class="space-y-3">
-            <select id="w-network" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none text-white">
-              <option value="USDT">USDT (Tether)</option>
-              <option value="TRX">TRX (Tron)</option>
-              <option value="TON">TON (Toncoin)</option>
-              <option value="XRP">XRP (Ripple)</option>
-            </select>
-            <input type="text" id="w-address" placeholder="آدرس کیف پول..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono" dir="ltr">
-            <input type="text" id="w-label" placeholder="لیبل (مثل: ولت شماره ۱)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
-            <input type="number" id="w-priority" value="0" placeholder="اولویت (عدد بزرگتر = نمایش اول)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none" dir="ltr">
-            <button onclick="saveWallet()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-xl font-bold active:scale-95 transition">ذخیره کیف پول</button>
-          </div>
+    <!-- Mobile Header -->
+    <div class="md:hidden w-full glass p-4 flex justify-between items-center z-30 border-b border-white/10 shrink-0">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <i class="ph-bold ph-lightning text-sm"></i>
         </div>
-        
-        <div class="glass p-6 rounded-3xl md:col-span-2 overflow-hidden flex flex-col">
-          <h3 class="font-bold mb-4">لیست کیف‌پول‌های موجود در سیستم</h3>
-          <div class="flex-1 overflow-auto pr-2">
-            <div id="wallets-list" class="space-y-3">
-              <div class="text-center text-xs text-slate-500 py-10">در حال دریافت...</div>
-            </div>
-          </div>
-        </div>
+        <h1 class="font-bold text-sm">NOVA CRM</h1>
       </div>
-    </section>
-
-    <!-- 7. Settings -->
-    <section id="view-settings" class="view-section">
-      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph-fill ph-gear text-slate-400"></i> تنظیمات هسته سیستم</h2>
-      
-      <div class="glass p-8 rounded-3xl max-w-md mx-auto mt-10">
-        <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-currency-circle-dollar text-green-400"></i> نرخ تبدیل ارز (دلار به تومان)</h3>
-        <p class="text-xs text-slate-400 mb-6 leading-relaxed text-justify">تمامی محاسبات فروشگاه تلگرامی بر اساس این نرخ انجام می‌شود. با تغییر این عدد، قیمت نمایش داده شده برای محصولات در فرانت‌اند به صورت زنده آپدیت می‌شود.</p>
-        
-        <div class="mb-6">
-          <label class="block text-xs text-slate-300 mb-2">نرخ هر دلار (تومان):</label>
-          <div class="flex items-center gap-2">
-            <input type="number" id="sys-usd-rate" placeholder="مثال: 60000" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-4 text-lg font-mono outline-none focus:border-blue-500" dir="ltr">
-            <span class="bg-slate-800 text-slate-400 px-4 py-4 rounded-xl font-bold">T</span>
-          </div>
-        </div>
-        
-        <button onclick="saveSettings()" id="btn-save-settings" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-bold shadow-lg shadow-blue-900/30 active:scale-95 transition">
-          ذخیره تغییرات
-        </button>
+      <div class="flex gap-2">
+        <select id="mobile-nav" onchange="switchView(this.value, null)" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white outline-none w-32">
+          <option value="dashboard">پیشخوان آماری</option>
+          <option value="receipts">تراکنش‌ها</option>
+          <option value="sold">سرویس‌های فروخته‌شده</option>
+          <option value="users">مشتریان</option>
+          <option value="inventory">انبار</option>
+          <option value="history">تاریخچه مالی</option>
+          <option value="tickets">پشتیبانی</option>
+          <option value="broadcast">پیام همگانی</option>
+          <option value="wallets">کیف‌پول‌ها</option>
+          <option value="settings">تنظیمات</option>
+        </select>
+        <button onclick="logout()" class="bg-red-900/30 text-red-400 p-2 rounded-lg border border-red-500/20"><i class="ph-bold ph-sign-out"></i></button>
       </div>
-    </section>
+    </div>
 
-  </main>
-
-  <script>
-    let activeView = 'dashboard'; // پیش‌فرض روی داشبورد تنظیم شد
-    let allTickets = [];
-    let currentChatId = null;
-
-    function switchView(viewId, btnEl) {
-      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-      document.getElementById(`view-${viewId}`).classList.add('active');
+    <!-- Main Content Area -->
+    <main class="flex-1 bg-[#020617] h-full relative overflow-hidden flex flex-col">
       
-      if (btnEl) {
-        document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
-        btnEl.classList.add('active');
-      }
-      activeView = viewId;
-      refreshAll();
-    }
-
-    async function apiCall(action, params = {}) {
-      const pass = document.getElementById('admin-pass').value;
-      try {
-        const res = await fetch('/api/adminManage', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, admin_pass: pass, ...params })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'خطای سرور');
-        return data;
-      } catch (err) { alert(err.message); return null; }
-    }
-
-    async function apiCallNew(endpoint, method = 'GET', body = null) {
-      const pass = document.getElementById('admin-pass').value;
-      const headers = { 'Authorization': `Bearer ${pass}` };
-      if (body) headers['Content-Type'] = 'application/json';
-      
-      try {
-        const res = await fetch(endpoint, { method, headers, body: body ? JSON.stringify(body) : null });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'احراز هویت انجام نشد');
-        return data;
-      } catch (err) { alert(err.message); return null; }
-    }
-
-    async function refreshAll() {
-      if (activeView === 'dashboard') loadDashboard();
-      if (activeView === 'sold') loadSoldConfigs();
-      if (activeView === 'history') loadTransactionHistory();
-      if (activeView === 'receipts') loadReceipts();
-      if (activeView === 'tickets') loadTickets();
-      if (activeView === 'users') loadUsers();
-      if (activeView === 'inventory') { loadInventory(); loadPlans(); }
-      if (activeView === 'wallets') loadWallets();
-      if (activeView === 'settings') loadSettings();
-    }
-
-    // 🆕 --- Dashboard Functions ---
-    async function loadDashboard() {
-      const data = await apiCall('get_dashboard_stats');
-      if (data) {
-        document.getElementById('stat-revenue').innerHTML = `${Number(data.total_revenue).toLocaleString()} <span class="text-xs text-slate-500">T</span>`;
-        document.getElementById('stat-users').innerText = data.users_count;
-        document.getElementById('stat-pending').innerText = data.pending_receipts;
-        document.getElementById('stat-avail').innerText = data.available_configs;
-        document.getElementById('stat-sold').innerText = data.sold_configs;
-      }
-    }
-
-    // 🆕 --- Sold Services Functions ---
-    async function loadSoldConfigs() {
-      const data = await apiCall('get_sold_configs');
-      const tbody = document.getElementById('sold-configs-body');
-      if (!data || data.configs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center p-6 text-slate-500">هیچ سرویس فروخته شده‌ای یافت نشد.</td></tr>';
-        return;
-      }
-      
-      tbody.innerHTML = data.configs.map(c => `
-        <tr class="border-b border-white/5 hover:bg-white/5 transition">
-          <td class="p-4 font-mono text-xs text-blue-400">${c.owner_id || 'نامشخص'}</td>
-          <td class="p-4 font-bold text-xs">${c.plan_name}</td>
-          <td class="p-4 text-[10px] text-slate-400 font-mono">${new Date(c.sold_at).toLocaleString('fa-IR')}</td>
-          <td class="p-4">
-            <div class="text-[10px] text-slate-400 font-mono truncate max-w-[150px] bg-black/30 p-1 rounded" title="${c.v2ray_uri}">
-              ${c.v2ray_uri || c.web_panel_url || '-'}
+      <!-- 0. Dashboard -->
+      <section id="view-dashboard" class="view-section active flex-1">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="ph-fill ph-squares-four text-blue-500"></i> پیشخوان آماری و سلامت سیستم</h2>
+          <button onclick="loadDashboard()" class="md:hidden bg-slate-800 p-2 rounded-lg"><i class="ph-bold ph-arrows-clockwise"></i></button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6">
+          <div class="stat-card p-5 md:p-6 rounded-3xl flex items-center gap-4 relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-500/20 blur-2xl rounded-full"></div>
+            <div class="w-12 h-12 md:w-14 md:h-14 bg-green-500/20 text-green-400 rounded-2xl flex items-center justify-center shrink-0 z-10"><i class="ph-fill ph-money text-2xl md:text-3xl"></i></div>
+            <div class="z-10">
+              <p class="text-[10px] md:text-xs text-slate-400 mb-1">مجموع درآمد (تایید شده)</p>
+              <h3 class="text-xl md:text-2xl font-bold font-mono text-white" id="stat-revenue">0 <span class="text-xs">T</span></h3>
             </div>
-          </td>
-          <td class="p-4 text-center">
-            <button onclick="deleteConfig('${c.id}')" class="bg-slate-800 p-2 rounded-lg text-red-400 hover:bg-red-900/30 transition" title="حذف این کانفیگ از سیستم"><i class="ph ph-trash"></i></button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    async function deleteConfig(id) {
-      if(!confirm('آیا از حذف دائم این کانفیگ از دیتابیس مطمئن هستید؟ (اگر کاربر این کانفیگ را خریده باشد، از پنل او نیز پاک می‌شود!)')) return;
-      const res = await apiCall('delete_config', { config_id: id });
-      if (res) {
-        alert('کانفیگ با موفقیت حذف شد.');
-        if (activeView === 'sold') loadSoldConfigs();
-        if (activeView === 'inventory') loadInventory();
-      }
-    }
-
-    // 🆕 --- All Transactions History ---
-    async function loadTransactionHistory() {
-      const data = await apiCall('get_all_transactions');
-      const tbody = document.getElementById('history-body');
-      if (!data || data.transactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center p-6 text-slate-500">هیچ تاریخچه‌ای وجود ندارد.</td></tr>';
-        return;
-      }
-      
-      tbody.innerHTML = data.transactions.map(t => {
-        const isApproved = t.status === 'approved';
-        const isTopup = t.target_plan === 'wallet_topup';
-        return `
-        <tr class="border-b border-white/5 hover:bg-white/5 transition opacity-${isApproved ? '100' : '50'}">
-          <td class="p-4 text-[10px] text-slate-400 font-mono">${new Date(t.handled_at || t.created_at).toLocaleString('fa-IR')}</td>
-          <td class="p-4 font-mono text-xs text-blue-400">${t.chat_id}</td>
-          <td class="p-4 text-xs font-bold">${isTopup ? 'شارژ کیف‌پول' : t.target_plan}</td>
-          <td class="p-4 font-mono text-xs">${Number(t.amount_toman).toLocaleString()} <span class="text-[9px] text-slate-500">(${t.crypto_amount} ${t.crypto_currency})</span></td>
-          <td class="p-4">
-            <span class="px-2 py-1 rounded text-[10px] font-bold ${isApproved ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}">
-              ${isApproved ? 'موفق' : 'رد شده'}
-            </span>
-          </td>
-        </tr>
-      `}).join('');
-    }
-
-    // --- 1. Receipts ---
-    async function loadReceipts() {
-      const data = await apiCall('get_pending');
-      const container = document.getElementById('receipts-list');
-      if (!data) return;
-      if (data.receipts.length === 0) {
-        container.innerHTML = '<div class="glass p-10 text-center text-slate-500 rounded-3xl">هیچ تراکنش معلقی وجود ندارد.</div>';
-        return;
-      }
-      
-      container.innerHTML = data.receipts.map(r => {
-        const isTopup = r.target_plan === 'wallet_topup';
-        const badgeHtml = isTopup 
-          ? `<span class="bg-purple-900/30 text-purple-400 px-2 py-1 rounded text-xs font-bold flex items-center gap-1"><i class="ph-bold ph-wallet"></i> درخواست شارژ حساب</span>`
-          : `<span class="bg-blue-900/30 text-blue-400 px-2 py-1 rounded text-xs font-bold">${r.target_plan}</span>`;
-
-        return `
-        <div class="glass p-5 rounded-2xl border-r-4 ${isTopup ? 'border-purple-500' : 'border-blue-500'} flex flex-col md:flex-row justify-between items-center gap-4">
-          <div class="flex-1 w-full">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="bg-slate-800 px-2 py-1 rounded text-xs font-mono text-slate-300">ID: ${r.chat_id}</span>
-              ${badgeHtml}
-            </div>
-            <div class="text-sm font-mono text-white break-all bg-black/30 p-2 rounded border border-white/5">${r.txid_or_receipt}</div>
-            <div class="mt-2 text-xs text-slate-400">مبلغ: <span class="text-white">${Number(r.amount_toman).toLocaleString()} T</span> | ارز: <span class="text-white">${r.crypto_amount} ${r.crypto_currency}</span></div>
-            ${r.notes ? `<div class="mt-2 text-xs bg-yellow-500/10 text-yellow-200 p-2 rounded border border-yellow-500/20">📝 ${r.notes}</div>` : ''}
           </div>
-          <div class="flex gap-2 w-full md:w-auto">
-            <button onclick="txAction('${r.id}', 'approve')" class="flex-1 md:flex-none bg-green-600 px-6 py-3 rounded-xl font-bold text-xs">تایید و اعمال</button>
-            <button onclick="txAction('${r.id}', 'reject')" class="flex-1 md:flex-none bg-red-600/50 px-6 py-3 rounded-xl font-bold text-xs">رد کردن</button>
+
+          <div class="stat-card p-5 md:p-6 rounded-3xl flex items-center gap-4 relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/20 blur-2xl rounded-full"></div>
+            <div class="w-12 h-12 md:w-14 md:h-14 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center shrink-0 z-10"><i class="ph-fill ph-users text-2xl md:text-3xl"></i></div>
+            <div class="z-10">
+              <p class="text-[10px] md:text-xs text-slate-400 mb-1">مجموع کاربران ربات</p>
+              <h3 class="text-xl md:text-2xl font-bold font-mono text-white" id="stat-users">0</h3>
+            </div>
+          </div>
+
+          <div class="stat-card p-5 md:p-6 rounded-3xl flex items-center gap-4 relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-yellow-500/20 blur-2xl rounded-full"></div>
+            <div class="w-12 h-12 md:w-14 md:h-14 bg-yellow-500/20 text-yellow-400 rounded-2xl flex items-center justify-center shrink-0 z-10"><i class="ph-fill ph-receipt text-2xl md:text-3xl"></i></div>
+            <div class="z-10">
+              <p class="text-[10px] md:text-xs text-slate-400 mb-1">تراکنش‌های در انتظار تایید</p>
+              <h3 class="text-xl md:text-2xl font-bold font-mono text-white" id="stat-pending">0</h3>
+            </div>
           </div>
         </div>
-      `}).join('');
-    }
 
-    async function txAction(id, type) {
-      if (!confirm('آیا مطمئن هستید؟')) return;
-      const res = await apiCall(type, { tx_id: id });
-      if (res) {
-        if(activeView === 'receipts') loadReceipts();
-      }
-    }
-
-    async function loadTickets() {
-      const data = await apiCall('get_tickets');
-      if (!data) return;
-      allTickets = data.tickets;
-      
-      const chatGroups = {};
-      allTickets.forEach(t => {
-        if(!chatGroups[t.chat_id]) chatGroups[t.chat_id] = { messages: [], username: t.users?.username || 'Unknown' };
-        chatGroups[t.chat_id].messages.push(t);
-      });
-
-      const listContainer = document.getElementById('ticket-users-list');
-      if (Object.keys(chatGroups).length === 0) {
-        listContainer.innerHTML = '<div class="p-5 text-center text-xs text-slate-500">هیچ پیامی وجود ندارد</div>';
-        return;
-      }
-
-      listContainer.innerHTML = Object.keys(chatGroups).map(chatId => {
-        const msgs = chatGroups[chatId].messages;
-        const lastMsg = msgs[msgs.length - 1];
-        return `
-          <div onclick="openChat('${chatId}')" class="p-4 border-b border-white/5 hover:bg-white/5 cursor-pointer transition flex items-center gap-3 ${currentChatId == chatId ? 'bg-blue-900/20 border-r-2 border-r-blue-500' : ''}">
-            <div class="w-10 h-10 bg-slate-800 rounded-full flex justify-center items-center shrink-0">
-              <i class="ph-fill ph-user text-slate-400"></i>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <div class="stat-card p-5 md:p-6 rounded-3xl flex justify-between items-center">
+            <div>
+              <p class="text-[10px] md:text-xs text-slate-400 mb-1">سرویس‌های فروخته شده (فعال)</p>
+              <h3 class="text-2xl md:text-3xl font-bold text-emerald-400 font-mono" id="stat-sold">0</h3>
             </div>
-            <div class="flex-1 overflow-hidden">
-              <div class="font-bold text-sm text-slate-200 truncate">@${chatGroups[chatId].username}</div>
-              <div class="text-[10px] text-slate-400 truncate mt-1">${lastMsg.message_text}</div>
+            <i class="ph-fill ph-check-circle text-4xl md:text-5xl text-emerald-500/20"></i>
+          </div>
+          <div class="stat-card p-5 md:p-6 rounded-3xl flex justify-between items-center border border-red-500/20">
+            <div>
+              <p class="text-[10px] md:text-xs text-slate-400 mb-1">کانفیگ‌های آزاد (در انبار)</p>
+              <h3 class="text-2xl md:text-3xl font-bold text-red-400 font-mono" id="stat-avail">0</h3>
             </div>
-          </div>
-        `;
-      }).join('');
-
-      if(currentChatId) openChat(currentChatId);
-    }
-
-    function openChat(chatId) {
-      currentChatId = chatId;
-      const chatHistory = document.getElementById('chat-history');
-      
-      document.getElementById('reply-input').disabled = false;
-      document.getElementById('reply-btn').disabled = false;
-      
-      const userMsgs = allTickets.filter(t => t.chat_id == chatId);
-      if(userMsgs.length > 0) {
-         document.getElementById('chat-header-name').innerText = `@${userMsgs[0].users?.username || 'کاربر'}`;
-         document.getElementById('chat-header-id').innerText = chatId;
-      }
-
-      chatHistory.innerHTML = userMsgs.map(t => {
-        const isUser = t.sender === 'user';
-        const date = new Date(t.created_at).toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'});
-        return `
-          <div class="flex ${isUser ? 'justify-end' : 'justify-start'} mb-2">
-            <div class="${isUser ? 'chat-bubble-user text-right text-slate-200' : 'chat-bubble-admin text-left text-blue-100'} p-3 max-w-[80%]">
-              <div class="text-sm break-words">${t.message_text.replace(/\n/g, '<br>')}</div>
-              <div class="text-[9px] opacity-50 mt-1">${date}</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      chatHistory.scrollTop = chatHistory.scrollHeight;
-    }
-
-    async function sendReply() {
-      const input = document.getElementById('reply-input');
-      const text = input.value.trim();
-      if (!text || !currentChatId) return;
-
-      const btn = document.getElementById('reply-btn');
-      btn.disabled = true;
-      
-      const res = await apiCall('reply_ticket', { target_chat_id: currentChatId, message_text: text });
-      if (res) {
-        input.value = '';
-        loadTickets(); 
-      }
-      btn.disabled = false;
-    }
-
-    async function loadUsers() {
-      const data = await apiCall('get_users');
-      if (!data) return;
-      document.getElementById('users-table-body').innerHTML = data.users.map(u => `
-        <tr class="border-b border-white/5 hover:bg-white/5 transition">
-          <td class="p-4 font-mono text-xs">${u.chat_id}<br><span class="text-[10px] text-slate-500">@${u.username || 'n/a'}</span></td>
-          <td class="p-4 font-mono text-blue-400">${Number(u.wallet_balance || 0).toLocaleString()}</td>
-          <td class="p-4 font-mono text-red-400">${u.wallet_trx || 0}</td>
-          <td class="p-4 text-center">${u.total_referrals || 0}</td>
-          <td class="p-4 flex gap-2 justify-center">
-            <button onclick="editBalance('${u.chat_id}')" class="bg-blue-600/20 text-blue-400 p-2 rounded-lg" title="شارژ"><i class="ph ph-coins"></i></button>
-            <button onclick="banUser('${u.chat_id}', '${u.role}')" class="bg-slate-800 p-2 rounded-lg text-red-400" title="مسدود"><i class="ph ph-prohibit"></i></button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    async function editBalance(chatId) {
-      const amount = prompt("مبلغ جدید کیف پول (تومان):");
-      if (amount === null) return;
-      const res = await apiCall('update_user_balance', { target_chat_id: chatId, amount: Number(amount) });
-      if (res) loadUsers();
-    }
-    
-    async function banUser(id, currentRole) {
-      const newRole = currentRole === 'banned' ? 'user' : 'banned';
-      if (!confirm(`آیا می‌خواهید این کاربر را ${newRole === 'banned' ? 'مسدود' : 'آزاد'} کنید؟`)) return;
-      const res = await apiCall('update_user_role', { target_chat_id: id, role: newRole });
-      if (res) loadUsers();
-    }
-
-    async function loadInventory() {
-      const data = await apiCall('get_inventory');
-      if (!data) return;
-      document.getElementById('inventory-status').innerHTML = Object.entries(data.stats).map(([name, count]) => `
-        <div class="flex justify-between p-3 bg-slate-900/50 rounded-xl border border-white/5">
-          <span class="text-sm font-bold">${name}</span>
-          <span class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full text-xs font-mono font-bold">${count} موجود</span>
-        </div>
-      `).join('') || '<div class="text-center text-xs text-slate-500">انبار خالی است.</div>';
-    }
-
-    async function loadPlans() {
-      const data = await apiCall('get_plans_list');
-      if (!data) return;
-      
-      document.getElementById('inv-plan').innerHTML = data.plans.map(p => `<option value="${p.internal_name}">${p.title_fa}</option>`).join('');
-      
-      document.getElementById('plans-list').innerHTML = data.plans.map(p => `
-        <div class="glass p-4 rounded-2xl flex justify-between items-center border border-white/5">
-          <div>
-            <div class="font-bold text-sm">${p.title_fa} <span class="text-[10px] text-slate-500">(${p.internal_name})</span></div>
-            <div class="text-xs text-slate-400">${Number(p.price_toman).toLocaleString()} تومان | $${p.price_usd}</div>
-          </div>
-          <div class="flex gap-2">
-            <button onclick="togglePlan('${p.internal_name}', ${p.is_active})" class="px-3 py-1.5 rounded-lg text-[10px] font-bold ${p.is_active ? 'bg-green-600' : 'bg-red-600'}">${p.is_active ? 'فعال' : 'غیرفعال'}</button>
-            <button onclick="deletePlan('${p.internal_name}')" class="bg-slate-800 p-2 rounded-lg text-red-400"><i class="ph ph-trash"></i></button>
+            <i class="ph-fill ph-package text-4xl md:text-5xl text-red-500/20"></i>
           </div>
         </div>
-      `).join('');
-    }
+      </section>
 
-    async function addConfig() {
-      const plan = document.getElementById('inv-plan').value;
-      const v2ray = document.getElementById('inv-v2ray').value;
-      const panel = document.getElementById('inv-panel').value;
-      const note = document.getElementById('inv-note').value;
+      <!-- 1. Receipts -->
+      <section id="view-receipts" class="view-section flex-1">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="ph-fill ph-receipt text-blue-500"></i> بررسی تراکنش‌های معلق</h2>
+          <button onclick="loadReceipts()" class="md:hidden bg-slate-800 p-2 rounded-lg"><i class="ph-bold ph-arrows-clockwise"></i></button>
+        </div>
+        <div class="grid grid-cols-1 gap-4 max-w-4xl" id="receipts-list">
+          <div class="glass p-10 text-center text-slate-500 rounded-3xl">در حال دریافت...</div>
+        </div>
+      </section>
 
-      if (!v2ray) return alert('کد کانفیگ الزامی است');
-      const data = await apiCall('add_config', { plan, v2ray, panel: panel || '', note });
-      
-      if (data) { 
-        alert('کانفیگ با موفقیت به انبار اضافه شد.'); 
-        document.getElementById('inv-v2ray').value = ''; 
-        document.getElementById('inv-panel').value = ''; 
-        loadInventory(); 
-      }
-    }
+      <!-- 1.5 Sold Services -->
+      <section id="view-sold" class="view-section flex-1">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="ph-fill ph-check-circle text-emerald-500"></i> مدیریت سرویس‌های فروخته‌شده</h2>
+          <button onclick="loadSoldConfigs()" class="md:hidden bg-slate-800 p-2 rounded-lg"><i class="ph-bold ph-arrows-clockwise"></i></button>
+        </div>
+        <div class="glass rounded-3xl border border-white/5 w-full">
+          <div class="overflow-x-auto w-full">
+            <table class="w-full text-right text-sm min-w-[700px]">
+              <thead class="bg-slate-900/50 text-slate-400">
+                <tr>
+                  <th class="p-4">خریدار (Chat ID)</th>
+                  <th class="p-4">پلن</th>
+                  <th class="p-4">تاریخ فروش</th>
+                  <th class="p-4">لینک کانفیگ/پنل</th>
+                  <th class="p-4 text-center">عملیات</th>
+                </tr>
+              </thead>
+              <tbody id="sold-configs-body">
+                 <tr><td colspan="5" class="text-center p-6 text-slate-500">در حال دریافت...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-    async function addNewPlan() {
-      const params = {
-        plan_id: document.getElementById('p-id').value,
-        title_fa: document.getElementById('p-title').value,
-        price_toman: Number(document.getElementById('p-toman').value),
-        price_usd: Number(document.getElementById('p-usd').value)
-      };
-      if (!params.plan_id || !params.title_fa) return alert("فیلدها را پر کنید.");
-      const res = await apiCall('add_plan', params);
-      if (res) { alert("محصول ثبت شد."); loadPlans(); }
-    }
+      <!-- 1.6 All Transactions History -->
+      <section id="view-history" class="view-section flex-1">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="ph-fill ph-clock-counter-clockwise text-purple-500"></i> تاریخچه و بایگانی تراکنش‌ها</h2>
+          <button onclick="loadTransactionHistory()" class="md:hidden bg-slate-800 p-2 rounded-lg"><i class="ph-bold ph-arrows-clockwise"></i></button>
+        </div>
+        <div class="glass rounded-3xl border border-white/5 w-full max-w-5xl">
+          <div class="overflow-x-auto w-full">
+            <table class="w-full text-right text-sm min-w-[600px]">
+              <thead class="bg-slate-900/50 text-slate-400">
+                <tr>
+                  <th class="p-4">تاریخ بررسی</th>
+                  <th class="p-4">کاربر</th>
+                  <th class="p-4">عملیات/پلن</th>
+                  <th class="p-4">مبلغ (تومان)</th>
+                  <th class="p-4">وضعیت</th>
+                </tr>
+              </thead>
+              <tbody id="history-body">
+                <tr><td colspan="5" class="text-center p-6 text-slate-500">در حال دریافت...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-    async function togglePlan(id, current) {
-      const res = await apiCall('toggle_plan', { plan_id: id, status: !current });
-      if (res) loadPlans();
-    }
+      <!-- 2. Tickets -->
+      <section id="view-tickets" class="view-section flex-1 p-4 md:p-6 flex flex-col">
+        <div class="flex justify-between items-center mb-4 md:hidden">
+          <h2 class="text-lg font-bold flex items-center gap-2"><i class="ph-fill ph-chats-teardrop text-blue-500"></i> مرکز پیام</h2>
+          <button onclick="loadTickets()" class="bg-slate-800 p-2 rounded-lg"><i class="ph-bold ph-arrows-clockwise"></i></button>
+        </div>
+        <div class="flex-1 max-w-6xl w-full mx-auto glass rounded-2xl md:rounded-3xl border border-white/5 flex flex-col md:flex-row overflow-hidden h-[calc(100vh-180px)] md:h-auto">
+          <!-- Users List -->
+          <div class="w-full md:w-80 border-b md:border-b-0 md:border-l border-white/5 bg-slate-900/30 flex flex-col h-1/3 md:h-full">
+            <div class="p-3 md:p-4 border-b border-white/5 bg-slate-900/80 font-bold text-xs md:text-sm">لیست گفتگوها</div>
+            <div class="flex-1 overflow-y-auto custom-scroll" id="ticket-users-list">
+              <div class="p-5 text-center text-xs text-slate-500">درحال لود...</div>
+            </div>
+          </div>
+          <!-- Chat Area -->
+          <div class="flex-1 flex flex-col bg-slate-950/50 h-2/3 md:h-full relative">
+            <div class="p-3 md:p-4 border-b border-white/5 bg-slate-900/80 flex justify-between items-center h-12 md:h-14 shrink-0">
+              <span class="font-bold text-xs md:text-sm" id="chat-header-name">یک چت را انتخاب کنید</span>
+              <span class="text-[10px] md:text-xs font-mono text-slate-500" id="chat-header-id"></span>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scroll" id="chat-history">
+              <div class="h-full flex items-center justify-center text-slate-500 text-sm">پیامی برای نمایش وجود ندارد.</div>
+            </div>
+            <div class="p-3 md:p-4 bg-slate-900/80 border-t border-white/5 shrink-0 flex gap-2">
+              <input type="text" id="reply-input" placeholder="پاسخ متنی به مشتری..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 md:px-4 text-xs md:text-sm outline-none focus:border-blue-500" disabled>
+              <button id="reply-btn" onclick="sendReply()" class="bg-blue-600 px-4 md:px-6 rounded-xl font-bold active:scale-95 transition disabled:opacity-50" disabled><i class="ph-bold ph-paper-plane-right"></i></button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    async function deletePlan(id) {
-      if (!confirm('مطمئن هستید؟')) return;
-      const res = await apiCall('delete_plan', { plan_id: id });
-      if (res) loadPlans();
-    }
+      <!-- 3. Users CRM -->
+      <section id="view-users" class="view-section flex-1">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="ph-fill ph-users text-blue-500"></i> پرونده مشتریان</h2>
+          <button onclick="loadUsers()" class="md:hidden bg-slate-800 p-2 rounded-lg"><i class="ph-bold ph-arrows-clockwise"></i></button>
+        </div>
+        <div class="glass rounded-3xl border border-white/5 w-full">
+          <div class="overflow-x-auto w-full">
+            <table class="w-full text-right text-sm min-w-[700px]">
+              <thead class="bg-slate-900/50 text-slate-400">
+                <tr>
+                  <th class="p-4">کاربر</th>
+                  <th class="p-4">کیف پول (T)</th>
+                  <th class="p-4">پاداش (TRX)</th>
+                  <th class="p-4">زیرمجموعه</th>
+                  <th class="p-4 text-center">عملیات</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-    async function sendBroadcast() {
-      const text = document.getElementById('bc-text').value;
-      if (!text || !confirm('این پیام برای تمام کاربران ارسال خواهد شد. آیا مطمئن هستید؟')) return;
-      const data = await apiCall('broadcast', { message_text: text });
-      if (data) {
-        alert(`عملیات موفق. پیام در حال ارسال به ${data.count} کاربر است.`);
-        document.getElementById('bc-text').value = '';
-      }
-    }
+      <!-- 4. Inventory & Plans -->
+      <section id="view-inventory" class="view-section flex-1">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="ph-fill ph-package text-blue-500"></i> مدیریت محصولات و انبار</h2>
+          <button onclick="loadInventory(); loadPlans();" class="md:hidden bg-slate-800 p-2 rounded-lg"><i class="ph-bold ph-arrows-clockwise"></i></button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
+          <div class="glass p-5 md:p-6 rounded-3xl">
+            <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-plus-circle text-green-400"></i> شارژ انبار کانفیگ</h3>
+            <div class="space-y-3">
+              <select id="inv-plan" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none"></select>
+              <input type="text" id="inv-v2ray" placeholder="vless://... (کد کانفیگ)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
+              <input type="text" id="inv-panel" placeholder="https://... (لینک پنل وب - اختیاری)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono">
+              <textarea id="inv-note" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs outline-none text-blue-300 resize-none">برای لود پنل نیاز است vpn خاموش کنید یا لینک sub را از زیر کپی و در کروم بزنید</textarea>
+              <button onclick="addConfig()" class="w-full bg-green-600 py-3 rounded-xl font-bold active:scale-95 transition">افزودن به موجودی</button>
+            </div>
+          </div>
+          <div class="glass p-5 md:p-6 rounded-3xl">
+            <h3 class="font-bold mb-4">آمار موجودی (کانفیگ‌های آزاد)</h3>
+            <div id="inventory-status" class="space-y-2"></div>
+          </div>
+        </div>
 
-    async function loadWallets() {
-      const container = document.getElementById('wallets-list');
-      container.innerHTML = '<div class="text-center text-xs text-slate-500 py-10">در حال لود...</div>';
-      const data = await apiCallNew('/api/wallets');
-      if (!data) return;
+        <div class="glass p-5 md:p-6 rounded-3xl mb-6 border border-white/5">
+          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-tag text-purple-400"></i> ایجاد محصول جدید</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <input type="text" id="p-id" placeholder="شناسه سیستمی (انگلیسی)" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
+            <input type="text" id="p-title" placeholder="نام فارسی نمایشی" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
+            <input type="number" id="p-toman" placeholder="قیمت به تومان" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
+            <input type="number" step="0.01" id="p-usd" placeholder="قیمت به دلار" class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
+            <button onclick="addNewPlan()" class="md:col-span-4 bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-bold text-sm transition">ثبت محصول در دیتابیس</button>
+          </div>
+        </div>
+        
+        <div id="plans-list" class="space-y-3"></div>
+      </section>
 
-      if (data.length === 0) {
-        container.innerHTML = '<div class="text-center text-xs text-slate-500 py-10">هیچ کیف پولی ثبت نشده است.</div>';
-        return;
-      }
+      <!-- 5. Broadcast -->
+      <section id="view-broadcast" class="view-section flex-1">
+        <h2 class="text-xl font-bold mb-6 flex items-center gap-2 md:hidden"><i class="ph-fill ph-megaphone text-red-500"></i> پیام همگانی</h2>
+        <div class="glass p-6 md:p-8 rounded-3xl max-w-2xl mx-auto md:mt-10">
+          <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i class="ph-fill ph-megaphone text-red-500"></i> ارسال پیام همگانی (Broadcast)</h3>
+          <p class="text-xs md:text-sm text-slate-400 mb-6 leading-relaxed">این ابزار، متن شما را برای تک‌تک کاربرانی که تا به حال ربات را استارت کرده‌اند ارسال می‌کند. بسیار سریع و بدون افت سرعت سرور.</p>
+          <textarea id="bc-text" rows="6" placeholder="متن اطلاعیه شما..." class="w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-blue-500 mb-4 resize-none"></textarea>
+          <button onclick="sendBroadcast()" class="w-full bg-red-600 py-3 md:py-4 rounded-2xl font-bold shadow-lg shadow-red-900/30 active:scale-95 transition flex justify-center items-center gap-2">
+            <i class="ph-bold ph-paper-plane-tilt text-lg"></i> ارسال اطلاعیه به کل مشتریان
+          </button>
+        </div>
+      </section>
 
-      container.innerHTML = data.map(w => `
-        <div class="glass p-4 rounded-2xl border border-white/5 relative overflow-hidden">
-          <div class="flex justify-between items-start mb-2">
+      <!-- 6. Wallets Management -->
+      <section id="view-wallets" class="view-section flex-1">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="ph-fill ph-wallet text-emerald-400"></i> مدیریت کیف‌پول‌های پرداخت</h2>
+          <button onclick="loadWallets()" class="md:hidden bg-slate-800 p-2 rounded-lg"><i class="ph-bold ph-arrows-clockwise"></i></button>
+        </div>
+        
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+          <div class="glass p-5 md:p-6 rounded-3xl xl:col-span-1">
+            <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-plus-circle text-emerald-400"></i> افزودن کیف پول جدید</h3>
+            <div class="space-y-3">
+              <select id="w-network" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none text-white">
+                <option value="USDT">USDT (Tether)</option>
+                <option value="TRX">TRX (Tron)</option>
+                <option value="TON">TON (Toncoin)</option>
+                <option value="XRP">XRP (Ripple)</option>
+              </select>
+              <input type="text" id="w-address" placeholder="آدرس کیف پول..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none font-mono" dir="ltr">
+              <input type="text" id="w-label" placeholder="لیبل (مثل: ولت شماره ۱)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none">
+              <input type="number" id="w-priority" value="0" placeholder="اولویت (عدد بزرگتر = نمایش اول)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm outline-none" dir="ltr">
+              <button onclick="saveWallet()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-xl font-bold active:scale-95 transition">ذخیره کیف پول</button>
+            </div>
+          </div>
+          
+          <div class="glass p-5 md:p-6 rounded-3xl xl:col-span-2 overflow-hidden flex flex-col">
+            <h3 class="font-bold mb-4">لیست کیف‌پول‌های موجود در سیستم</h3>
+            <div class="flex-1 overflow-y-auto pr-1 md:pr-2">
+              <div id="wallets-list" class="space-y-3">
+                <div class="text-center text-xs text-slate-500 py-10">در حال دریافت...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. Settings -->
+      <section id="view-settings" class="view-section flex-1">
+        <h2 class="text-xl font-bold mb-6 flex items-center gap-2 md:hidden"><i class="ph-fill ph-gear text-slate-400"></i> تنظیمات</h2>
+        <div class="glass p-6 md:p-8 rounded-3xl max-w-md mx-auto md:mt-10">
+          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-currency-circle-dollar text-green-400"></i> نرخ تبدیل ارز (دلار به تومان)</h3>
+          <p class="text-xs text-slate-400 mb-6 leading-relaxed text-justify">تمامی محاسبات فروشگاه تلگرامی بر اساس این نرخ انجام می‌شود. با تغییر این عدد، قیمت نمایش داده شده برای محصولات در فرانت‌اند به صورت زنده آپدیت می‌شود.</p>
+          
+          <div class="mb-6">
+            <label class="block text-xs text-slate-300 mb-2">نرخ هر دلار (تومان):</label>
             <div class="flex items-center gap-2">
-              <span class="bg-slate-800 text-white font-bold px-2 py-1 rounded text-xs">${w.network}</span>
-              <span class="text-[10px] text-slate-400">${w.label || 'بدون نام'}</span>
-            </div>
-            <div class="flex gap-2">
-              <button onclick="toggleWallet('${w.id}', ${!w.is_active})" class="px-3 py-1 rounded-lg text-[10px] font-bold ${w.is_active ? 'bg-emerald-900/50 text-emerald-400' : 'bg-red-900/50 text-red-400'} border ${w.is_active ? 'border-emerald-500/20' : 'border-red-500/20'}">
-                ${w.is_active ? 'فعال در ربات' : 'غیرفعال'}
-              </button>
-              <button onclick="deleteWallet('${w.id}')" class="bg-slate-800 p-1.5 rounded-lg text-red-400 border border-white/5"><i class="ph ph-trash"></i></button>
+              <input type="number" id="sys-usd-rate" placeholder="مثال: 60000" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-3 md:p-4 text-lg font-mono outline-none focus:border-blue-500" dir="ltr">
+              <span class="bg-slate-800 text-slate-400 px-4 py-3 md:py-4 rounded-xl font-bold">T</span>
             </div>
           </div>
-          <div class="text-xs font-mono text-slate-300 break-all bg-black/30 p-2 rounded border border-white/5 mt-2">${w.address}</div>
-          <div class="flex justify-between mt-3 text-[10px] text-slate-500 border-t border-white/5 pt-2">
-            <span>تعداد استفاده (رسید): <strong class="text-white">${w.usage_count}</strong></span>
-            <span>اولویت نمایش: <strong class="text-white">${w.priority}</strong></span>
-          </div>
+          
+          <button onclick="saveSettings()" id="btn-save-settings" class="w-full bg-blue-600 hover:bg-blue-500 py-3 md:py-4 rounded-xl font-bold shadow-lg shadow-blue-900/30 active:scale-95 transition">
+            ذخیره تغییرات
+          </button>
         </div>
-      `).join('');
-    }
+      </section>
 
-    async function saveWallet() {
-      const payload = {
-        network: document.getElementById('w-network').value,
-        address: document.getElementById('w-address').value,
-        label: document.getElementById('w-label').value,
-        priority: parseInt(document.getElementById('w-priority').value) || 0
-      };
-      if(!payload.address) return alert('وارد کردن آدرس کیف پول الزامی است');
-      
-      const res = await apiCallNew('/api/wallets', 'POST', payload);
-      if(res) {
-        alert('کیف پول با موفقیت ثبت شد.');
-        document.getElementById('w-address').value = '';
-        document.getElementById('w-label').value = '';
-        loadWallets();
-      }
-    }
+    </main>
+  </div>
 
-    async function toggleWallet(id, is_active) {
-      const res = await apiCallNew('/api/wallets', 'PUT', { id, is_active });
-      if (res) loadWallets();
-    }
-
-    async function deleteWallet(id) {
-      if(!confirm('آیا از حذف این کیف پول اطمینان دارید؟')) return;
-      const res = await apiCallNew(`/api/wallets?id=${id}`, 'DELETE');
-      if (res) loadWallets();
-    }
-
-    async function loadSettings() {
-      const data = await apiCallNew('/api/settings');
-      if (data) {
-        document.getElementById('sys-usd-rate').value = data.usd_rate;
-      }
-    }
-
-    async function saveSettings() {
-      const btn = document.getElementById('btn-save-settings');
-      const rate = document.getElementById('sys-usd-rate').value;
-      if(!rate) return alert("مبلغ را وارد کنید");
-      
-      btn.innerText = 'در حال ذخیره...';
-      const res = await apiCallNew('/api/settings', 'POST', { usd_rate: rate });
-      if (res) alert('✅ قیمت جدید دلار در سیستم اعمال شد.');
-      btn.innerText = 'ذخیره تغییرات';
-    }
-
-    window.onload = refreshAll;
-  </script>
+  <!-- اتصال به فایل جاوااسکریپت جدا شده -->
+  <script src="/admin/admin.js"></script>
 </body>
 </html>
